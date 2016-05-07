@@ -1,0 +1,42 @@
+\chapter{Testing}\label{chapter:testing}
+
+Testing
+ Chapter is focused on explaining theory behind testing that gives high certainty about correctness of algorithm and its implementation.  I’ve run many tests on different levels that had to verify if implementation is correct, but what is more important if new multi partition paxos algorithm delivers its promise. 
+Paxos has been proven formally, whereas algorithm developed during this research has been proven to work in practice for all written tests. For some, it might not be enough, but writing a formal proof is a complex task which would require further research.
+
+
+Unit testing
+Many unit tests were written to test particular functionality in isolation. 
+
+
+TODO description...
+
+
+Cluster tests
+* Feature tests - single features tested on cluster
+* Full tests - TODO main part of testing
+* Tell about using CCM
+
+
+Full tests
+
+
+Counters - basic building block for different tests
+
+
+Testing for rollback
+
+
+Testing for read repair
+Read has to be consistent when leader crashes
+
+
+Testing for concurrent transactions
+Counters and executors which increment them. Number of incrementations has to be equal to successful transactions
+
+
+Testing for independent transactions
+
+
+Performance tests
+TODO how to test performance 
