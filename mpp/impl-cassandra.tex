@@ -1,8 +1,16 @@
-\section{Algorithm in Cassandra}\label{sec:algo:c}
-% Implementation in Cassandra (concrete part, implementation in Cassandra)
-In this section the discussion will point to implementation details of algorithm and its components in Cassandra.
+%!TEX root = ../thesis.tex
 
-Cassandra is one of more widely used NoSql databases. Since it has token ring architecture it is well suited for proof of concept implementation of Multi Partition Paxos algorithm.
+\section{Implementation of algorithm in Cassandra}\label{sec:algo:c}
+% Implementation in Cassandra (concrete part, implementation in Cassandra)
+In this section the discussion will point to implementation details of algorithm and its components in Cassandra. 
+
+
+\subsection{Proof of concept}
+Paxos algorithm has a formal mathematical proof of its correctness. Formal proof of \emph{Mutli Partition Paxos} algorithm is out of scope for this work. Implementation of algorithm in Cassandra database has been done instead, as proof of concept. Details of implementation specific for Cassandra are the main focus of the following sections.
+
+% TODO do usuniecia bo temat raczej wyczerpany
+Since it has token ring architecture it is well suited for proof of concept implementation of Multi Partition Paxos algorithm.
+
 
 
 \subsection{Key assumptions}

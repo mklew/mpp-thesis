@@ -1,3 +1,5 @@
+%!TEX root = ../thesis.tex
+
 \section{Multi partition paxos algorithm}
 
 \input{mpp/mpp-theory-algo-idea.tex}
@@ -25,6 +27,8 @@ There are few requirements that need to be satisfied in order to be sure that pa
 
 \subsection{Transaction requirements}
 Transactions should have following functionality:
+TODO napisac czym sie roznica od LWT - dodatki do prywatne dane
+TODO napisac czym sa memtable - tylko pytanie gdzie to napisac
 
 
 1. Run in isolation from other transactions - transactions - their state and data - should be isolated from each other. One transaction cannot see other’s data.
@@ -46,7 +50,7 @@ TODO jakiś diagram który pokazuje o co chodzi, po co to jest np. Diagram z nod
 
 
 \subsection{Representation of transaction}
-A transaction has some state, let’s call it transaction state. Whole state of transaction is represented by its unique id and all the operations with data, so all modifications done within transaction. Each modification is performed for some key which might point to any table, any row. Since database uses token ring, each key has corresponding token value computed by hashing function. It is irrelevant what that function is from perspective of algorithm. What’s important is that keys alone can be heavy, can have complex structure. Imagine complex key which consists of 6 columns. Tokens however, are simple and guaranteed to be just numbers. Therefore from memory usage perspective, it is better to use tokens instead of keys.
+Transaction state has unique id of transaction and all the operations with data, thus all modifications done within transaction. Each modification is performed for some key which might point to any table, any row. Since database uses token ring, each key has corresponding token value computed by hashing function. It is irrelevant what that function is from perspective of algorithm. What’s important is that keys alone can be heavy, can have complex structure. Imagine complex key which consists of 6 columns. Tokens however, are simple and guaranteed to be just numbers. Therefore from memory usage perspective, it is better to use tokens instead of keys.
 
 
 Given token and topology of cluster it is known which nodes are replicas responsible for that token. This is how such databases operate. Each node knows that tokens in range (1, 100) are in nodes 1,2,3 and tokens in range (101, 200) in nodes 4,5,6 and so on. Note that this is trivial example.
@@ -73,8 +77,8 @@ Transaction Item :=
         token
         Table name
 
-
-Transaction state is, as said before, unique id plus something that allows us to find all modifications. That something is called transaction item, which has token and table name. 
+% TODO nie mozna uzywac 'something', 'so', 'thing'
+Transaction state is unique id plus something that allows us to find all modifications. That something is called transaction item, which has token and table name. 
 
 
 * Tokens in each transaction item point to concrete replicas which store modification done in transaction
@@ -92,11 +96,11 @@ In case there were are no transactions, all we ….
 What if there were no transaction items? If all we know is unique id, we would have to ask each node in cluster if it has some data for that transaction. That is unacceptable. If cluster has 100 nodes and our transaction modifies data that belongs to 5 nodes. Instead of asking just five nodes, we would need to ask all of them wasting network resources.
 
 
-\subsection{Isolation from other transactions}
+\section{Isolation from other transactions}
 Transactions must run in isolation from each other. To put it simply, transactions cannot see each other, nor anyone else can see what transactions are doing before transaction actually completes with commit.
 
 
-We would like to modify some data in transaction, which would put that modification at replicas responsible for given piece of data keeping it private for just that transaction.[c]
+We would like to modify some data in transaction, which would put that modification at replicas responsible for given piece of data keeping it private for just that transaction.
 
 
 In order to satisfy that requirement, new private storage has to be present in each node.
@@ -117,12 +121,12 @@ Private Transaction Storage {
 From perspective of algorithm it does not matter whether modifications are stored in memory or in any other way as long as modifications are accessible during transaction.
 
 
-\subsubsection{Quorum requirements}
+\subsection{Quorum requirements}
 Each modification within transaction should be written to at least quorum of nodes responsible. Otherwise modification has to be either tried again or whole transaction needs to be rolled back.
 Private transaction storage also satisfies requirement of doing many operations within transaction. Each operation gets executed, stored in private storage and mapped to transaction item.
 
 
-\subsubsection{Algorithm for adding operations to private transaction storage}
+\subsection{Algorithm for adding operations to private transaction storage}
 
 
 1. Clients send a request INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
@@ -148,15 +152,15 @@ Last step in algorithm is crucial, because client is responsible for keeping tra
 
 
 
-\subsection{Addressing paxos requirements}
+\section{Addressing paxos requirements}
 Paxos requirements have to be met. What was easy in case of LWT becomes troublesome considering many partitions. In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
 
 
-        \subsubsection{Paxos value}
+\subsection{Paxos value}
 Value that we need to have consensus about is transaction state. It is because given transaction state, we can identify all modifications in transaction. It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. Transaction state always is an entry point to algorithm.
 
 
-\subsubsection{Ability to find paxos state at node given transaction state (value).}
+\subsection{Ability to find paxos state at node given transaction state (value).}
 This requirement alone is easy, but if thought about in context of serializability it becomes quite hard. In order to support transactions we need to have property:
 
 
@@ -175,7 +179,7 @@ So paxos can do it as long as we can guarantee that conflicting transactions par
 * It maps non-conflicting transactions to different paxos round id -- otherwise it would not scale well.
 
 
-\subsubsection{Conflicting transactions}
+\subsection{Conflicting transactions}
 In relational world it is well defined what a conflict is. There are different ways of concurrency control which include locks and other mechanisms. In distributed setting in order to have absolute certainty whether two transactions are conflicting it would require to compare their private modifications and see whether they modify same keys. That would result in as many round trips as there are items being modified by transactions multiplied by number of concurrent transactions. It might cause overhead bigger than what it is worth. 
 
 
@@ -334,7 +338,7 @@ MPP is designed for operations on many partitions therefore there are many repli
 Furthermore, there is another phase not existing in paxos, which is named rollback phase. Replicas can transition to rollback phase at anytime after pre prepare phase. When replica is in such phase it simply means that transaction was rolled back by other concurrent transaction at that replica. 
 
 
-\subsubsection{Replica groups in details}
+\subsection{Replica groups in details}
 Assume N=3 and transaction for keys: k1, k2, k3, k4 
 K1 belongs to replica group n1, n2, n3
 K2 belongs to replica group n2, n3, n4
@@ -405,26 +409,32 @@ Minimum phase among replica groups is pre prepare phase.
 4. Node 3, node 5 have to do actual prepare request with new high ballot
 5. Phases after transitions are evaluated and algorithm continues.
         
-Above example shows how different multi partition paxos is from LWT. Example showed how[f] phase depends on all replica groups which depend on replicas and all the other replica groups. All of that is required to simply have replicas that stay in sync and where each replica group has satisfied quorum. That is requirement which comes from paxos and all these dependencies relations make it possible.
+Above example shows how different multi partition paxos is from LWT. Example shows how phase depends on all replica groups which depend on replicas and all the other replica groups. All of that is required to simply have replicas that stay in sync and where each replica group has satisfied quorum. That is requirement which comes from paxos and all these dependencies relations make it possible.
 
 
 \subsubsection{Algorithm requirements on cluster}
 Algorithm can make progress as long as quorum in each replica group is satisfied, thus the algorithm is resilient to failures of n nodes:
+
+% TODO tableka, 
+% best case, N, wniosek
+% worst case, N, wniosek
+
         N-denotes number of nodes that can be down[g]
 * At best case, when replica groups are disjoint, n = (number of replica groups) * (N - (N/2 + 1)), that is, the minority of replicas can be down for each replica group.
 * At worst cas[h]e, when all replica groups intersect, only minority of replicas can be down therefore n= N - (N/2 + 1)
 
 
+
 Therefore resilience scales with size of transaction.
 
 
-\subsection{Phases}
+\section{Replica phases}
 TODO co to jest, po co, lista tych phases a potem konkretny opis.
         Detailed description of phases
 In this section discussion will point to details of each phase.
 
 
-\subsection{Pre prepare phase description}
+\subsection{Pre prepare phase}
 Pre prepare phase is the first phase in multi partition paxos. There two main components in that phase:
 * Transaction registers in transaction index 
 * Transaction makes it data consistent
@@ -488,7 +498,8 @@ Inputs:
 
 
 \subsubsection{Optimization on number of requests}
-At first it might seem that we could limit [j]number of requests to only those transaction items which are missing in Private Transaction Storage. Note that, items have only tokens whereas private data has full information about keys and modifications for these keys. If we check whether we have key in private storage which matches with token then we could omit further requests to other replicas. 
+% TODO 'unikac seems'. Przepisac to jakos
+We could not limit number of requests to only those transaction items which are missing in Private Transaction Storage. Note that, items have only tokens whereas private data has full information about keys and modifications for these keys. If we check whether we have key in private storage which matches with token then we could omit further requests to other replicas. 
 Such optimization could work only under the condition that transaction cannot modify same keys twice. 
 
 
@@ -498,13 +509,15 @@ For example, given row with key K and columns C1 and C2 we could have updates:
 3. Update C1 and C2 for K
 
 
-Each case is valid as long as others do not happen. If we allow 1) and later on 2) we won’t have any guarantees if we have data for both updates. If one update is lost on the way, replica won’t know whether it has all the updates associated with given key or not. This is because it has only one token and one key. Without such restriction, replica would think it[k] has consistent data, but in reality is has missing second update.
+Each case is valid as long as others do not happen. If we allow 1) and later on 2) we won’t have any guarantees if we have data for both updates. If one update is lost on the way, replica won’t know whether it has all the updates associated with given key or not. This is because it has only one token and one key. 
+Without such restriction, replica would think it[k] has consistent data, but in reality is has missing second update.
+% TODO Replika nie mysli, unikac 
 To summarize, optimizations are possible, but only with further constraints. I argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization could remain opt-in and configurable even per transaction. Which would yield best performance for specific cases without restricting other kinds of transactions.
         
 To conclude pre prepare phase, it lays out foundation for further paxos phases and makes guarantees that if replica is in pre prepare phase, then it is eligible to participate in paxos round and its private data is eligible for commit. Whether commit occurs or not, it depends on results of next phases.
 
 
-\subsection{Rollback phase in details}
+\subsection{Rollback phase}
 Rollback phase was briefly mentioned at high level overview of multi partition paxos algorithm. 
 Rollback phase for replica, means that transaction was rolled back at given replica node. 
 This phase is special, because if even one replica group decides to move to rollback phase, then all the other replicas have to move to rollback phase. Secondly, there is no transition out of rollback phase. Multi partition paxos algorithm ends and yields result that transaction has been rolled back.
@@ -522,7 +535,7 @@ Transaction cannot be rolled back once its proposal was accepted by all replica 
 If replica has to move to rollback phase upon decision of all replica groups and not by its own. It should notify node about rollback. Node will then purge its private data, remove transaction from index and add information about rolled back transaction to transaction log.
 
 
-\subsection{Prepare phase in details}
+\subsection{Prepare phase}
 Prepare phase is the expected next phase after pre prepare phase. During prepare each replica receives ballot, which is just a name for timestamp. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by id which is stored in Transaction Index. To find that id, we need to look up index using Transaction State. That requires that ballot is passed along with transaction state, but this state cannot be treated as paxos value. That’s not how paxos algorithm was designed. Transaction State is used only to find id of Paxos State and to compare ballots.
 
 
@@ -553,7 +566,7 @@ To summarize prepare phase, it extends original paxos’s prepare phase, because
 After successful transition of all replicas to prepare phase, next transition can be applied.
 
 
-\subsection{Propose phase in details}
+\subsection{Propose phase}
 Propose phase is the next expected phase from prepare phase, but also from repairing phase. Its purpose is to propose transaction state as paxos value to replicas and get majority of acceptances. 
 
 
@@ -566,7 +579,7 @@ Proposal phase is quite simple. Proposal with Transaction State can be accepted 
 When transaction cannot be found in index, it has to be present in Transaction Log which also helps the leader to make decision whether algorithm should continue.
 
 
-\subsection{Commit phase in details}
+\subsection{Commit phase}
 Commit phase comes after successful propose phase. It can only happen when transaction was accepted by all quorums in all replica groups. Upon commit message replica has to do couple of things:
 * Flush transaction’s data locally
    * Find transaction’s data in Private Transaction Storage 
@@ -584,7 +597,7 @@ Commit phase comes after successful propose phase. It can only happen when trans
 When leader sees that all replica groups received acknowledges it can safely finish multi partition paxos round and respond to a client that transaction has been committed.
 
 
-\subsection{Repairing phase in details}
+\subsection{Repairing phase}
 It might happen that during prepare leader receives in progress proposal. It means that it has interrupted some other leader which was executing his transaction. As required by paxos algorithm, in progress proposal has to be completed before first transaction can continue. When replica group sees that it has in progress proposal, this replica group has to transition to repairing phase. 
 Other replica groups are also affected because they cannot advance in phase until in progress transaction is repaired. Repaired means that multi partition paxos round is run on in progress transaction until it finishes with commit or rollback. Only after repair first transaction might continue. If it turns out that repaired transaction was rolled back, first transaction has a chance to be committed. If however repaired transaction is committed, main transaction will see that it was rolled back and will also stop.
 This means that another multi partition paxos is nested in main multi partition paxos. It is slightly different because it can start from more advanced phase.
@@ -597,7 +610,7 @@ Since all replicas have to wait with further transitions until in progress trans
 
 
 
-\subsection{Theoretical number of requests during algorithm}
+\section{Theoretical number of requests during algorithm}
 There can be many modifications to different keys resulting in many transaction items, but what is important are the number of replicas. At worst case each key will reside on different replica set. Most likely case is that some replica groups have replicas in common.
 
 
