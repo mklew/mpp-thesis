@@ -1,12 +1,11 @@
 \section{Algorithm in Cassandra}\label{sec:algo:c}
-Implementation in Cassandra (concrete part, implementation in Cassandra)
-In this section the discussion will point to implementation details of algorithm and its components in Cassandra database. 
-
+% Implementation in Cassandra (concrete part, implementation in Cassandra)
+In this section the discussion will point to implementation details of algorithm and its components in Cassandra.
 
 Cassandra is one of more widely used NoSql databases. Since it has token ring architecture it is well suited for proof of concept implementation of Multi Partition Paxos algorithm.
 
 
-Key assumptions
+\subsection{Key assumptions}
 There are few assumptions as to implementation.
 
 
@@ -16,8 +15,7 @@ There are few assumptions as to implementation.
 * Transactions should not be forced onto user, user has to use them as opt-in in a way they were designed
 * Transactions should not block normal updates - implementation won’t block user from doing non transactional updates to tables.
 
-
-Proper use of transactions
+\subsection{Proper use of transactions}
 Implementation cannot prevent user from doing wrong things. Implementation allows to use Cassandra in transactional way, but only if it is done according to specification. In principle transactions are run with other transactions whereas normal updates are completely independent from each other as well as from transactions. 
 
 
@@ -35,7 +33,7 @@ Illegal scenario from business perspective would be to update balances within tr
 To summarize, transactions are yet another opt-in feature of database that can work as intended only if used properly. 
 
 
-New consistency levels
+\subsection{New consistency levels}
 Transactions are implemented as opt-in feature of Cassandra. Following convention of how new features are added to Cassandra I’ve added new consistency levels that represent transactional workload.
 Cassandra has different consistency levels for performing reads and writes. Different consistency levels have different performance, but also different guarantees. Examples of consistency levels are:
 * ONE - read/write performed only on single node
@@ -51,7 +49,7 @@ Following convention, transactions are introduced as new consistency levels. New
 * LOCAL_TRANSACTIONAL - transactional consistency confined to the data center, uses MPP
 
 
-Transaction state
+\subsection{Transaction state}
 Cassandra allows to organize tables in keyspaces which are like relational schemas. Keyspace aggregates tables. 
 
 
@@ -69,7 +67,7 @@ Just because table name is not enough to find it. Keyspace name is always requir
 Transaction has unique id. I’ve used UUID with encoded timestamp to represent transaction id.
 
 
-Extending binary protocol
+\subsection{Extending binary protocol}
 Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. I’ve used Cassandra Java Driver which is most standard implementation of C* driver.
 
 
@@ -126,7 +124,7 @@ Transaction State is also required in order to send rollback messages only to no
 
 
 
-Write path[o]
+\subsection{Write path}
 I’ve modified write path of Cassandra to store modifications into Private Transaction Storage.
 Cassandra’s write path is known to be very fast. Implementation of transactions won’t slow it down, because data is only kept in-memory. Therefore write is acknowledged by coordinator node as soon as modification has been written to quorum of replica nodes.
 
@@ -137,7 +135,7 @@ Write path has been extended by detecting whether using transaction clause was u
 When transactional mutation is applied by its apply method, all the changes go to Private Transaction Storage instead of main tables.
 
 
-Read path[p]
+\subsection{Read path}
 Read path was also modified. Syntax of select statement stays without changes, because logic of executing select depends only on consistency level used to execute query.  When select is performed with one of new consistency levels, then coordinator performs transactional read.
 
 
@@ -168,27 +166,24 @@ Read is only performed when coordinator has became a leader and completed all of
 
 
 
-Private memtables - implementation of Private Transaction Storage
+\subsection{Private memtables - implementation of Private Transaction Storage}
 Storage implemented according to specification. It simply maps transaction id to its data called TransactionData. TransactionData keeps mutations mapped by keyspace, table and key.
 
 
 Each time new mutation is added to transaction data, it will be either merged with already present mutation for same partition, or it is appended as new entry in the map.
 
 
-Applying changes locally
+\subsubsection{Applying changes locally}
 Cassandra uses timestamps to detect most recent write. When transaction is committed at node, its data is applied to targeted tables. All partition updates have to be written with timestamp that comes from paxos ballot. Since mutations - that have partition updates inside - were added at arbitrary time before commit, their timestamps have to be modified. Concretely binary trees with data stored in PartitionUpdates stored in mutations has to be transformed into new binary tree with all timestamps updated. Fortunately, Cassandra already provides a method which rewrites binary trees with updated timestamps.
 
 
-In memory data
+\subsubsection{In memory data}
 Private storage keeps data only in-memory. There is a risk that given many transactions Cassandra will run out of memory. However transactions are supposed to be short lived. Number of concurrent transactions could be even controlled by client of the cluster. 
 Another issue can be raised that data is lost when node shuts down and comes back immediately. Transaction’s private data would be lost at this node. However data is saved to quorum of replicas. General assumption is that at least quorum of nodes should stay alive during transaction’s life span. On these grounds, we can argue that in-memory storage is sufficient for transactions.
 
 
 
-
-
-
-MPP Transaction Index
+\subsection{MPP Transaction Index}
 Transaction Index is yet another in-memory service. Index needs to be thread-safe and stay consistent when many transactions try to register to it. It is easy to create global lock on index, but such implementation is not very effective and could potentially cause bottleneck. 
 
 
@@ -199,14 +194,14 @@ Index is a map from MppIndexKey to MppParticipants. MppIndexKeys are computed fr
 Transaction Item is mapped into index key by conflict functions. That results in set of index keys. Index keys are used to find locks. In order to avoid deadlock, index keys have to be sorted so that locks are acquired in order and released in reversed order.
 
 
-Registration in index
+\subsubsection{Registration in index}
 When transaction wants to register in index, it first has to acquire it. Then MpPaxosParticipant is created for this transaction. All participants from all index keys are iterated over and checked if there is a single paxos round id. If there are more potential rounds, transaction cannot continue. 
 
 
 Given at most one paxos round id, new participant can be added to participants for all computed index keys.
 
 
-Configurable conflict functions per column family
+\subsection{Configurable conflict functions per column family}
 Conflict functions used to compute index keys are configurable per column family. Configuration is dynamic and can be changed at runtime by running ALTER TABLE commands.
 
 
@@ -231,11 +226,11 @@ Transaction_conflict_bounds can be one of:
 By default, conflicts are resolved using common transaction items.
 
 
-Transaction Log
+\subsection{Transaction Log}
 Since transaction log needs to preserve information about transaction after transaction is done it is better to keep it off memory. I’ve implemented it using cassandra table local to each node. 
 
 
-Mp Paxos State
+\subsection{Mp Paxos State}
 Multi partition paxos state has been also implemented as table in Cassandra local to each node. It stores information about paxos state as described in theoretical part.
 
 
@@ -254,7 +249,7 @@ PRIMARY KEY (paxos_id))
 
 
 
-Multi partition paxos implementation
+\subsection{Multi partition paxos implementation}
 This section discusses few details about implementation of multi partition paxos algorithm in Cassandra.
 
 
@@ -292,9 +287,7 @@ Replica Groups Phases Executor
 
 
 
-
-
-Obstacles
+\subsection{Obstacles}
 There were several obstacles during implementation of transactions in Cassandra. One of the major problems is that Cassandra has very big codebase and is a very mature project. It requires significant knowledge of how everything fits together before anything can be changed. 
 Another issue is that most of the key services are singletons and in many places these singletons are directly referenced. Highly coupled code is sometimes impossible to test in isolation. In addition, it becomes impossible to test Cassandra creating embedded instances. Due to this limitation, more complex tests had to be done on real cluster.
 
