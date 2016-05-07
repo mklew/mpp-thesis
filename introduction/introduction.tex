@@ -4,4 +4,25 @@
 
 \section{Motivation}\label{sec:introduction:motivation}
 
+\subsection{Current state of transactions in Cassandra}	
+Cassandra due to its distributed nature, cannot have full acid transactions, but it supports transactional behaviour with so called Lightweight Transactions (LWT).
+LWT guarantees atomic modification of single partition iff specified condition is met. Main guarantee however is that after a successful LWT quorum of replicas agree on given value.
+
+Conditions allow for example to do only insert if that row hasn’t existed before. 
+
+Examples of LWT:
+
+1)
+INSERT INTO users (user_id, name, email)  VALUES (1, ‘John’, ‘john@yahoo.com’) IF NOT EXISTS
+
+First example uses LWT to add user John with id=1 if John was not present in database. To put it differently, to insert a row to users table only if row with given key=1 didn’t exist.
+
+2)
+UPDATE balances SET balance = 2500 WHERE user_id = 1 IF balance = 2000;
+
+Second example shows that conditions can have expressions that are evaluated during LWT. LWT will proceed further only if condition is met. Such expressions are restricted only to row that is being updated.
+
+LWT is a tool which allows to have some consistency guarantees, but it is limited to single row. It cannot be used to have some transaction that spans two rows with conditions between them. 
+To put LWT in terms of ACID, LWTs have serial isolation level, are atomic and durable. Consistency is preserved in terms of quorum, but not in terms of all nodes involved which is the case in relational world.
+
 \section{Structure}\label{sec:introduction:structure}
