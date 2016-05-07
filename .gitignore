@@ -7,4 +7,8 @@
 *.sublime-workspace
 *.toc
 *.bbl
-*.blg
+*.blg*.loa
+*.lof
+*.lot
+thesis.blg
+thesis.loa
