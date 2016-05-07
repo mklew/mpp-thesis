@@ -1,5 +1,18 @@
 %!TEX root = ../thesis.tex
-\subsection{The idea}
+
+\subsection{The advantage}
+\emph{LWT} (\ref{sec:theory:transactions:lwt}) are limited to a single partition. Therefore LWT cannot be used for atomic updates of many partitions. Usual use case for transactions is atomic and consistent update of many rows, thus LWT is not enough to support that use case. \emph{RAMP} transactions (\ref{sec:theory:transactions:ramp}) have support for multi-partition operations. 
+However \emph{RAMP} relies on 64 bit timestamp which is not the current standard, thus \emph{RAMP} cannot be used at the time being.
+
+\mpp is an algorithm that has multi-partition operations support. \mpp can be used nowadays. Therefore is has advantage over \emph{LWT} and \emph{RAMP}. It has network partition tolerance, therefore has advantage over \emph{3PC} (\ref{sec:theory:transactions:3pc}).
+\mpp is resilient to partial failures, therefore is applicable to distributed environments.
+
+Atomic multi-partition updates can be used for many different use cases. Databases can properly enforce foreign keys, do secondary indexing, update materialized views. Users can benefit, because their applications already rely on multi-partition operations. Therefore logic does not have to change dramatically in order to adapt to distributed databases. Transactions also remove burden of ensuring consistency in other ways. One way of doing many consistent updates to single partition with \emph{LWT} is to have a \emph{step} column representing current progress of \emph{transaction}. Flag is updated during each \emph{LWT} operation. If flag matches expected value, operation succeeds. Such model puts restrictions on how user uses database. Note that even with the special flag LWTs are still restricted to single partition. \mpp allows users to perform their operations in more natural way without additional restrictions. 
+
+
+\subsection{The outline}
+TODO więcej przykładów na tle LWT, po co, jaki zysk
+
 Algorithm “MPPaxos” is designed for all distributed databases that share token ring architecture. 
 
 MPPaxos provides serializable transactions that span multiple tokens on token ring. Provides transactions which are isolated from each other. Transactions that are atomic and durable. 

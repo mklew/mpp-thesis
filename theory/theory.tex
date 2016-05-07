@@ -22,18 +22,18 @@ Transactions in RDBMS
 
 \section{Distributed transactions}
 
-\subsection{3 phase commit}
+\subsection{3 phase commit}\label{sec:theory:transactions:3pc}
 
 \subsection{Paxos}
 
 \subsection{Raft}
 \emph{Raft} algorithm has same guarantees, as \paxos. \emph{Raft} has been designed to be an example of more understandable distributed consensus algorithm than \paxos. \cite{ongaro2014search} The difference to \paxos  is that \emph{Raft} has been decomposed into independent subproblems which clearly address problems. \emph{Raft} uses \emph{Leader election}. Leader is elected for specific term. \emph{Raft} uses \emph{Log Replication} to arrive at consensus. Leader proposes new value to \emph{followers} which append value to uncommitted log. Once leader has majority of acknowledges it sends commit message. Followers receive commit message and commit value in the log. Visualization of \emph{Raft} algorithm is available at \cite{raftVisual}.
 
-\subsection{RAMP}
+\subsection{RAMP}\label{sec:theory:transactions:ramp}
 \emph{Read Atomic Multi Partition} transactions \cite{Bailis:2014} are most recent compared to mentioned algorithms. \emph{RAMP} identify new transaction isolation level \emph{Read Atomic}. \emph{RAMP} transactions are designed to match requirements of use cases, such as secondary indexing, foreign key
 enforcement, and materialized view maintenance. \emph{RAMP} ensures \emph{atomic visibility}: either all or none of each transaction's updates are seen by other transactions. \emph{RAMP} is resilient to partial failures (via \emph{synchronization independence}) and has network partition independence by minimized communication between servers. \emph{RAMP} uses multi-versioning with a variable but small amount of metadata per write. \emph{RAMP} transactions are linearly scalable. Scalability has been tested up to 100 servers.
 
-\subsection{LWT}
+\subsection{LWT}\label{sec:theory:transactions:lwt}
 
  How LWT are implemented
 
