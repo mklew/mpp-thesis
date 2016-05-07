@@ -31,16 +31,21 @@ Transactions, especially known from \emph{RDBM} systems (\ref{sec:theory:transac
 \item begin transaction operation -- transaction is begun, subsequent operations are part of the transaction. 
 \item commit transaction operation -- as a result, transaction is either committed or rolled back.
 \item rollback transaction operation -- rollback whole transaction and its modification if needed
-\item do an operation within transaction - any data manipulation operation should be possible to execute in context of transaction
+\item do an operation within a transaction - any data manipulation operation should be possible to execute in context of a transaction
 \item atomicity
 \item durability
 \item consistency -- in case of \mpp, eventual consistency.
 \end{enumerate*}
 
-Proposed \mpp holds all imposed requirements. Following sections address requirements in context of \mpp.
+\subsubsection{Compared to LWT}
+\lwt is for single partition, therefore it is a single operation. As such, operation itself is a \emph{transaction} that begins, performs and possibly commits. Data for \lwt transaction is passed within operation itself, therefore data does not have to be stored anywhere for the duration of the transaction. It exists in memory as the \lwt executes.
+\mpp supports many operations within transaction. Therefore operations with data have to be stored for the duration of transaction. Storage has to be private for the transaction, because of isolation requirement.
+
+%Proposed \mpp holds all imposed requirements. Following sections address requirements in context of \mpp.
 
 %Transactions should have following functionality:
-TODO napisac czym sie roznica od LWT - dodatki do prywatne dane - to juz opisalem w The advantage \\
+
+%TODO napisac czym sie roznica od LWT - dodatki do prywatne dane - to juz opisalem w The advantage \\
 TODO napisac czym sa memtable - tylko pytanie gdzie to napisac, to moze byc opisane w innej sekcji \\
 
 

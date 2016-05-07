@@ -8,53 +8,8 @@
 
 \input{mpp/mpp-theory-also-requirements.tex}
 
+\input{mpp/mpp-theory-algo-tx-state.tex}
 
-
-\section{Representation of transaction}
-Transaction state has unique id of transaction and all the operations with data, thus all modifications done within transaction. Each modification is performed for some key which might point to any table, any row. Since database uses token ring, each key has corresponding token value computed by hashing function. It is irrelevant what that function is from perspective of algorithm. What’s important is that keys alone can be heavy, can have complex structure. Imagine complex key which consists of 6 columns. Tokens however, are simple and guaranteed to be just numbers. Therefore from memory usage perspective, it is better to use tokens instead of keys.
-
-
-Given token and topology of cluster it is known which nodes are replicas responsible for that token. This is how such databases operate. Each node knows that tokens in range (1, 100) are in nodes 1,2,3 and tokens in range (101, 200) in nodes 4,5,6 and so on. Note that this is trivial example.
-Therefore node knows which nodes to ask for data with certain key because of token computed from that key and topology of cluster.
-
-
-Coming back to transaction state, it needs to have information about what pieces of data were modified. Requirements recap:
-
-
-* Transaction state has to allow to find all modifications done in transaction
-* Transaction state might be passed around many times between nodes, therefore it has to lightweight.
-* Transaction state has to uniquely identify transaction
-
-
-Given requirements I’ve arrived at following data structure
-
-
-TransactionState :=
-        Unique id
-        Collection of transaction items 
-
-
-Transaction Item :=
-        token
-        Table name
-
-% TODO nie mozna uzywac 'something', 'so', 'thing'
-Transaction state is unique id plus something that allows us to find all modifications. That something is called transaction item, which has token and table name. 
-
-
-* Tokens in each transaction item point to concrete replicas which store modification done in transaction
-* Additionally, there is table name, because two tables can have same keys which would result in same tokens and it is necessary to differentiate between those two, hence table name is added. This can be extended to any other name spacing. Note that, token ring is unaware of database schema, therefore token alone only directs us to nodes with modified data, but to know what has been modified, we also need names of tables.
-* Transaction State is just a container for all of these transaction items.
-
-
-Transaction state is very lightweight data structure, because it uses only tokens values, not full keys. Same functionality could be achieved storing real keys in transaction items, but then each key could have arbitrary size and same would apply to transaction state.
-
-
-Transaction state changes as transaction progresses. It has to be updated with new transaction items for each operation. As a corollary, each operation should return new transaction item which can be appended to transaction state. 
-
-
-In case there were are no transactions, all we ….
-What if there were no transaction items? If all we know is unique id, we would have to ask each node in cluster if it has some data for that transaction. That is unacceptable. If cluster has 100 nodes and our transaction modifies data that belongs to 5 nodes. Instead of asking just five nodes, we would need to ask all of them wasting network resources.
 
 
 \section{Isolation from other transactions}

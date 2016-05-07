@@ -43,7 +43,38 @@
 \usepackage{booktabs}
 \usepackage{xspace}
 \usepackage[inline]{enumitem}
+\usepackage{listings}
 
+\definecolor{ListingBackground}{rgb}{0.95,0.95,0.95}
+
+\lstdefinestyle{outcode}
+{
+basicstyle={\footnotesize},
+keywordstyle={\bf\footnotesize\color{blue}},
+commentstyle={\em\footnotesize\color{magenta}},
+numbers=left,
+stepnumber=5,
+firstnumber=1,
+numberfirstline=true,
+numberblanklines=true,
+numberstyle={\sf\tiny},
+numbersep=10pt,
+tabsize=2,
+xleftmargin=17pt,
+framexleftmargin=3pt,
+framexbottommargin=2pt,
+framextopmargin=2pt,
+framexrightmargin=0pt,
+showstringspaces=true,
+backgroundcolor={\color{ListingBackground}},
+extendedchars=true,
+% title=\lstname,
+captionpos=b,
+% abovecaptionskip=1pt,
+% belowcaptionskip=1pt,
+frame=tb,
+framerule=0.1pt,
+}
 
 \author{Marek Lewandowski}
 \title{Scalable distributed transactions}
