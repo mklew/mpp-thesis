@@ -1,0 +1,126 @@
+%!TEX root = ../thesis.tex
+
+\section{Isolation from other transactions}
+Transactions must run in isolation from each other. Transactions cannot see each other, nor anyone else can see effects of transactions before it completes with commit or rollback.
+
+Each key's value modification done in transaction should be stored at replicas responsible for given key keeping it private for that transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
+
+Each transactional operation is executed but instead of operating on current live data, modifications is put into private storage. Interface of the storage is presented in the listing \ref{lst:privateTransactionStorage}.
+
+\begin{lstlisting}[language=Java,style=outcode,label={lst:privateTransactionStorage},caption={API of private transaction storage}]
+PrivateTransactionStorage {
+  TransactionItem addModification(transaction id, modification)
+
+  void removeTransactionsData(transaction id)
+
+  Collection<Modification> getModifications(transaction id)        
+}
+
+\end{lstlisting}
+
+
+From perspective of algorithm it does not matter whether modifications are stored in memory or in any other way as long as modifications are accessible during transaction.
+
+Private transaction storage also satisfies requirement of performing many operations within transaction. Each operation is stored in private storage and mapped to transaction item.
+
+
+\subsection{Quorum requirements}
+Each modification within transaction should be written to at least quorum of nodes responsible for modified key. Otherwise modification has to be either tried again or whole transaction needs to be rolled back.
+
+
+\subsection{Algorithm for adding operations to private transaction storage}
+
+
+1. Clients send a request INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
+2. Request is received by some node in cluster that becomes coordinator C for that request
+3. C identifies replicas responsible
+   1. C sees that users table has key column user_id. 
+   2. It received user_id=1
+   3. C computes token using key value = 1 
+   4. C checks in topology which replicas are responsible for that token
+   5. C finds replicas
+1. C routes request to replica nodes
+At each replica:
+   1. Modification is added to private transaction storage of transaction with id 1001
+   2. Replica replies with success
+1. C waits until quorum responds with success
+2. C responds to client with transaction item
+3. Client receives transaction item and merges it to its current transaction state
+
+\begin{algorithm}
+  \caption{Topological numbering}
+  \label{alg:topologicalNumbering}
+  \begin{algorithmic}
+    \State $p \gets$ number of parents by vertex
+    \State $r \gets root$
+    \State $doNumbering(r)$
+    \State $counter \gets 1$
+    
+    \Function{doNumbering}{vertex}
+      \State $\delta(v) \gets counter$
+      \State $counter \gets counter + 1$
+      \ForAll{$c \in C(vertex)$}
+        \State $p(c) \gets p(c) - 1$
+        \If{$p(c) = 0$}
+          \State $doNumbering(c)$
+        \EndIf
+      \EndFor
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm} 
+
+% \begin{figure}[hbt]
+%   \begin{center}
+%     \setlength{\unitlength}{0.7cm}
+%     \begin{pspicture}[showgrid=false](3, 6)
+  
+%         \psset{fillcolor=vertexColor, fillstyle=solid, xunit=7mm, yunit=8mm}
+%         \cnodeput(2, 7){a}{\color{vertexTextColor} \small A}
+%         \cnodeput(0, 5){b}{\color{vertexTextColor} \small B}
+%         \cnodeput(2, 5){c}{\color{vertexTextColor} \small C}
+%         \cnodeput(4, 5){d}{\color{vertexTextColor} \small D}
+%         \cnodeput(0, 3){e}{\color{vertexTextColor} \small E}
+%         \cnodeput(2, 3){f}{\color{vertexTextColor} \small F}
+%         \cnodeput(4, 3){g}{\color{vertexTextColor} \small G}
+%         \cnodeput(2, 1){h}{\color{vertexTextColor} \small H}
+        
+%         \psset{linecolor=connectorColor, arrowscale=2.5}
+%         \ncline{->}{a}{b}
+%         \ncline{->}{a}{c}
+%         \ncline{->}{a}{d}
+%         \ncline{->}{b}{f}
+%         \ncline{->}{d}{f}
+%         \ncline{->}{c}{e}
+%         \ncline{->}{c}{g}
+%         \ncline{->}{f}{h}
+  
+%         \psset{linecolor=highlightedConnectorColor, arrowscale=2.5}
+%         \ncarc[arcangle=30, fillstyle=none]{->}{c}{h}
+        
+%       \end{pspicture}
+%   \end{center}
+%   \caption{Trimming the false-positive conflicts in both directions}
+%   \label{fig:trimmingBoth}
+% \end{figure}
+
+%\begin{pdfpic}
+%  \psset{unit=0.75cm}
+%\newgray{mygray}{.65}
+  % \begin{pspicture}(-5,-5)(5,5)
+  %   \psaxes[labels=none,ticks=none]{<->}(0,0)(-4,-4)(4,4)
+  %   \psdots(0,0)(3,2)(-2,1)(-1,-1)(2,-2)
+  %   \dotline(3,0)(3,2)(0,2)
+  %   \dotline(-2,0)(-2,1)(0,1)
+  %   \dotline(-1,0)(-1,-1)(0,-1)
+  %   \dotline(2,0)(2,-2)(0,-2)
+  %   \uput[dr](0,0){(0,0)}
+  %   \uput[ur](3,2){(3,2)}
+  %   \uput[ul](-2,1){(-2,1)}
+  %   \uput[dl](-1,-1){(-1,-1)}
+  %   \uput[dr](2,-2){(2,-2)}
+  % \end{pspicture}
+%\end{pdfpic} 
+ 
+
+Last step in algorithm is crucial, because client is responsible for keeping track of all things that were modified. Nodes are unaware of modifications done at other nodes. Only client can gather all that information and keep track of it.
+        Merging two transaction states, simply means concatenating collections of transaction items from two transactions given that transaction id is the same. In terms of functional programming, transaction state is a monoid.

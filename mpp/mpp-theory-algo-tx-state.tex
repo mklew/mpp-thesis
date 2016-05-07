@@ -16,7 +16,8 @@ Ranges of token ring are divided among nodes in cluster. Division and assignment
 Transaction state has to allow to find all modifications done in transaction. Transaction state is updated with each operation done within transaction. Each update is a \emph{transaction item}. \emph{Transaction item} is a pointer to the operation, thus to its data. Since there are many transactions, transaction state should use least amount of memory possible. Tokens can be used to keep memory usage in bounds. Data structure is proposed at listing (\ref{lst:txState}).
 %Coming back to transaction state, it needs to have information about what pieces of data were modified. Requirements recap:
 
-\begin{lstlisting}[language=Java,style=outcode,label={lst:txState}caption={Transaction State data structure}]
+% TODO problem z label
+\begin{lstlisting}[language=Java,style=outcode,label={lst:txState},caption={Transaction State data structure}]
 class TransactionState
 {
     UUID id

@@ -10,60 +10,8 @@
 
 \input{mpp/mpp-theory-algo-tx-state.tex}
 
+\input{mpp/mpp-theory-also-isolation.tex}
 
-
-\section{Isolation from other transactions}
-Transactions must run in isolation from each other. To put it simply, transactions cannot see each other, nor anyone else can see what transactions are doing before transaction actually completes with commit.
-
-
-We would like to modify some data in transaction, which would put that modification at replicas responsible for given piece of data keeping it private for just that transaction.
-
-
-In order to satisfy that requirement, new private storage has to be present in each node.
-Each transactional operation will get executed but instead of operating on current live data, modifications will be put into private storage. Interface of such service looks like this:
-
-
-Private Transaction Storage {
-        TransactionItem addModification(transaction id, modification)
-
-
-        void removeTransactionsData(transaction id)
-
-
-          Collection of Modifications getModifications(transaction id)        
-}
-
-
-From perspective of algorithm it does not matter whether modifications are stored in memory or in any other way as long as modifications are accessible during transaction.
-
-
-\subsection{Quorum requirements}
-Each modification within transaction should be written to at least quorum of nodes responsible. Otherwise modification has to be either tried again or whole transaction needs to be rolled back.
-Private transaction storage also satisfies requirement of doing many operations within transaction. Each operation gets executed, stored in private storage and mapped to transaction item.
-
-
-\subsection{Algorithm for adding operations to private transaction storage}
-
-
-1. Clients send a request INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
-2. Request is received by some node in cluster that becomes coordinator C for that request
-3. C identifies replicas responsible
-   1. C sees that users table has key column user_id. 
-   2. It received user_id=1
-   3. C computes token using key value = 1 
-   4. C checks in topology which replicas are responsible for that token
-   5. C finds replicas
-1. C routes request to replica nodes
-At each replica:
-   1. Modification is added to private transaction storage of transaction with id 1001
-   2. Replica replies with success
-1. C waits until quorum responds with success
-2. C responds to client with transaction item
-3. Client receives transaction item and merges it to its current transaction state
-
-
-Last step in algorithm is crucial, because client is responsible for keeping track of all things that were modified. Nodes are unaware of modifications done at other nodes. Only client can gather all that information and keep track of it.
-        Merging two transaction states, simply means concatenating collections of transaction items from two transactions given that transaction id is the same. In terms of functional programming, transaction state is a monoid.
 
 
 
