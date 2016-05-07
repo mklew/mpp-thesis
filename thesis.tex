@@ -1,0 +1,143 @@
+\documentclass[a4paper,onecolumn,oneside,12pt]{report}
+
+% Uwagi
+% TODO wszędzie przed AS przecinek
+
+%\usepackage[utf8]{inputenc}
+
+%\usepackage[OT4]{fontenc}
+%\usepackage{lmodern}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{glossaries}
+\usepackage{todonotes}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{paralist}
+\usepackage{mathtools}
+\usepackage{mathrsfs}
+\usepackage{breqn}
+\usepackage{subfig}
+\usepackage{color}
+\usepackage{epic}
+\usepackage{eepic}
+\usepackage{pstricks}
+\usepackage{pst-node}
+\usepackage{times}
+\usepackage{pstcol}
+\usepackage{pst-plot}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{algpseudocode}
+\usepackage[chapter]{algorithm}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{lscape}
+\usepackage{array}
+\usepackage{booktabs}
+
+\author{Marek Lewandowski}
+\title{Scalable distributed transactions}
+
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}{Lemma}[chapter]
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\newcounter{ExampleCount}
+\setcounter{ExampleCount}{0}
+\newenvironment{example}
+{ \stepcounter{ExampleCount} {\bf\small Example} \arabic{ExampleCount} \\ }
+{  }
+
+
+\definecolor{vertexColor}{rgb}{0.88, 0.88, 0.88}
+\definecolor{vertexBorderColor}{rgb}{0, 0, 0}
+\definecolor{vertexTextColor}{rgb}{0, 0, 0}
+\definecolor{connectorColor}{rgb}{0.39, 0.51, 0.73}
+\definecolor{highlightedConnectorColor}{rgb}{1.0, 0.0, 0.0}
+
+\definecolor{areaColor1}{rgb}{0.5, 0.9, 0.3}
+\definecolor{areaColor2}{rgb}{1.0, 0.7, 0.7}
+\definecolor{areaColor3}{rgb}{0.6, 0.6, 1.0}
+\definecolor{areaColor4}{rgb}{1.0, 0.9, 0.7}
+\definecolor{areaColor5}{rgb}{0.7, 0.7, 0.7}
+\definecolor{areaColor6}{rgb}{0.9, 0.9, 0.9}
+\definecolor{areaColorMix13}{rgb}{0.55, 0.75, 0.65}
+\definecolor{areaColorMix34}{rgb}{0.8, 0.75, 0.85}
+\definecolor{areaColorMix14}{rgb}{0.75, 0.9, 0.5}
+\definecolor{areaColorMix134}{rgb}{0.7, 0.8, 0.67}
+
+
+\hyphenpenalty=10000      % nie dziel wyrazów zbyt często
+\clubpenalty=10000        % kara za sierotki
+\widowpenalty=10000       % nie pozostawiaj wdów
+\brokenpenalty=10000      % nie dziel wyrazów między stronami
+\exhyphenpenalty=999999   % nie dziel słów z myślnikiem
+\righthyphenmin=3         % dziel minimum 3 litery
+
+\tolerance=4500
+\pretolerance=250
+\hfuzz=1.5pt
+\hbadness=1450
+\sloppy                   % umacnia pozycję prawego marginesu
+
+\linespread{1.3}\selectfont
+
+\begin{document}
+
+\input{titlePage.tex}
+
+\newpage
+\mbox{}
+
+%\input{abstract.tex}
+
+\tableofcontents
+
+\section{Data structures}\label{sec:basics:dataStructures}
+
+Data structures we are discussing in this work may be viewed in the contexts of their applications and theory --
+especially the lattice theory and the graph theory. We may consider different issues connected with management and
+utilization of these structures, in all of the areas mentioned above. Therefore, we will sketch these contexts in the
+next paragraphs. We will also set some terms that we will use in the rest of the work.
+
+\subsection{The area of applications}
+In the area of applications, the studied data structures are commonly used as hierarchies of different types, especially
+as inheritance hierarchies. A characteristic feature of them is an existence of a special element, called a root. The
+rest of elements are connected to the root directly or through other elements. Depending on what sort of hierarchy we
+are exploring, various sets of terms are possible to describe specific elements. For example, in case of employees
+hierarchy, each element represents an employee. An employee's chief is its predecessor in the hierarchy whilst
+employee's subordinates are its successors. In the area of object-oriented programming languages and ontologies,
+predecessors and successors are called super-classes and sub-classes respectively \footnote{In the area of ontologies
+there are yet other terms that are frequently used. They are: concept, super-concept and sub-concept.}, whereas a
+connection between a pair of elements is called inheritance or ``is-a'' relation. Another terminology is  depicted on
+Fig. \ref{fig:hierarchyElements}.
+
+%\input{introduction/introduction.tex}
+
+%\input{basics/basics.tex}
+
+%\input{related/related.tex}
+
+%\input{hybrid-method/hm.tex}
+
+%\input{tests/tests.tex}
+
+%\input{summary/summary.tex}
+
+\listoffigures
+\listoftables
+\listofalgorithms
+ 
+\bibliographystyle{acm}
+\bibliography{thesis}
+
+\end{document}
