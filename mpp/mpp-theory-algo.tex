@@ -1,53 +1,16 @@
 %!TEX root = ../thesis.tex
 
-\section{Multi partition paxos algorithm}
+%\section{Multi partition paxos algorithm}
 
 \input{mpp/mpp-theory-algo-idea.tex}
-Algorithm’s rationale (theoretical part) - TODO, wstępny akapit przenieść do motywacji
+
+\input{mpp/mpp-theory-algo-rationale.tex}
+
+\input{mpp/mpp-theory-also-requirements.tex}
 
 
 
-\subsection{Inspired by Paxos}
-Similarly to LWT, this algorithm also relies on paxos, but with many more pieces added, changed and extended. 
-Therefore paxos with couple of modifications is part of main MPPaxos algorithm. As a consequence, MPPaxos has to satisfy all paxos requirements in addition to requirements which are defined for transaction like behaviour.         
-
-
-\subsection{Paxos requirements}
-There are few requirements that need to be satisfied in order to be sure that paxos can work the way it was designed and proven formally. 
-
-
-1. Ability to find paxos state at node given value.[a]
-2. Ability to finish paxos round given in progress proposal.
-3. Quorum of nodes has to promise before making any proposal
-4. Quorum of nodes has to accept proposal before commit
-5. Quorum of nodes has to acknowledge commit before leader can finish paxos round
-
-
-\subsection{Transaction requirements}
-Transactions should have following functionality:
-TODO napisac czym sie roznica od LWT - dodatki do prywatne dane
-TODO napisac czym sa memtable - tylko pytanie gdzie to napisac
-
-
-1. Run in isolation from other transactions - transactions - their state and data - should be isolated from each other. One transaction cannot see other’s data.
-2. Serializability - if two transactions modify same piece of data and commit at same time, only one transaction can be committed, as a corollary second has to be rolled back.
-3. Begin transaction - that how any transaction is started in relational databases. Transaction is begun and then subsequent operations are part of that transaction.
-4. Commit transaction - once transaction’s logic has finished, user commits transaction and sees either successful commit or rollback of transaction. 
-5. Rollback transaction - rollback whole transaction if needed
-6. Do an operation within transaction - any data manipulation operation should be possible to execute in context of transaction
-7. Atomicity
-8. Durability
-9. Eventual consistency
-
-
-%        Requirements summary
-%All of requirements above were addressed in algorithm. There is an solution to each requirement in next sections followed by summary of whole algorithm.
-
-
-TODO jakiś diagram który pokazuje o co chodzi, po co to jest np. Diagram z nodes i transakcjami.
-
-
-\subsection{Representation of transaction}
+\section{Representation of transaction}
 Transaction state has unique id of transaction and all the operations with data, thus all modifications done within transaction. Each modification is performed for some key which might point to any table, any row. Since database uses token ring, each key has corresponding token value computed by hashing function. It is irrelevant what that function is from perspective of algorithm. What’s important is that keys alone can be heavy, can have complex structure. Imagine complex key which consists of 6 columns. Tokens however, are simple and guaranteed to be just numbers. Therefore from memory usage perspective, it is better to use tokens instead of keys.
 
 
