@@ -257,9 +257,10 @@ PRIMARY KEY (paxos_id))
 
 
 
-\subsection{Multi partition paxos implementation}
+%\subsection{Multi partition paxos implementation}
 This section discusses few details about implementation of multi partition paxos algorithm in Cassandra.
 
+\subsection{Replica Groups Phases Executor}
 
 TODO more info about MPP
 
@@ -290,7 +291,7 @@ public enum Phase
 It is important that, begin and repair phase (repairing phase) is less advanced than prepare phase. Otherwise some replicas could try to propose new value instead of waiting till all replica groups are at least in prepared phase.
 
 
-Replica Groups Phases Executor
+
 
 
 
