@@ -17,69 +17,64 @@
 
 
 \section{Addressing paxos requirements}
-Paxos requirements have to be met. What was easy in case of LWT becomes troublesome considering many partitions. In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
+Paxos requirements have to be met. What was easy in case of LWT becomes troublesome considering many partitions. 
+%In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
 
 
 \subsection{Paxos value}
-Value that we need to have consensus about is transaction state. It is because given transaction state, we can identify all modifications in transaction. It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. Transaction state always is an entry point to algorithm.
+Proposed \emph{value} in \mpp is transaction state. Given transaction state, we can identify all modifications in transaction. Given transaction state, any node can try to commit transaction, because it can check which nodes participate in transaction and where is the private data stored. This fact is used to satisfy requirement, as to proposing highest value (\ref{sec:mpp:requirements:finishInProgress}).
+Transaction state always is an entry point to algorithm.
+%It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. 
 
 
-\subsection{Ability to find paxos state at node given transaction state (value).}
-This requirement alone is easy, but if thought about in context of serializability it becomes quite hard. In order to support transactions we need to have property:
+\subsection{Ability to find paxos state at node given transaction state}
+In order to have serializability and also to find paxos state given transaction state we need to have two properties:
+%This requirement alone is easy, but if thought about in context of serializability it becomes quite hard. In order to support transactions we need to have property:
 
+\begin{definition}
+  \label{def:samePaxosStateProperty}
+  Conflicting transactions must participate in same paxos round, thus have same \emph{paxos round id} assigned.  
+\end{definition}
 
-If there are many transactions being committed at same time, and those transactions are in conflict with each other, then only one transaction should get committed and rest of them should be rolled back. 
-That’s serializability property which we need. How to guarantee it? Let’s look at it differently.
+\begin{definition}
+  \label{def:txSerializability}
+  If there are many transactions being committed at same time, and those transactions are in conflict with each other, then only one transaction should get committed and rest of them should be rolled back.   
+\end{definition}
 
+%If there are many transactions being committed at same time, and those transactions are in conflict with each other, then only one transaction should get committed and rest of them should be rolled back. 
+%That’s serializability property which we need. How to guarantee it? Let’s look at it differently.
 
-If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is.
+If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
 
-
-So paxos can do it as long as we can guarantee that conflicting transactions participate in same paxos round. Therefore we need some function, with following properties:
-
-
-* It maps transaction to paxos round id
-* It maps conflicting transactions to same paxos round id 
-* It maps non-conflicting transactions to different paxos round id -- otherwise it would not scale well.
+\paxos can guarantee serializability as long as conflicting transactions participate in same paxos round. In case of \lwt \emph{paxos round id} is determined by key \emph{k}. \mpp has support for more than one key, therefore we need a function which maps \emph{transaction} $\rightarrow $ \emph{paxos round id} with properties: 
+\begin{enumerate*}
+%\item It maps transaction to paxos round id
+\item It maps conflicting transactions to same paxos round id 
+\item It maps non-conflicting transactions to different paxos round id
+\end{enumerate*}
 
 
 \subsection{Conflicting transactions}
-In relational world it is well defined what a conflict is. There are different ways of concurrency control which include locks and other mechanisms. In distributed setting in order to have absolute certainty whether two transactions are conflicting it would require to compare their private modifications and see whether they modify same keys. That would result in as many round trips as there are items being modified by transactions multiplied by number of concurrent transactions. It might cause overhead bigger than what it is worth. 
+In relational world it is well defined what a conflict is. In distributed setting in order to have absolute certainty whether two transactions are conflicting it requires to compare their private modifications and see whether they modify same keys. That results in as many round trips as there are items being modified by transactions multiplied by number of concurrent transactions. In distributed settings algorithms should do minimum round trips, because it costs resources and hurts performance \cite{rotem2006fallacies}.
+
+Example of conflict checking functions, that are local, this do not require round trips, but as a tradeoff have false positives include:
+\begin{description}
+\item[Conflict on same transaction items] \hfill \\
+	Transactions are considered conflicting if they share transaction item. 
+	\\
+	If transactions $tx_{1}, tx{_2}$ modify row with key $k_{1}$ in table $t_{1}$ then both transactions have same transaction item. Given transaction states of two transactions, transaction items can be checked for intersection.
+	If they intersect then transactions are considered to be in conflict with each other. \\
+	False positives occur when transactions modify row with key $k_{1}$, but $tx_{1}$ modifies column $c_{1}$ and $tx_{2}$ modifies column $c_{2}$. Since transaction item is not resolved to level of column, but to level of row, then function yields conflict when there is none, because different columns are modified.	
+\item[Conflict on same table] \hfill \\
+		Function marks transactions as conflicting if they have transaction item for same table. It greatly increases number of conflicts, but reduces number of paxos rounds since all conflicting transactions participate in same paxos round.
+		False positives occur when transactions modify different keys $k_{1}, k_{2}$ in same table $t_{1}$. 
+\item[Conflict on same token range slice] \hfill \\
+		Function slices token range into $s$ slices, where $s$ is a configurable parameter. Function takes transaction item and finds slice number for token in transaction item that falls into sliced token range. If two transactions have transaction items which fall into same slice, then transactions are considered conflicting.
+		Fuction allows to have configurable number of concurrent paxos rounds since there will be at most as many rounds as there are slices. False positives are expected result of the function.
+\end{description}
 
 
-There are other ways to look at conflict, which might not require any further communication but as a tradeoff might have false positives. 
-
-
-Let’s define function signature and take a look at couple of possibilities how it could be implemented.
-Boolean are_transactions_conflicting (transaction state 1, transaction state 2)
-
-
-Possible conflict functions:
-1. Conflict on same transaction items
-Transactions are considered conflicting if they share transaction item.
-
-
-If transactions modify at least one same key in same table, that would result in same token, therefore same transaction item would appear in two transaction states. If transaction states share at least one item then are considered to be in conflict with each other.
-
-
-However if these two transactions modify different columns in some row for same key they would also be marked as conflicting when in reality, if we really checked it at the column level it would appear that transactions are not conflicting at all. This kind of check would require more communication between nodes increasing overall number of round-trips required by the algorithm.
-
-
-But simply looking at tokens is an easy way to determine whether two transactions are conflicting or not and no other round-trips are necessary.
-
-
-1. Conflict on same table
-        This function marks transactions as conflicting if they have transaction item for same table. It greatly increases number of conflicts, but reduces number of paxos rounds since all conflicting transactions will participate in same paxos round.
-1. Conflict on same token range
-        Function has configurable parameter number of token range slices
-        It will slice token range evenly for configured number of slices and then assign slice number to transaction item. If two transactions belong to same token range slice then they are conflicting.
-        Similarly to previous function, it increases conflicts but allows to have configurable number of concurrent paxos rounds since there will be at most as many rounds as there are slices.
-
-
-To summarize, conflict functions allow to reduce round trips and also to put bounds on number of concurrent transactions. Algorithm can work with any of above conflict resolution function. Additionally, these functions might be configurable per table or per some other namespace. 
-
-
-
+Conflict functions allow to eliminate round trips, put bounds on number of concurrent transactions, but with a cost of false positives. \mpp algorithm works with any conflict resolution function. Conflict resolution functions can be defined per table.
 
 \subsection{Transactions index}
 

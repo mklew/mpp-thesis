@@ -111,3 +111,9 @@ Transaction state changes as transaction progresses. It has to be updated with n
   \end{algorithmic}
 \end{algorithm}
 
+Appending transaction items is the crucial step of the algorithm \ref{alg:updateTxState}, because client is responsible for keeping track of all performed operations within transaction. Transaction state is assumed to be source of truth about transaction.
+Note that, user can be unaware of transaction items, but client i.e. driver has to keep track of transaction items and append them to transaction state.
+
+%Nodes are unaware of modifications done at other nodes. Only client can gather all that information and keep track of it.
+ %       Merging two transaction states, simply means concatenating collections of transaction items from two transactions given that transaction id is the same. In terms of functional programming, transaction state is a monoid.
+

@@ -5,7 +5,7 @@ Transactions must run in isolation from each other. Transactions cannot see each
 
 Each key's value modification done in transaction should be stored at replicas responsible for given key keeping it private for that transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
 
-Each transactional operation is executed but instead of operating on current live data, modifications is put into private storage. Interface of the storage is presented in the listing \ref{lst:privateTransactionStorage}.
+Each transactional operation is executed, but instead of operating on current live data, modifications is put into private storage. Interface of the storage is presented in the listing \ref{lst:privateTransactionStorage}.
 
 \begin{lstlisting}[language=Java,style=outcode,label={lst:privateTransactionStorage},caption={API of private transaction storage}]
 PrivateTransactionStorage {
@@ -25,140 +25,45 @@ Private transaction storage also satisfies requirement of performing many operat
 
 
 \subsection{Quorum requirements}
-Each modification within transaction should be written to at least quorum of nodes responsible for modified key. Otherwise modification has to be either tried again or whole transaction needs to be rolled back.
+Each modification within transaction should be written to at least quorum of nodes responsible for modified key. Otherwise modification has to be either tried again or whole transaction needs to be rolled back. 
 
+\subsection{Transactional operations run in isolation}
+Algorithm (\ref{alg:transactionalInsert}) shows how transactional operations are performed, concretely transactional inserts. All transactional operations are executed in the same way. 
 % TODO napisac algorytm
-\subsection{Algorithm for adding operations to private transaction storage}
+%\subsection{Algorithm for adding operations to private transaction storage}
 
-\begin{figure}[hbt]
-  \begin{center}
-  \setlength{\unitlength}{0.7cm}
-  \subfloat[Client's request.]{
-    INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
-  }\qquad
-  \subfloat[Coordinator's algorithm.]{
-    Request is received by some node in cluster that becomes coordinator C for that request
-  }\qquad
-  \subfloat[Replica's algorithm.]{
+% \begin{figure}[hbt]
+%   \begin{center}
+%   \setlength{\unitlength}{0.7cm}
+%   \subfloat[Client's request.]{
+%     INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
+%   }\qquad
+%   \subfloat[Coordinator's algorithm.]{
+%     Request is received by some node in cluster that becomes coordinator C for that request
+%   }\qquad
+%   \subfloat[Replica's algorithm.]{
     
-  }
-  \end{center}
-  \caption{Adding operations to private transaction storage}
-  \label{fig:addToPrivateMemtable}
-\end{figure}
-
-% \begin{algorithm}
-%       \begin{algorithmic}
-%         \State $p \gets$ number of parents by vertex
-%         \State $r \gets root$
-%         \State $doNumbering(r)$
-%         \State $counter \gets 1$
-        
-%         \Function{doNumbering}{vertex}
-%           \State $\delta(v) \gets counter$
-%           \State $counter \gets counter + 1$
-%           \ForAll{$c \in C(vertex)$}
-%             \State $p(c) \gets p(c) - 1$
-%             \If{$p(c) = 0$}
-%               \State $doNumbering(c)$
-%             \EndIf
-%           \EndFor
-%         \EndFunction
-%       \end{algorithmic}
-%     \end{algorithm} 
-
-% \begin{algorithm}
-%   \caption{Writing to private storage on a node}
-%   \label{alg:writingToPrivateStorageOnNode}
-%   \begin{algorithmic}
-%     \State $TC \gets$ transitive closure of $G$
-%     \State $\delta_1, \delta_2 \gets$ primary dimensions
-%     \State $i \gets 2$
-%     \While {unresolved conflicts exist}
-%       \State $\delta_{i+1} \gets$ new dimension \Comment do not add it to the index
-%       \State $b \gets$ $bits(\delta_{i+1})$
-%       \State $c \gets$ resolve conflicts by genes with use of at most $b$ bits, and return the number of resolved
-%       conflicts
-%       \If {$resolvedConflicts(\delta_{i+1}) \geq c$} 
-%         \State undo the last step in the gene-based index
-%         \State add $\delta_{i+1}$ to the topological index
-%         \State $i \gets i+1$
-%       \EndIf
-%     \EndWhile   
-%   \end{algorithmic}
-% \end{algorithm}
-
-% \begin{algorithm}[H]
-% \SetAlgoLined
-% \KwResult{Write here the result }
-%  initialization\;
-%  \While{While condition}{
-%   instructions\;
-%   \eIf{condition}{
-%    instructions1\;
-%    instructions2\;
-%    }{
-%    instructions3\;
 %   }
-%  }
-%  \caption{How to write algorithms}
-% \end{algorithm}
+%   \end{center}
+%   \caption{Adding operations to private transaction storage}
+%   \label{fig:addToPrivateMemtable}
+% \end{figure}
 
-% \begin{algorithm}
-% \DontPrintSemicolon
-% \KwData{$G=(X,U)$ such that $G^{tc}$ is an order.}
-% \KwResult{$G’=(X,V)$ with $V\subseteq U$ such that  is an interval order.}
-% \Begin{
-%   $V \longleftarrow U$\;
-%   $S \longleftarrow \emptyset$\;
-%   \For{$x\in X$}{
-%     $NbSuccInS(x) \longleftarrow 0$\;
-%     $NbPredInMin(x) \longleftarrow 0$\;
-%     $NbPredNotInMin(x) \longleftarrow |ImPred(x)|$\;
-%     }
-%   \For{$x \in X$}{
-%     \If{$NbPredInMin(x) = 0$ {\bf and} $NbPredNotInMin(x) = 0$}{
-%       $AppendToMin(x)$}
-%     }
-%     \nl\While{$S \neq \emptyset$}{\label{InRes1}
-%     \nlset{REM} remove $x$ from the list of $T$ of maximal index\;\label{InResR}
-%     \lnl{InRes2}\While{$|S \cap  ImSucc(x)| \neq |S|$}{
-%       \For{$ y \in  S-ImSucc(x)$}{
-%         \{ remove from $V$ all the arcs $zy$ : \}\;
-%         \For{$z \in  ImPred(y) \cap  Min$}{
-%           remove the arc $zy$ from $V$\;
-%           $NbSuccInS(z) \longleftarrow NbSuccInS(z) - 1$\;
-%           move $z$ in $T$ to the list preceding its present list\;
-%           \{i.e. If $z \in T[k]$, move $z$ from $T[k]$ to
-%            $T[k-1]$\}\;
-%           }
-%         $NbPredInMin(y) \longleftarrow 0$\;
-%         $NbPredNotInMin(y) \longleftarrow 0$\;
-%         $S \longleftarrow S - \{y\}$\;
-%         $AppendToMin(y)$\;
-%         }
-%       }
-%     $RemoveFromMin(x)$\;
-%     }
-%   }
-% \caption{IntervalRestriction\label{IR}}
-% \end{algorithm}
-
-1. Clients send a request INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
-2. Request is received by some node in cluster that becomes coordinator C for that request
-3. C identifies replicas responsible
-   1. C sees that users table has key column user_id. 
-   2. It received user_id=1
-   3. C computes token using key value = 1 
-   4. C checks in topology which replicas are responsible for that token
-   5. C finds replicas
-1. C routes request to replica nodes
-At each replica:
-   1. Modification is added to private transaction storage of transaction with id 1001
-   2. Replica replies with success
-1. C waits until quorum responds with success
-2. C responds to client with transaction item
-3. Client receives transaction item and merges it to its current transaction state
+% 1. Clients send a request INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
+% 2. Request is received by some node in cluster that becomes coordinator C for that request
+% 3. C identifies replicas responsible
+%    1. C sees that users table has key column user_id. 
+%    2. It received user_id=1
+%    3. C computes token using key value = 1 
+%    4. C checks in topology which replicas are responsible for that token
+%    5. C finds replicas
+% 1. C routes request to replica nodes
+% At each replica:
+%    1. Modification is added to private transaction storage of transaction with id 1001
+%    2. Replica replies with success
+% 1. C waits until quorum responds with success
+% 2. C responds to client with transaction item
+% 3. Client receives transaction item and merges it to its current transaction state
 
 \begin{algorithm}
 \algblockdefx[NAME]{StartRequest}{EndRequest}%
@@ -173,23 +78,23 @@ At each replica:
    {\textbf{for each} \emph{replica} $\gets$ \emph{replicas}}%
    {\textbf{end}}   
 
-  \caption{Transactional writes}
-  \label{alg:scoringByNumOfRemovedConflicts}
+  \caption{Transactional insert}
+  \label{alg:transactionalInsert}
   \begin{algorithmic}
-    \StartRequest[transactional write]      
+    \StartRequest[transactional insert]      
       \State $C \gets$ coordinator node of request
       \State $T \gets$ topology at coordinator node
       \State $k \gets$ key from write request
       \State $token \gets$ token computed by \Call{Hash Function}{$k$}
       \State $replicas \gets$ \Call{Find Nodes Assigned To Token}{$T$, $token$} 
       \ForEachReplica
-        \State send transactional write $message$ to $replica$
+        \State send transactional insert $message$ to $replica$
       \EndForEachReplica
       \State await responses
       \If {$quorum(responses)$} 
         \State $response \gets$ success 
       \Else
-        \State transactional write failed
+        \State transactional insert failed
         \State $response \gets$ failure 
       \EndIf
     \EndRequest    
@@ -197,24 +102,12 @@ At each replica:
   \end{algorithmic}
   
   \begin{algorithmic}
-    \Message[transactional write]
+    \Message[transactional insert]
         \State $id \gets $ transaction id from $message$
-        \State \Call{Add To Private Transaction Storage}{$id$, $message.write$}
+        \State \Call{Add To Private Transaction Storage}{$id$, $message.insert$}
         \State respond with success message
     \EndMessage
   \end{algorithmic}
-
-% \begin{algorithmic}[1]
-% \Require $x\ge5$
-% \Ensure $x\le-5$
-% \Statex
-% \While{$x>-5$}
-%    \State $x\gets x-1$
-% \EndWhile
-% \end{algorithmic}
 \end{algorithm}
  
  
-
-Last step in algorithm is crucial, because client is responsible for keeping track of all things that were modified. Nodes are unaware of modifications done at other nodes. Only client can gather all that information and keep track of it.
-        Merging two transaction states, simply means concatenating collections of transaction items from two transactions given that transaction id is the same. In terms of functional programming, transaction state is a monoid.
