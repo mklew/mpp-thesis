@@ -6,92 +6,81 @@ In this section the discussion will point to implementation details of algorithm
 
 
 \subsection{Proof of concept}
-Paxos algorithm has a formal mathematical proof of its correctness. Formal proof of \emph{Mutli Partition Paxos} algorithm is out of scope for this work. Implementation of algorithm in Cassandra database has been done instead, as proof of concept. Details of implementation specific for Cassandra are the main focus of the following sections.
+\paxos algorithm has a formal mathematical proof of its correctness. \cite{Lamport1998partTimeParliment} Formal proof of \emph{Mutli Partition Paxos} algorithm is out of scope for this work. Implementation of algorithm in Cassandra database is done instead, as proof of concept. Details of implementation specific for Cassandra are the main focus of the following sections.
 
 % TODO do usuniecia bo temat raczej wyczerpany
-Since it has token ring architecture it is well suited for proof of concept implementation of Multi Partition Paxos algorithm.
+%Since it has token ring architecture it is well suited for proof of concept implementation of Multi Partition Paxos algorithm.
 
 
 
 \subsection{Key assumptions}
 There are few assumptions as to implementation.
+\begin{enumerate*}
+\item  Implementation should be an extension to existing features of database - cannot break nor change specification of existing functionality
+\item Algorithm’s implementation should be part of database, not an application on top of database.
+\item User uses transactions according to specification, any use opposed to specification is not guaranteed to work as intended
+\item Transactions should not be forced onto user, user has to use them as opt-in in a way they were designed
+\item Transactions should not block normal updates - implementation won’t block user from doing non transactional updates to tables.
+\end{enumerate*}
+
+\subsection{Indended use of transactions}
+Implementation does not prevent user from misusing transactions. Implementation allows to use Cassandra in transactional way, but only if it is done according to specification. In principle transactions are run with other transactions whereas normal updates are completely independent from each other as well as from transactions. 
+
+% \subsubsection{Typical use case}
+% Assume bank transfers and moving money from account $acc_{1}$ to account $acc_{2}$. Each account has a balance which is reflected by transfers to and from an account.
+% Moving money from one account to the other should create 
+% For example, typical use case can be:
+% 1. Client wants to move money to his other account.  Update balances of his accounts and record transfer to transfers table within transaction
+% 2. Save request about attempt to make money transfer outside transaction using normal update
 
 
-* Implementation should be an extension to existing features of database - cannot break nor change specification of existing functionality
-* Algorithm’s implementation should be part of database, not an application on top of database.
-* User uses transactions according to specification, any use opposed to specification is not guaranteed to work as intended
-* Transactions should not be forced onto user, user has to use them as opt-in in a way they were designed
-* Transactions should not block normal updates - implementation won’t block user from doing non transactional updates to tables.
-
-\subsection{Proper use of transactions}
-Implementation cannot prevent user from doing wrong things. Implementation allows to use Cassandra in transactional way, but only if it is done according to specification. In principle transactions are run with other transactions whereas normal updates are completely independent from each other as well as from transactions. 
+% Money transfer will either succeed or fail, but request to do so should be always saved because it runs outside transaction. This is just a simple example showing how different workloads can be mixed if required. 
 
 
-For example, typical use case can be:
-1. Client wants to move money to his other account.  Update balances of his accounts and record transfer to transfers table within transaction
-2. Save request about attempt to make money transfer outside transaction using normal update
-
-
-Money transfer will either succeed or fail, but request to do so should be always saved because it runs outside transaction. This is just a simple example showing how different workloads can be mixed if required. 
-
-
-Illegal scenario from business perspective would be to update balances within transaction but to register transfer outside transaction because if transaction fails then there is a transfer in the system that does not have reflection in accounts balances. 
-
-
-To summarize, transactions are yet another opt-in feature of database that can work as intended only if used properly. 
-
+% Illegal scenario from business perspective would be to update balances within transaction, but to register transfer outside transaction because if transaction fails then there is a transfer in the system that does not have reflection in accounts balances. 
 
 \subsection{New consistency levels}
-Transactions are implemented as opt-in feature of Cassandra. Following convention of how new features are added to Cassandra I’ve added new consistency levels that represent transactional workload.
-Cassandra has different consistency levels for performing reads and writes. Different consistency levels have different performance, but also different guarantees. Examples of consistency levels are:
-* ONE - read/write performed only on single node
-* QUORUM - read/write performed on quorum of replicas
-* ALL - read/write from/to all replicas
-* SERIAL / LOCAL_SERIAL- uses LWT to do read/write with condition
+Transactions are implemented as opt-in feature of Cassandra. New consistency levels  are introduced that represent transactional workload. Adding new levels follows convention of how new features are added to Cassandra, as was the case with \lwt. 
+ 
+Cassandra can operate on different consistency levels performing reads and writes. Different consistency levels have different performance, but also different guarantees. Examples of consistency levels are:
+\begin{description}
+\item[ONE] -- read/write performed only on single node
+\item[QUORUM] -- read/write performed on quorum of replicas
+\item[ALL] -- read/write from/to all replicas
+\item[SERIAL / LOCAL_SERIAL] -- uses \lwt to do read/write with condition
+\end{description}
 
-
-Following convention, transactions are introduced as new consistency levels. New transactional consistency levels are:
-
-
-* TRANSACTIONAL - transactional consistency, uses MPP
-* LOCAL_TRANSACTIONAL - transactional consistency confined to the data center, uses MPP
-
+New transactional consistency levels are \textbf{TRANSACTIONAL, LOCAL_TRANSACTIONAL}. Both use \mpp, but latter is confined to the local data center.
 
 \subsection{Transaction state}
-Cassandra allows to organize tables in keyspaces which are like relational schemas. Keyspace aggregates tables. 
+Cassandra organizes tables in \emph{keyspaces}, thus transaction items need additional information about keyspace to locate data at a node.
 
+Transaction item in Cassandra becomes:
 
-Therefore representation of transaction item in transaction state has to be slightly adjusted. In Cassandra transaction item becomes:
+\begin{lstlisting}[language=Java,style=outcode,label={lst:txState},caption={Transaction item in Cassandra}]
 
-
-TransactionItem {
+class TransactionItem
+{
    long token
    String keyspaceName;
    String tableName;
 }
+\end{lstlisting}
 
-
-Just because table name is not enough to find it. Keyspace name is always required. Here we can also see concrete type of token which is just a plain long number.
-Transaction has unique id. I’ve used UUID with encoded timestamp to represent transaction id.
+Keyspace and table name are always required. Type of a token is just \emph{long} type. Type of transaction id is \emph{UUID with encoded timestamp} \cite{CassandraUUID}.
+% Just because table name is not enough to find it. Keyspace name is always required. Here we can also see concrete type of token which is just a plain long number.
+% Transaction has unique id. I’ve used 
 
 
 \subsection{Extending binary protocol}
-Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. I’ve used Cassandra Java Driver which is most standard implementation of C* driver.
+Cassandra Query Language has been extended to support new functionality and new statements.
+%Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. 
+%I’ve used Cassandra Java Driver which is most standard implementation of C* driver.
 
+Adding any new feature to CQL requires a change to its syntax. I wanted to reuse as much of functionality as possible, but I had to modify syntax of: insert, update and delete statement. Fortunately all modification statements share same \emph{USING} clause, as in examples below:
 
-Adding any new feature to CQL requires a change to its syntax. I wanted to reuse as much of functionality as possible, but I had to modify syntax of:
-* Insert statement
-* Update statement
-* Delete statement
-
-
-Fortunately all modification statements share same “USING” clause, as in examples below:
-
-
-INSERT INTO ks.users VALUES(...) WHERE … USING TIMESTAMP = <timestamp>
-
-
-UPDATE ks.users USING TIMESTAMP = <timestamp> SET … WHERE … 
+\code{INSERT INTO ks.users VALUES(...) WHERE … USING TIMESTAMP = <timestamp>}
+\code{UPDATE ks.users USING TIMESTAMP = <timestamp> SET … WHERE … }
 
 
 Therefore I could only extend this clause to add new functionality to all statements. Extended using clause supports “transaction” keyword and accept transaction id.
@@ -235,7 +224,9 @@ By default, conflicts are resolved using common transaction items.
 
 
 \subsection{Transaction Log}
-Since transaction log needs to preserve information about transaction after transaction is done it is better to keep it off memory. I’ve implemented it using cassandra table local to each node. 
+Transaction log is implemented using cassandra table local to each node. 
+Committed transactions are added to the table with flag \code{commited = true}. 
+% Since transaction log needs to preserve information about transaction after transaction is done it is better to keep it off memory. I’ve implemented it using cassandra table local to each node. 
 
 
 \subsection{Mp Paxos State}
@@ -293,10 +284,7 @@ It is important that, begin and repair phase (repairing phase) is less advanced 
 
 
 
-
-
-
-\subsection{Obstacles}
-There were several obstacles during implementation of transactions in Cassandra. One of the major problems is that Cassandra has very big codebase and is a very mature project. It requires significant knowledge of how everything fits together before anything can be changed. 
-Another issue is that most of the key services are singletons and in many places these singletons are directly referenced. Highly coupled code is sometimes impossible to test in isolation. In addition, it becomes impossible to test Cassandra creating embedded instances. Due to this limitation, more complex tests had to be done on real cluster.
+% \subsection{Obstacles}
+% There were several obstacles during implementation of transactions in Cassandra. One of the major problems is that Cassandra has very big codebase and is a very mature project. It requires significant knowledge of how everything fits together before anything can be changed. 
+% Another issue is that most of the key services are singletons and in many places these singletons are directly referenced. Highly coupled code is sometimes impossible to test in isolation. In addition, it becomes impossible to test Cassandra creating embedded instances. Due to this limitation, more complex tests had to be done on real cluster.
 

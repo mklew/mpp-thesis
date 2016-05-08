@@ -73,106 +73,157 @@ Example of conflict checking functions, that are local, this do not require roun
 		Fuction allows to have configurable number of concurrent paxos rounds since there will be at most as many rounds as there are slices. False positives are expected result of the function.
 \end{description}
 
-
 Conflict functions allow to eliminate round trips, put bounds on number of concurrent transactions, but with a cost of false positives. \mpp algorithm works with any conflict resolution function. Conflict resolution functions can be defined per table.
 
 \subsection{Transactions index}
+Paxos round id for a transaction is obtained through \emph{Transactions Index}. This is an index in which transactions have to successfully register. Registration in index of part of \mpp algorithm. Transaction Index exists on each node and is local to a node, thus independent from other nodes.
+
+Transaction Index has to guarantee that: 
+\begin{enumerate*}
+\item Transactions that are in conflict must be registered in index and obtain same paxos id
+\item Transaction can register in index only if there is single paxos id which can be assigned to this transaction.
+\end{enumerate*}
+
+In this work, I put forward the claim that \emph{paxos round id} does not have to be globally assigned to same id, but only locally at each node. Therefore, at each node transaction can participate in paxos round with different id. However, at any node, transaction always participates in the same round as conflicting transactions.
+
+Transaction cannot be registered in index when locally it can obtain more than one paxos round id. Algorithm to register is presented at Fig. \ref{alg:indexRegistration}.
+
+\begin{algorithm}
+\algblockdefx[NAME]{ForEach}{EndForEach}%
+   [2]{\textbf{for each} \emph{#1} $ \gets $ \emph{#2}}%
+   {\textbf{end}}   
+
+  \caption{Registration in transaction index}
+  \label{alg:indexRegistration}
+  \begin{algorithmic}
+  	\State $TS \gets$ transaction state of transaction to register
+  	\State $rounds \gets $ empty set 
+  	\State $items \gets $ subset of $TS.transactionItems$ owned by this node
+  	\ForEach{ ti }{TS.transactionItems}
+  		\State $conflicting \gets $ \Call{Find Conflicting}{ti} \Comment 
+  		\If {conflicting is not empty } 
+        	\State add paxos round id from conflicting participants to $rounds$
+      \EndIf	
+  	\EndForEach    
+  	\State $round \gets$ unassigned round id
+  	\If {rounds size = 0}
+  		\State $round \gets$ generate new round id 
+  		\State \Call{Append Transaction}{TS, items, round} 		
+  	\ElsIf {rounds size = 1}
+  		\State $round \gets$ get round from $rounds$
+  		\State \Call{Append Transaction}{TS, items, round}
+  	\Else
+  		\State transaction cannot be registered in index
+  	\EndIf
 
 
-Coming back to first requirement. We need to receive paxos round id given transaction state but also it has to be same round id for different transactions that are in conflict.
+  	\Procedure{Append Transaction}{$TS, items, round$} 
+	  	\ForEach{ ti }{items}
+	  		\State $participants \gets$ get participants from $index$ map by key $ti$ 
+	  		\State append $(TS, round)$ to participants
+	  	\EndForEach       		
+	\EndProcedure  	
+  \end{algorithmic}
+   
+\end{algorithm}
+
+\subsubsection{Example of registration}
+Assume $3$ transactions: $tx_{1}, tx_{2}, tx_{3}$ and $4$ different transaction items: $ti_{1}, ti_{2}, ti_{3}, ti_{4}$. Assume conflict function on same transaction items.
+Assume items in transactions $tx_{1} \rightarrow (ti_{1}, ti_{2}, ti_{3})$, 
+ $tx_{2} \rightarrow (ti_{2}, ti_{4})$, $tx_{3} \rightarrow (ti_{4})$
+Assume that registration of transactions happens in arbitrary order. Registration in index is done according to algorithm (\ref{alg:indexRegistration}). Two different orderings yield different outcomes. 
+ \begin{description}
+ \item[Order $tx_{1} \rightarrow tx_{2} \rightarrow tx_{3}$] \hfill \\
+ 	$tx_{1}$ registers in index and obtains paxos id $id_{1}$ \\
+ 	$tx_{2}$ registers in index and obtains paxos id from conflicting transaction $tx_{1}$, $id_{1}$ \\
+ 	$tx_{3}$ registers in index and obtains paxos id $id_{1}$ from conflicting transactions: $tx_{1}, tx_{2}$ All transactions participate in the same paxos round. Only one transaction is chosen during paxos round. 
+ \item[Order $tx_{1} \rightarrow tx_{3} \rightarrow tx_{2}$] \hfill \\
+ 	$tx_{1}$ registers in index and obtains paxos id $id_{1}$ \\
+ 	$tx_{3}$ registers in index, there are no conflicts, thus obtains paxos id $id_{3}$\\
+ 	$tx_{2}$ registers in index and it has $2$ conflicting transactions participating in different paxos rounds with ids: $id_{1}$, $id_{3}$. It is illegal to register $tx_{2}$, because if $tx_{2}$ is registered in both rounds it can be accepted in round $id_{1}$, but not accepted in round $id_{3}$ in which case it is committed and rolled back at the same time which is illegal behaviour. 
+
+ \end{description}
+
+% Let’s assume that:
+% * There are three transactions represented by transaction states: Tx1, Tx2, Tx3.
+% * Tx1 modifies items Ti1, Ti2, Ti3
+% * Tx2 modifies items Ti2, Ti4
+% * Tx3 modifies items Ti4
+% * conflict resolution is defined as conflict on same transaction items.
+% * All transactions try to execute at same time
 
 
-To solve this problem, I propose Transaction Index. This is index or registry if you like, in which transactions have to successfully register before they can proceed further in algorithm.        Transaction Index exists on each node in cluster.
+% Order of transactions registering in transaction index can be arbitrary. Let’s analyze two interesting cases
+% 1. Tx1 -> Tx2 -> Tx3
+% 2. Tx1 -> Tx3 -> Tx2
 
 
-Transaction Index has to guarantee that:
-* Transactions that are in conflict must be registered in index with same paxos id
-* Transaction can register in index only if single paxos id can be assigned to this transaction
+% Case 1)
+% 1. Tx1 registers in index
+%    1. There are no conflicting transactions
+%    2. New paxos round is started with paxos id PaxosId_1
+% 1. Tx2 registers in index
+%    1. Tx1 exists in index and has conflict on item Ti2
+%    2. Tx2 joins paxos round of Tx1 
+%    3. Tx2 receives round id PaxosId_1
+% 1. Tx3 registers in index
+%    1. There are 2 conflicting transactions
+%    2. But both of them belong to same round. 
+%    3. Tx3 joins round with id PaxosId_1
 
 
-Second guarantee requires an example.
+% In that case, all transactions go into same paxos round, therefore after paxos round, replicas will agree on single transaction. That’s exactly what we wanted and what will guarantee serializability.
 
 
-Let’s assume that:
-* There are three transactions represented by transaction states: Tx1, Tx2, Tx3.
-* Tx1 modifies items Ti1, Ti2, Ti3
-* Tx2 modifies items Ti2, Ti4
-* Tx3 modifies items Ti4
-* conflict resolution is defined as conflict on same transaction items.
-* All transactions try to execute at same time
+% Case 2)
+% 1. Tx1 registers in index and receives PaxosId_1
+% 2. Tx3 registers in index
+%    1. There are no other transactions that modify Ti4
+%    2. New paxos round is started with paxos id PaxosId_2
+% 1. Tx2 registers in index
+%    1. There are 2 conflicting transactions: Tx1 and Tx3
+%    2. Transactions belong to different paxos rounds
+%    3. Tx2 cannot start and has to rollback or try again.
 
 
-Order of transactions registering in transaction index can be arbitrary. Let’s analyze two interesting cases
-1. Tx1 -> Tx2 -> Tx3
-2. Tx1 -> Tx3 -> Tx2
+% What if Tx2 was somehow registered in both rounds? Then it might be a case where Tx2 is committed at one round, but rolled back at the other which is illegal because it breaks serializability. We need to guarantee that two concurrent conflicting transactions will not get committed at same time. Allowing Tx2 to participate in any of these paxos rounds could potentially break such guarantee.
 
 
-Case 1)
-1. Tx1 registers in index
-   1. There are no conflicting transactions
-   2. New paxos round is started with paxos id PaxosId_1
-1. Tx2 registers in index
-   1. Tx1 exists in index and has conflict on item Ti2
-   2. Tx2 joins paxos round of Tx1 
-   3. Tx2 receives round id PaxosId_1
-1. Tx3 registers in index
-   1. There are 2 conflicting transactions
-   2. But both of them belong to same round. 
-   3. Tx3 joins round with id PaxosId_1
+\subsubsection{Rolling back concurrent transactions}
+\emph{Transaction Index} knows which paxos round id to assign to which transaction, but also it knows other transactions that share same paxos round id. This knowledge is used to rollback concurrent transactions when paxos round is finished at this node and transaction is committed.
 
 
-In that case, all transactions go into same paxos round, therefore after paxos round, replicas will agree on single transaction. That’s exactly what we wanted and what will guarantee serializability.
+% To summarize, transaction index main responsibility is to assign paxos round id for each transaction in a way that doesn’t break any of requirements. Index itself changes a lot since there are many concurrent transactions that begin, try to commit and at the end are either committed or rolled back. 
 
 
-Case 2)
-1. Tx1 registers in index and receives PaxosId_1
-2. Tx3 registers in index
-   1. There are no other transactions that modify Ti4
-   2. New paxos round is started with paxos id PaxosId_2
-1. Tx2 registers in index
-   1. There are 2 conflicting transactions: Tx1 and Tx3
-   2. Transactions belong to different paxos rounds
-   3. Tx2 cannot start and has to rollback or try again.
+\subsection{Time of rollback}
+Transaction rollback happens either by:
+\begin{enumerate*}
+\item successfully committed concurrent transaction - which happens at the end of paxos round
+\item request of the client
+\end{enumerate*}
 
+Successfully committed transaction uses \emph{Transaction Index} to find conflicting transactions that participate in its round and use \emph{Private Transaction Storage} to delete their data, thus rollback transaction locally at the node.
 
-What if Tx2 was somehow registered in both rounds? Then it might be a case where Tx2 is committed at one round, but rolled back at the other which is illegal because it breaks serializability. We need to guarantee that two concurrent conflicting transactions will not get committed at same time. Allowing Tx2 to participate in any of these paxos rounds could potentially break such guarantee.
+Client that wants to rollback transaction has to pass transaction state. Then replicas responsible for items are found and rollback messages are sent. When node receives rollback message it purges all the private data stored in \emph{Private Transaction Storage} associated with transaction id.
 
-
-Rolling back concurrent transactions
-Transaction Index knows which paxos round id to assign to which transaction, but also it knows all the other transactions that share same paxos round id. This knowledge can be used to rollback concurrent transactions when paxos round is finished at this node for some transaction.
-
-
-To summarize, transaction index main responsibility is to assign paxos round id for each transaction in a way that doesn’t break any of requirements. Index itself changes a lot since there are many concurrent transactions that begin, try to commit and at the end are either committed or rolled back. 
-
-
-
-
-\subsection{Rollback transaction}
-Transaction rollback can happen either by:
-1. Request of the client
-2. Successfully committed concurrent transaction - which happens at the end of paxos round.
-
-
-Client that wants to rollback transaction has to pass transaction state. Then replicas responsible for items are found and rollback messages are sent. When node receives rollback message it purges all the private data stored in Private Transaction Storage associated with transaction id.
-
-
-Successfully committed transaction can use Transaction Index to look up locally all other transactions that participate in its round and use Private Transaction Storage to delete their data.
-
-
-\subsection{Transaction Log}
-Transaction Log is a similar concept to Transaction Index. It also has to be present at each node in the cluster. Its responsibility is to track committed and rolled back transactions. Transaction Index is very dynamic and can change frequently. Since transaction index is the only way to find Paxos State and since transactions are removed from index once their are finished, we need something that tells us after the fact whether transaction was committed or not. That is the responsibility of transaction log.
+\section{Transaction Log}
+\emph{Transaction Log} is a similar concept to \emph{Transaction Index}. It also has to be present at each node in the cluster. Its responsibility is to record committed and rolled back transactions. \emph{Transaction Index} changes frequently, because transactions are registered in it and removed on rollback. Since \emph{transaction index} is the only way to find Paxos State and since transactions are removed from index once they are finished, we need a log that has information whether transaction is committed or not.
 
 
 It has to support operations:
-* addAsCommitted(transaction id)
-* addAsRolledBack(transaction id)
-* LogState findTransaction(transaction id) where LogState is an enum with values: 
-   * Committed - when transaction has been committed
-   * Rolled_back - when transaction has been rolled back
-   * Unknown - when transaction with given id hasn’t been added to a log yet
+\begin{description}
+\item[\code{addAsCommitted (transaction id)}] -- records committed transaction
+\item[\code{addAsRolledBack (transaction id)}] -- records rolled back transaction
+\item[\code{findTransaction(transaction id)}] -- finds information about transaction. Returns \emph{LogState} which can be one of: \begin{enumerate*} 
+		\item \code{Committed} -- when transaction has been committed
+		\item \code{Rolled_back} -- when transaction has been rolled back
+		\item \code{Unknown} -- when transaction with given id hasn’t been added to a log yet
+		\end{enumerate*} 
+\end{description}
+Log should store information off memory in order to preserve information about transaction after it is removed from \emph{Transaction Index}.
 
-
-\subsection{The algorithm's description}
+\section{The algorithm's description}
 Multi partition paxos (MPPaxos) depends on previously described concepts and guarantees they provide. This part of whole solution is responsible for committing transaction. To commit transaction actually means to perform multi partition paxos round. 
 
 

@@ -9,7 +9,7 @@ Paxos defines requirements and constraints that the protocol must operate within
   \item Acceptors reply with value associated with highest numbered proposal that they have already accepted. Then proposer is bound to ask acceptors to only commit that value (which might be different from its original proposal). -- this forces proposer to commit other completed proposals instead of his own.\label{sec:mpp:requirements:finishInProgress}
   \item Proposer can finish protocol only when majority of acceptors acknowledge commit.
 \end{enumerate*}
-These are requirements that need to be satisfied in order to be sure that \paxos can work the way it was designed and proven formally. 
+These are requirements that need to be satisfied in order to be sure that \paxos can work the way it was designed and proven formally \cite{Lamport1998partTimeParliment}. 
 
 \lwt supports many instances of paxos protocol at any given time, as opposed to appending to single replicated log \cite{chandra2007PaxosMadeLive}. \mpp has to run many instances of paxos protocol as well. Thus \mpp needs to have ability to identify \emph{paxos round} at node given proposed \emph{value}. \lwt identifies \emph{paxos round} by a partition key. \mpp is a multi-partition protocol, therefore identification of \emph{paxos round} poses a problem and a requirement. \label{sec:mpp:requirements:identifyRound}
 
