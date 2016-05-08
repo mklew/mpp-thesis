@@ -122,18 +122,18 @@ Transaction State is also required in order to send rollback messages only to no
 
 
 \subsection{Write path}
-I’ve modified write path of Cassandra to store modifications into Private Transaction Storage.
+Write path of Cassandra \cite{CassandraWritePath} was modified in order to support transactional writes to private memtables. 
 Cassandra’s write path is known to be very fast. Implementation of transactions won’t slow it down, because data is only kept in-memory. Therefore write is acknowledged by coordinator node as soon as modification has been written to quorum of replica nodes.
 
 
-Write path has been extended by detecting whether using transaction clause was used and if so if transaction id is present. All changes to data in Cassandra are represented by Mutation class. If transaction is detected, mutation is wrapped with TransactionalMutation which besides having mutation has also transaction id.
+Write path has been extended by detecting whether \emph{using transaction} clause has been used and if so if transaction id is present. All changes to data in Cassandra are represented by Mutation class. If transaction is detected, mutation is wrapped with TransactionalMutation which besides having mutation has also transaction id.
 
 
 When transactional mutation is applied by its apply method, all the changes go to Private Transaction Storage instead of main tables.
 
 
 \subsection{Read path}
-Read path was also modified. Syntax of select statement stays without changes, because logic of executing select depends only on consistency level used to execute query.  When select is performed with one of new consistency levels, then coordinator performs transactional read.
+Read path \cite{CassandraReadPath} was also modified. Syntax of select statement stays without changes, because logic of executing select depends only on consistency level used to execute query.  When select is performed with one of new consistency levels, then coordinator performs transactional read.
 
 
 Transactional read guarantees that it will read consistent data and finish any in progress transactions that can be found. It runs MPP round, but completes early when there are no in progress proposals or when it has repaired all in progress transactions.

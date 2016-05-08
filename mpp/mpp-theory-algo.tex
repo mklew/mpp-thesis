@@ -224,7 +224,21 @@ It has to support operations:
 Log should store information off memory in order to preserve information about transaction after it is removed from \emph{Transaction Index}.
 
 \section{The algorithm's description}
-Multi partition paxos (MPPaxos) depends on previously described concepts and guarantees they provide. This part of whole solution is responsible for committing transaction. To commit transaction actually means to perform multi partition paxos round. 
+Multi partition paxos algorithm depends on previously described concepts and guarantees they provide. This part of whole solution is responsible for committing transaction. Transaction is committed by performing multi partition paxos round in which transaction is accepted by majority from all replica groups. 
+
+\subsection{Phases}
+Algorithm works in \emph{phases}. All possible phases are: 
+\begin{enumerate}
+\item no phase
+\item pre prepare phase
+\item repair phase
+\item prepare phase
+\item propose phase
+\item commit phase
+\item rollback phase
+\end{enumerate}
+All phases have corresponding descriptions in the following sections.
+
 
 
         High level description
