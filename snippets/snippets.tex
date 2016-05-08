@@ -1,0 +1,111 @@
+% obrazek po lewej i tabelka po prawej
+
+\begin{figure}[h]
+  \centering
+    \subfloat[A sample graph with the two slices - $s_0$ marked with green border and $s_1$ marked with red border.]{%
+      \setlength{\unitlength}{0.8cm}
+      \begin{pspicture}[showgrid=false](8, 8)
+  
+        \psset{fillcolor=vertexColor, fillstyle=solid}
+        \cnodeput(2, 7){a}{\color{vertexTextColor} A}
+        \cnodeput(4, 7){b}{\color{vertexTextColor} B}
+        \cnodeput(6, 7){c}{\color{vertexTextColor} C}
+        \cnodeput(2, 5){d}{\color{vertexTextColor} D}
+        \cnodeput(4, 5){e}{\color{vertexTextColor} E}
+        \cnodeput(6, 5){f}{\color{vertexTextColor} F}
+        \cnodeput(1, 3){g}{\color{vertexTextColor} G}
+        \cnodeput(3, 3){h}{\color{vertexTextColor} H}
+        \cnodeput(5, 3){i}{\color{vertexTextColor} I}
+        \cnodeput(7, 3){j}{\color{vertexTextColor} J}
+        \cnodeput(4, 1){k}{\color{vertexTextColor} K}
+        
+        \psset{linecolor=connectorColor, arrowscale=2.5}
+        \ncline{->}{a}{d}
+        \ncline{->}{a}{e}
+        \ncline{->}{b}{e}
+        \ncline{->}{c}{d}
+        \ncline{->}{c}{e}
+        \ncline{->}{c}{f}
+        \ncline{->}{d}{g}
+        \ncline{->}{d}{h}
+        \ncline{->}{e}{i}
+        \ncline{->}{e}{h}
+        \ncline{->}{f}{i}
+        \ncline{->}{f}{j}
+        \ncline{->}{h}{k}
+        \ncline{->}{i}{k}
+        
+        \psccurve[fillstyle=none, linestyle=dashed, linecolor=areaColor1](1, 7.5)(4, 8)(7, 7.5)(7, 6.5)(6, 6.5)(4.5, 5)(3,
+        2)(0, 2)(1, 5.5)
+  
+        \psccurve[fillstyle=none, linestyle=dashed, linecolor=areaColor2](3, 1)(3.5, 2)(5, 4)(6, 6)(8, 3)(6, 2)(5, 0)
+      \end{pspicture}
+    }
+    \subfloat[The encoding of the graph.]{
+      \raisebox{4.5cm}{
+      \begin{tabular}{c|cccc}
+        \toprule
+        & $id(t)$ & $I_i(t)$ & $s_0$ & $s_1$ \\ \midrule
+        A & 2 & 0 & $[2;2]$ & $\emptyset$ \\
+        B & 5 & 0 & $[5;5]$ & $\emptyset$ \\
+        C & 3 & 0 & $[3;3]$ & $\emptyset$ \\
+        D & 1 & 0 & $[1;3]$ & $\emptyset$ \\
+        E & 4 & 0 & $[2;5]$ & $\emptyset$ \\
+        F & 2 & 1 & $[3;3]$ & $[2;2]$ \\
+        G & 0 & 0 & $[0;3]$ & $\emptyset$ \\
+        H & 6 & 0 & $[1;6]$ & $\emptyset$ \\
+        I & 1 & 1 & $[2;5]$ & $[1;2]$ \\
+        J & 3 & 1 & $[3;3]$ & $[2;3]$ \\
+        K & 0 & 1 & $[1;6]$ & $[0;2]$ \\ \bottomrule
+      \end{tabular}
+      }
+    }
+  \caption{A hierarchy encoded with the slicing method - the sample from \cite{baehni07}}
+  \label{fig:slicing}
+\end{figure}
+
+%
+% OPIS KAWAŁKA KODU
+
+\begin{description}
+\item[Testing for the existence of a path] \hfill \\ \code{isReachable(G, x, y)} \\ 
+Given a digraph $G(V,A)$ and an ordered pair of vertices $(x,y)$ belonging to $G$, we have to check if there is a path
+from $x$ to $y$. Formally: 
+$$ \code{isReachable(G, x, y): Boolean} =  
+\begin{cases}
+  \text{true}  & \quad \text{if} \quad x \leq y \\
+  \text{false} & \quad \text{otherwise}
+\end{cases} $$
+When we choose the classical method of graph representation, we have to perform a search procedure (either depth first
+search or breadth first search), starting at the vertex $x$ (Fig. \ref{fig:checkingExistenceOfPath}). The extreme case
+would be searching across all the vertices in the graph to get a result. In ontologies, reachability testing is done to
+check whether a given object is the instance of a given concept or whether a given concept is a subconcept of another.
+
+\end{description}
+
+
+%
+% Algorytm z komentarzem
+%
+
+\begin{algorithm}
+  \caption{Scoring by the number of removed conflicts}
+  \label{alg:scoringByNumOfRemovedConflicts}
+  \begin{algorithmic}
+    \State $TC \gets$ transitive closure of $G$
+    \State $\delta_1, \delta_2 \gets$ primary dimensions
+    \State $i \gets 2$
+    \While {unresolved conflicts exist}
+      \State $\delta_{i+1} \gets$ new dimension \Comment do not add it to the index
+      \State $b \gets$ $bits(\delta_{i+1})$
+      \State $c \gets$ resolve conflicts by genes with use of at most $b$ bits, and return the number of resolved
+      conflicts
+      \If {$resolvedConflicts(\delta_{i+1}) \geq c$} 
+        \State undo the last step in the gene-based index
+        \State add $\delta_{i+1}$ to the topological index
+        \State $i \gets i+1$
+      \EndIf
+    \EndWhile   
+  \end{algorithmic}
+\end{algorithm}
+

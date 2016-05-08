@@ -64,3 +64,50 @@ Using just an id we would need to ask each node in the cluster if it has data as
 \subsubsection{Updates}
 Transaction state changes as transaction progresses. It has to be updated with new transaction items for each operation. As a corollary, each operation should return new transaction item which can be appended to transaction state. 
 
+
+% algorytm z pakietu algorithm2e
+% \begin{algorithm}
+% \SetKwFunction{startTx}{Begin Transaction}
+% \SetKwFunction{updateOperation}{Update Operation}
+% \SetKwFunction{commitTx}{CommitTransaction}
+% \DontPrintSemicolon
+% \KwData{$k$ key}
+% \KwData{$value$ of $k$ to update in transaction}
+% %\KwResult{$G’=(X,V)$ with $V\subseteq U$ such that  is an interval order.}
+% \Begin{
+%   $transactionState \longleftarrow BeginTransaction()$ \;
+%   $transactionState \longleftarrow \startTx()$ \;
+%   $id \longleftarrow transactionState.id$ \;
+%   no comment here\;
+%   $transactionItem \longleftarrow \updateOperation(id, k, value)$\;
+%   $transactionState.addItem(transactionItem)$
+%   $result \longleftarrow \commitTx(transactionState)$  
+%   }
+% \caption{Updating transaction state after an operation222\label{IR}}
+% \end{algorithm}
+
+% algorytm z pakietu algorithm
+
+% \begin{algorithmic}[1]
+% \Begin
+% \State $sum:=0$;
+% \For{i=1}{n}\Comment{sum(i)}
+%    \State $sum:=sum+i$;
+% \State writeln($sum$);
+% \End.
+% \end{algorithmic}
+
+\begin{algorithm}
+  \caption{Updating transaction state after two operations}
+  \label{alg:updateTxState}
+  \begin{algorithmic}  	    
+    \State $txState \gets$ \Call{Begin Transaction}{}
+    \State $id \gets$ $txState.id$ unique id generated for transaction
+    \State $item_{1} \gets $ \Call{Update Operation}{id, $k_{1}$, $v_{1}$} \Comment for some key and value
+    \State $txState \gets txState$.addItem($item_{1}$)
+    \State $item_{2} \gets $ \Call{Insert Operation}{id, $k_{2}$, $v_{2}$}
+    \State $txState \gets txState$.addItem($item_{2}$)
+    \State $result \gets $ \Call{Commit Transaction}{$txState$}    
+  \end{algorithmic}
+\end{algorithm}
+

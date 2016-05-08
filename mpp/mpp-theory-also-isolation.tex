@@ -27,9 +27,122 @@ Private transaction storage also satisfies requirement of performing many operat
 \subsection{Quorum requirements}
 Each modification within transaction should be written to at least quorum of nodes responsible for modified key. Otherwise modification has to be either tried again or whole transaction needs to be rolled back.
 
-
+% TODO napisac algorytm
 \subsection{Algorithm for adding operations to private transaction storage}
 
+\begin{figure}[hbt]
+  \begin{center}
+  \setlength{\unitlength}{0.7cm}
+  \subfloat[Client's request.]{
+    INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
+  }\qquad
+  \subfloat[Coordinator's algorithm.]{
+    Request is received by some node in cluster that becomes coordinator C for that request
+  }\qquad
+  \subfloat[Replica's algorithm.]{
+    
+  }
+  \end{center}
+  \caption{Adding operations to private transaction storage}
+  \label{fig:addToPrivateMemtable}
+\end{figure}
+
+% \begin{algorithm}
+%       \begin{algorithmic}
+%         \State $p \gets$ number of parents by vertex
+%         \State $r \gets root$
+%         \State $doNumbering(r)$
+%         \State $counter \gets 1$
+        
+%         \Function{doNumbering}{vertex}
+%           \State $\delta(v) \gets counter$
+%           \State $counter \gets counter + 1$
+%           \ForAll{$c \in C(vertex)$}
+%             \State $p(c) \gets p(c) - 1$
+%             \If{$p(c) = 0$}
+%               \State $doNumbering(c)$
+%             \EndIf
+%           \EndFor
+%         \EndFunction
+%       \end{algorithmic}
+%     \end{algorithm} 
+
+% \begin{algorithm}
+%   \caption{Writing to private storage on a node}
+%   \label{alg:writingToPrivateStorageOnNode}
+%   \begin{algorithmic}
+%     \State $TC \gets$ transitive closure of $G$
+%     \State $\delta_1, \delta_2 \gets$ primary dimensions
+%     \State $i \gets 2$
+%     \While {unresolved conflicts exist}
+%       \State $\delta_{i+1} \gets$ new dimension \Comment do not add it to the index
+%       \State $b \gets$ $bits(\delta_{i+1})$
+%       \State $c \gets$ resolve conflicts by genes with use of at most $b$ bits, and return the number of resolved
+%       conflicts
+%       \If {$resolvedConflicts(\delta_{i+1}) \geq c$} 
+%         \State undo the last step in the gene-based index
+%         \State add $\delta_{i+1}$ to the topological index
+%         \State $i \gets i+1$
+%       \EndIf
+%     \EndWhile   
+%   \end{algorithmic}
+% \end{algorithm}
+
+% \begin{algorithm}[H]
+% \SetAlgoLined
+% \KwResult{Write here the result }
+%  initialization\;
+%  \While{While condition}{
+%   instructions\;
+%   \eIf{condition}{
+%    instructions1\;
+%    instructions2\;
+%    }{
+%    instructions3\;
+%   }
+%  }
+%  \caption{How to write algorithms}
+% \end{algorithm}
+
+% \begin{algorithm}
+% \DontPrintSemicolon
+% \KwData{$G=(X,U)$ such that $G^{tc}$ is an order.}
+% \KwResult{$G’=(X,V)$ with $V\subseteq U$ such that  is an interval order.}
+% \Begin{
+%   $V \longleftarrow U$\;
+%   $S \longleftarrow \emptyset$\;
+%   \For{$x\in X$}{
+%     $NbSuccInS(x) \longleftarrow 0$\;
+%     $NbPredInMin(x) \longleftarrow 0$\;
+%     $NbPredNotInMin(x) \longleftarrow |ImPred(x)|$\;
+%     }
+%   \For{$x \in X$}{
+%     \If{$NbPredInMin(x) = 0$ {\bf and} $NbPredNotInMin(x) = 0$}{
+%       $AppendToMin(x)$}
+%     }
+%     \nl\While{$S \neq \emptyset$}{\label{InRes1}
+%     \nlset{REM} remove $x$ from the list of $T$ of maximal index\;\label{InResR}
+%     \lnl{InRes2}\While{$|S \cap  ImSucc(x)| \neq |S|$}{
+%       \For{$ y \in  S-ImSucc(x)$}{
+%         \{ remove from $V$ all the arcs $zy$ : \}\;
+%         \For{$z \in  ImPred(y) \cap  Min$}{
+%           remove the arc $zy$ from $V$\;
+%           $NbSuccInS(z) \longleftarrow NbSuccInS(z) - 1$\;
+%           move $z$ in $T$ to the list preceding its present list\;
+%           \{i.e. If $z \in T[k]$, move $z$ from $T[k]$ to
+%            $T[k-1]$\}\;
+%           }
+%         $NbPredInMin(y) \longleftarrow 0$\;
+%         $NbPredNotInMin(y) \longleftarrow 0$\;
+%         $S \longleftarrow S - \{y\}$\;
+%         $AppendToMin(y)$\;
+%         }
+%       }
+%     $RemoveFromMin(x)$\;
+%     }
+%   }
+% \caption{IntervalRestriction\label{IR}}
+% \end{algorithm}
 
 1. Clients send a request INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
 2. Request is received by some node in cluster that becomes coordinator C for that request
@@ -48,78 +161,59 @@ At each replica:
 3. Client receives transaction item and merges it to its current transaction state
 
 \begin{algorithm}
-  \caption{Topological numbering}
-  \label{alg:topologicalNumbering}
+\algblockdefx[NAME]{StartRequest}{EndRequest}%
+   [1][Unknown]{\textbf{Upon receiving} \emph{#1} \textbf{request}}%
+   {\textbf{end request}}
+
+\algblockdefx[NAME]{Message}{EndMessage}%
+   [1][Unknown]{\textbf{Upon receiving} \emph{#1} \textbf{message}}%
+   {\textbf{end}}   
+
+\algblockdefx[NAME]{ForEachReplica}{EndForEachReplica}%
+   {\textbf{for each} \emph{replica} $\gets$ \emph{replicas}}%
+   {\textbf{end}}   
+
+  \caption{Transactional writes}
+  \label{alg:scoringByNumOfRemovedConflicts}
   \begin{algorithmic}
-    \State $p \gets$ number of parents by vertex
-    \State $r \gets root$
-    \State $doNumbering(r)$
-    \State $counter \gets 1$
-    
-    \Function{doNumbering}{vertex}
-      \State $\delta(v) \gets counter$
-      \State $counter \gets counter + 1$
-      \ForAll{$c \in C(vertex)$}
-        \State $p(c) \gets p(c) - 1$
-        \If{$p(c) = 0$}
-          \State $doNumbering(c)$
-        \EndIf
-      \EndFor
-    \EndFunction
+    \StartRequest[transactional write]      
+      \State $C \gets$ coordinator node of request
+      \State $T \gets$ topology at coordinator node
+      \State $k \gets$ key from write request
+      \State $token \gets$ token computed by \Call{Hash Function}{$k$}
+      \State $replicas \gets$ \Call{Find Nodes Assigned To Token}{$T$, $token$} 
+      \ForEachReplica
+        \State send transactional write $message$ to $replica$
+      \EndForEachReplica
+      \State await responses
+      \If {$quorum(responses)$} 
+        \State $response \gets$ success 
+      \Else
+        \State transactional write failed
+        \State $response \gets$ failure 
+      \EndIf
+    \EndRequest    
+  
   \end{algorithmic}
-\end{algorithm} 
-
-% \begin{figure}[hbt]
-%   \begin{center}
-%     \setlength{\unitlength}{0.7cm}
-%     \begin{pspicture}[showgrid=false](3, 6)
   
-%         \psset{fillcolor=vertexColor, fillstyle=solid, xunit=7mm, yunit=8mm}
-%         \cnodeput(2, 7){a}{\color{vertexTextColor} \small A}
-%         \cnodeput(0, 5){b}{\color{vertexTextColor} \small B}
-%         \cnodeput(2, 5){c}{\color{vertexTextColor} \small C}
-%         \cnodeput(4, 5){d}{\color{vertexTextColor} \small D}
-%         \cnodeput(0, 3){e}{\color{vertexTextColor} \small E}
-%         \cnodeput(2, 3){f}{\color{vertexTextColor} \small F}
-%         \cnodeput(4, 3){g}{\color{vertexTextColor} \small G}
-%         \cnodeput(2, 1){h}{\color{vertexTextColor} \small H}
-        
-%         \psset{linecolor=connectorColor, arrowscale=2.5}
-%         \ncline{->}{a}{b}
-%         \ncline{->}{a}{c}
-%         \ncline{->}{a}{d}
-%         \ncline{->}{b}{f}
-%         \ncline{->}{d}{f}
-%         \ncline{->}{c}{e}
-%         \ncline{->}{c}{g}
-%         \ncline{->}{f}{h}
-  
-%         \psset{linecolor=highlightedConnectorColor, arrowscale=2.5}
-%         \ncarc[arcangle=30, fillstyle=none]{->}{c}{h}
-        
-%       \end{pspicture}
-%   \end{center}
-%   \caption{Trimming the false-positive conflicts in both directions}
-%   \label{fig:trimmingBoth}
-% \end{figure}
+  \begin{algorithmic}
+    \Message[transactional write]
+        \State $id \gets $ transaction id from $message$
+        \State \Call{Add To Private Transaction Storage}{$id$, $message.write$}
+        \State respond with success message
+    \EndMessage
+  \end{algorithmic}
 
-%\begin{pdfpic}
-%  \psset{unit=0.75cm}
-%\newgray{mygray}{.65}
-  % \begin{pspicture}(-5,-5)(5,5)
-  %   \psaxes[labels=none,ticks=none]{<->}(0,0)(-4,-4)(4,4)
-  %   \psdots(0,0)(3,2)(-2,1)(-1,-1)(2,-2)
-  %   \dotline(3,0)(3,2)(0,2)
-  %   \dotline(-2,0)(-2,1)(0,1)
-  %   \dotline(-1,0)(-1,-1)(0,-1)
-  %   \dotline(2,0)(2,-2)(0,-2)
-  %   \uput[dr](0,0){(0,0)}
-  %   \uput[ur](3,2){(3,2)}
-  %   \uput[ul](-2,1){(-2,1)}
-  %   \uput[dl](-1,-1){(-1,-1)}
-  %   \uput[dr](2,-2){(2,-2)}
-  % \end{pspicture}
-%\end{pdfpic} 
+% \begin{algorithmic}[1]
+% \Require $x\ge5$
+% \Ensure $x\le-5$
+% \Statex
+% \While{$x>-5$}
+%    \State $x\gets x-1$
+% \EndWhile
+% \end{algorithmic}
+\end{algorithm}
+ 
  
 
 Last step in algorithm is crucial, because client is responsible for keeping track of all things that were modified. Nodes are unaware of modifications done at other nodes. Only client can gather all that information and keep track of it.
