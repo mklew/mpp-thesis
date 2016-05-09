@@ -163,20 +163,20 @@ Read is only performed when coordinator has became a leader and completed all of
 
 
 
-\subsection{Private memtables - implementation of Private Transaction Storage}
-Storage implemented according to specification. It simply maps transaction id to its data called TransactionData. TransactionData keeps mutations mapped by keyspace, table and key.
+\subsection{MPP Private Transaction Storage}
+\emph{Private Transaction Storage} implementation which uses private \emph{memtables} to store transaction's modifications. It maps transaction id to its data \code{TransactionData}. Transaction data stores \emph{mutations} mapped by keyspace, table and \textbf{full key}, thus storage has information about what keys are modified in transaction. Each owned transaction item has corresponding entry in transaction data map.
 
-
-Each time new mutation is added to transaction data, it will be either merged with already present mutation for same partition, or it is appended as new entry in the map.
+When new modification is done in trasaction, then new mutation is added to transaction data. It is either merged with already present mutation for same partition key, or it is added as new entry in the map.
 
 
 \subsubsection{Applying changes locally}
-Cassandra uses timestamps to detect most recent write. When transaction is committed at node, its data is applied to targeted tables. All partition updates have to be written with timestamp that comes from paxos ballot. Since mutations - that have partition updates inside - were added at arbitrary time before commit, their timestamps have to be modified. Concretely binary trees with data stored in PartitionUpdates stored in mutations has to be transformed into new binary tree with all timestamps updated. Fortunately, Cassandra already provides a method which rewrites binary trees with updated timestamps.
+When transaction is committed at node, its data is applied to targeted tables.
+Since Cassandra uses timestamps to detect most recent writes all partition updates -- stored in mutations -- have to be written with timestamp that comes from paxos ballot. Since mutations were added at arbitrary time during execution of transaction, their timestamps have to be modified. Concretely binary trees with data stored in \code{PartitionUpdates} have to be transformed into new binary trees with all timestamps updated to ballot's timestamp. Fortunately, Cassandra provides a method to rewrite binary trees with updated timestamps.
 
 
 \subsubsection{In memory data}
-Private storage keeps data only in-memory. There is a risk that given many transactions Cassandra will run out of memory. However transactions are supposed to be short lived. Number of concurrent transactions could be even controlled by client of the cluster. 
-Another issue can be raised that data is lost when node shuts down and comes back immediately. Transaction’s private data would be lost at this node. However data is saved to quorum of replicas. General assumption is that at least quorum of nodes should stay alive during transaction’s life span. On these grounds, we can argue that in-memory storage is sufficient for transactions.
+Implementation of private transaction storage keeps data only in-memory. There is a risk that given many transactions Cassandra runs out of memory. However transactions are supposed to be short lived. Number of concurrent transactions can be even controlled by client of the cluster. 
+Another issue can be raised that data is lost when node shuts down and comes back immediately. In that case transaction’s private data is at this node. However data is saved to quorum of replicas. General assumption is that at least quorum of nodes should stay alive during transaction’s life span. On these grounds, we can argue that in-memory storage is sufficient for transactions.
 
 
 
