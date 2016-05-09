@@ -181,21 +181,14 @@ Another issue can be raised that data is lost when node shuts down and comes bac
 
 
 \subsection{MPP Transaction Index}
-Transaction Index is yet another in-memory service. Index needs to be thread-safe and stay consistent when many transactions try to register to it. It is easy to create global lock on index, but such implementation is not very effective and could potentially cause bottleneck. 
+Index needs to be thread-safe and stay consistent when many concurrent transactions try to register. One solution is to create global lock on index, but this can cause contention. Other solution with less contention uses many locks acquired per transaction item owned by the node. 
 
-
-Locking of index
-Index is a map from MppIndexKey to MppParticipants. MppIndexKeys are computed from transaction state’s items owned by this node. 
-
-
-Transaction Item is mapped into index key by conflict functions. That results in set of index keys. Index keys are used to find locks. In order to avoid deadlock, index keys have to be sorted so that locks are acquired in order and released in reversed order.
+\subsubsection{Locking of index}
+Index is a map from \code{MppIndexKey} to \code{MppParticipants}. Index keys are computed from transaction state’s items owned by this node. Each transaction Item is mapped into index key by one conflict function. That results in set of index keys. Locks are acquired from map of locks accessed by hash value of an index key. In order to avoid deadlock, index keys have to be sorted so that locks are acquired in same order by different transactions. Locks are released in reversed order.
 
 
 \subsubsection{Registration in index}
-When transaction wants to register in index, it first has to acquire it. Then MpPaxosParticipant is created for this transaction. All participants from all index keys are iterated over and checked if there is a single paxos round id. If there are more potential rounds, transaction cannot continue. 
-
-
-Given at most one paxos round id, new participant can be added to participants for all computed index keys.
+When transaction wants to register in index, it first has to acquire it. Then \code{MpPaxosParticipant} is created for this transaction. All participants from all index keys are iterated over and checked if there is a single paxos round id. If there are more potential rounds, transaction cannot be registered. Given at most one paxos round id, new participant is added to participants for all computed index keys.
 
 
 \subsection{Configurable conflict functions per column family}
