@@ -54,7 +54,7 @@ If there are many values being proposed at same time, only one value should be a
 \end{enumerate*}
 
 
-\subsection{Conflicting transactions}
+\subsection{Conflicting transactions}\label{sec:theory:conflictFunctions}
 In relational world it is well defined what a conflict is. In distributed setting in order to have absolute certainty whether two transactions are conflicting it requires to compare their private modifications and see whether they modify same keys. That results in as many round trips as there are items being modified by transactions multiplied by number of concurrent transactions. In distributed settings algorithms should do minimum round trips, because it costs resources and hurts performance \cite{rotem2006fallacies}.
 
 Example of conflict checking functions, that are local, this do not require round trips, but as a tradeoff have false positives include:

@@ -109,3 +109,18 @@ check whether a given object is the instance of a given concept or whether a giv
   \end{algorithmic}
 \end{algorithm}
 
+
+% listing
+\begin{lstlisting}[language=Java,style=outcode,label={lst:txState},caption={Transaction State data structure}]
+class TransactionState
+{
+    UUID id
+    Collection<TransactionItem> transactionItems    
+}
+
+class TransactionItem
+{
+    String tableName
+    Token token
+}
+\end{lstlisting}

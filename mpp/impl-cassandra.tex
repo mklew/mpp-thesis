@@ -199,28 +199,27 @@ Given at most one paxos round id, new participant can be added to participants f
 
 
 \subsection{Configurable conflict functions per column family}
-Conflict functions used to compute index keys are configurable per column family. Configuration is dynamic and can be changed at runtime by running ALTER TABLE commands.
+Conflict functions are configured per transaction item, thus conflict functions are configured per table. Per table configuration is an additional feature to algorithm. In Cassandra conflict functions configuration is implemented using column family metadata which can be changed dynamically at runtime of the cluster by executing \code{ALTER TABLE} commands. Listing \ref{lst:configureConflictFunctions} shows how conflict function is set to resolve conflict on same token range slice number, which puts bounds on number of concurrent transactions in table \code{sliced_counters} to $2000$ transactions. 
+
+\begin{lstlisting}[style=outcode,label={lst:configureConflictFunctions},caption={Configuring conflict function on Cassandra table}]
+CREATE TABLE counters.sliced_counters 
+   (id uuid, counter1 int, counter2 int, PRIMARY KEY (id));
 
 
-Example of configuration:
+ALTER TABLE counters.sliced_counters WITH extensions = { 
+   'transaction_conflict_bounds' : 'TOKEN_RANGE_SLICES', 
+   'token_range_slices' : '2000' };
+\end{lstlisting}
 
+%It will divide token range into 2000 even slices. Such configuration allows to have at most 2000 transactions running on single node for that particular table.
 
-CREATE TABLE counters.sliced_counters (id uuid, counter1 int, counter2 int, primary key (id));
-
-
-ALTER TABLE counters.sliced_counters WITH extensions = { 'transaction_conflict_bounds' : 'TOKEN_RANGE_SLICES', 'token_range_slices' : '2000' };
-
-
-It will divide token range into 2000 even slices. Such configuration allows to have at most 2000 transactions running on single node for that particular table.
-
-
-Transaction_conflict_bounds can be one of:
-* COMMON_TX_ITEMS - conflict on same transaction items
-* TOKEN_RANGE_SLICES - token range slices by parameter ‘token_range_slices’
-* ONE_FOR_ALL - single transaction per table
-
-
-By default, conflicts are resolved using common transaction items.
+All proposed conflict functions (\ref{sec:theory:conflictFunctions}) are available with following names:
+\begin{enumerate*}
+\item \code{COMMON_TX_ITEMS} -- conflict on same transaction items
+\item \code{TOKEN_RANGE_SLICES} -- conflict on same token range slice number. Function has additional configurable parameter \code{int token_range_slices}
+\item \code{ONE_FOR_ALL} -- conflict on same table.
+\end{enumerate*}
+By default tables are configured with conflict function on same transaction items.
 
 
 \subsection{Transaction Log}
