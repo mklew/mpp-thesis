@@ -2,43 +2,82 @@
 
 \chapter{Testing}\label{chapter:testing}
 
-Testing
- Chapter is focused on explaining theory behind testing that gives high certainty about correctness of algorithm and its implementation.  I’ve run many tests on different levels that had to verify if implementation is correct, but what is more important if new multi partition paxos algorithm delivers its promise. 
-Paxos has been proven formally, whereas algorithm developed during this research has been proven to work in practice for all written tests. For some, it might not be enough, but writing a formal proof is a complex task which would require further research.
+Testing chapter is focused on explaining theory behind testing of \mpp algorithm and its components that gives high certainty about correctness of algorithm and its implementation. I’ve run many tests on different levels that had to verify if implementation is correct, but what is more important if new multi partition paxos algorithm delivers its promise of multi--partition serializable transactions. 
+Paxos algorithm has formal proof, whereas \mpp algorithm developed during this research has been proven to work in practice for all written tests. Writing a formal proof is a complex task which would require further research and is out of scope of this work.
+
+\section{Unit testing}
+Many aspects of algorithm could be and were unit tested. Components such as \emph{Transaction Index}, \emph{Transaction Log}, \emph{Private Transaction Storage} were  tested for their expected behaviour. Tests also covered parts of \mpp which were not cluster dependent such as \emph{phase} transitions. Unit tests are not enough to check for correctness especially when testing distributed algorithms which are  exposed to network latencies, concurrency issues like deadlocks and other problems in the distributed environement. 
+
+\section{Cluster tests}
+Tests on real cluster of nodes were major part of all tests performed to validate \mpp correctness. I have conducted multiple experiments which covered all aspects of \mpp algorithm. 
+
+\subsection{Testing environement}
+Cluster tests were performed independently on two clusters with $3$ and $5$ nodes per cluster. Tests run on $5$ nodes yielded important results, because with $5$ nodes and $N=3$ there are at most $10$ replica groups. 
+
+Clusters were run locally using \emph{Cassandra Cluster Manager} which is a tool to quickly set up local cluster.
+
+\subsection{Testing method}
+
+\subsubsection{Counters}
+Tests are performed using testing schema with counter tables. Counter table is shown on Fig. (\ref{fig:counterTable}). It has $5$ columns with \emph{int} counter values: $c1,c2,c3,c4,c5$
+Testing schema consists of $2$ keyspaces with number of counter tables in each. Counter tables in each keyspace differ in name, but structure is the same.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c||c|c|c|c|c}
+        \toprule
+        id 		 & $c_{1}$ & $c_{2}$ & $c_{3}$ & $c_{4}$ & $c_{5}$ \\ \midrule
+        $counter_{1}$ & 1  & 1  & 1  &  1 & 1  \\
+        $counter_{2}$ & 1  & 2  & 3  &  4 & 5  \\ \bottomrule
+      \end{tabular}
+      \caption{A counter table with two sample rows}
+  \label{fig:counterTable}
+\end{figure}
+
+\subsubsection{Iterations}
+Each test case is done in many iterations i.e. $300$. During each iteration, there are many concurrent transactions which execute at the same time. Each transaction performs operations on counters. Most basic operation is to increment counter column using transactional update operation.
+
+\subsubsection{Counter executors}
+Counter executors run in parallel through all iterations. 
+Counter executors operate on set of counters. They perform same operation on each counter in each iteration, where each iteration is a new transaction that is committed at the end of iteration. 
+Basic executor increments specific counter column $c$ of each counter in the set.
+
+\subsection{Testing of repair of in progress proposal}
+Tests required modification of an implementation. During this test, counters from table named \code{stop_after_proposed} are incremented. \mpp has been modified to fail after algorithm reached has successfully proposed, thus before commit. It leaves transaction as accepted in progress proposal that should be finished by next proposer. 
+Normal select is used to check that changes were not yet committed by the transaction. 
+Then a transactional select is used which has to run \mpp algorithm until \emph{prepare phase} is reached. In progress proposal is detected during prepare and has to be completed. Transactional select commits transaction and returns incremented column. Results of select statement are checked for correctness. 
+
+\subsection{Testing of independent transactions}
+Tests employs multiple counter executors which receive disjoint sets of counters. Each executor increments counters by one and commits transactions. Each executor keeps track of number of committed transactions.
+
+After iterations, number of committed transactions must match counter values. In case of non conflicting counters, all transactions need to commit, thus counters must have counts equal to number of iterations.
+
+\subsection{Testing of conflicting transactions}
+There are $5$ counter executors which receive same set of counters. Each executor increments different count column. 
+
+After iterations, number of committed transactions must match counter values. In case of conflicting transactions counts are less than number of iterations. Counters may have different counts in columns, but all counter rows must have same values in $c_{x}$ columns, because they were incremented by single executor.
+
+\subsection{Testing of partially conflicting transactions}
+Test runs the same way as test for conflicting transactions, but executors receive additional disjoint sets of counters, so each executor has intersection on counters plus additional ones private for executor. 
+
+Assertions are the same as in the previous test.
+
+\subsubsection{Different conflict functions}
+Testing schema has counter tables with different conflict functions set. \mpp has to work for any conflict functions. Testing scenario remains the same. Expected results are also the same.
+
+\subsection{Testing correctness of commit and rollback}
+Testing correctness of rollback and commit is the most crucial test, because tests with incrementations are dependent on truth about rollback and commit responses.
+
+For this test, different counter executors were used. There are $2$ different counter executors. Both of them receive set of counters with even number of counters. Size of the set is double number of iterations. All counters start at $0$.
+
+First counter executor, \emph{Next Two Counter Executor}, in each iteration increments next two counters. In iteration $0$, increments $counter_{0}$, $counter_{1}$, in iteration $1$ increments $counter_{2}, counter_{3}$ and so continues until end of iterations. Second counter, \emph{Even Counter Executor}, in each iteration increments all counters which have even index in the set.
+
+Rationale behind test is that when \emph{Next Two Counter Executor} fails to commit and receives rollback, then for this particular iteration counter with odd index should not be incremented by executor, thus must have initial $0$ count. Otherwise transaction should be committed instead of rolled back.
+
+\subsection{Testing during partial failure}
+All previously described tests were also run with cluster during partial failure. Node was shutdown and tests were run. Since \mpp tolerates partial failures, as long as quorum is alive and responds to requests, tests yield same results.
+
+% TODO, co tu opisac?
+%\section{Performance testing}
 
 
-Unit testing
-Many unit tests were written to test particular functionality in isolation. 
-
-
-TODO description...
-
-
-Cluster tests
-* Feature tests - single features tested on cluster
-* Full tests - TODO main part of testing
-* Tell about using CCM
-
-
-Full tests
-
-
-Counters - basic building block for different tests
-
-
-Testing for rollback
-
-
-Testing for read repair
-Read has to be consistent when leader crashes
-
-
-Testing for concurrent transactions
-Counters and executors which increment them. Number of incrementations has to be equal to successful transactions
-
-
-Testing for independent transactions
-
-
-Performance tests
-TODO how to test performance 
