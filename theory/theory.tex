@@ -7,11 +7,33 @@ Distributed databases are .. \ref{fig:hierarchyElements}. \cite{CassandraDataSta
 
 \subsection{Cassandra}
 % TODO referencje do Cassandry, krotki wstep o Cassandrze
+% TODO wspomnieć o LWT.
 Cassandra is one of more widely used NoSql databases. 
 
 Cassandra
 
 Cassandra uses binary protocol named Cassandra Query Language (CQL)
+
+\subsection{MarkLogic}
+MarkLogic is a NoSql database with the document-centric schema-agnostic data model (more on this \cite{markLogicDataModel}) and support of ACID transactions \cite{markLogicAcid}.
+MarkLogic has native support for formats such as JSON, XML and RDF. ACID transactions are implemented by the means of multi-version concurrency control (MVCC) and locking. In an MVCC system, changes are tracked with a timestamp number on each document. 
+The database uses these timestamps to ensure that all users see consistent data. 
+Transaction has to acquire write locks on all of the updated documents and read locks on all of the queried documents in order to complete evaluation. Acquired locks are held until the transaction ends, which prevents other transactions from updating the read locked document and ensures a read-consistent view of the document. 
+Deadlocks might happen, but are detected by database, and are dealt with by aborting one or the other request and retrying it later (more on this \cite{markLogicUnderstandingTransactions}).
+
+% Bazy które wspierają jakieś transakcje
+% ACID transactions
+
+\subsection{FoundationDB}
+
+% Było, miało transakcje, zostało wchłonięte przez Apple i znikneło z Internetu
+
+
+\subsection{Distributed relational databases}
+% TODO wspomnieć coś o tym, napisać, że jest. Może porównać z Cassandrą
+
+% TODO inne rozproszone bazy z transakcjami, takie jak Cassandra
+
 
 \subsubsection{Eventual consistency}\label{sec:theory:eventualConsistency}
 In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is an \emph{AP} database with eventual consistency.
@@ -26,12 +48,31 @@ Transactions in RDBMS
 \subsection{2 phase commit}
 
 \section{Distributed transactions}
+% TODO rozrysować co czym jest, Raft, Paxos -> distributed consensous algorithm
+% RAMP atomic commit
+
+% LWT (CAS) distributed transaction, compare and set with distributed consensous. Implementacja w Cassandrze.
 
 \subsection{3 phase commit}\label{sec:theory:transactions:3pc}
 
 \subsection{Paxos}
 
+% TODO opisać na tyle szczegółowo żeby móc je porównać. 
+% bez dokładnego schematu
+% ogólny schemat, najbardziej typowy przypadek opisać, bez dowodów, bez wyników testów.
+% żeby było wiadomo o co chodzi.
+
+% po to żeby móc porównać, Paxos jest lepszy od 3PC bo (ma partycje) i źródło "dokładnie jest to opisane tu i tam"
+% ma wynikać z jakiego powodu jest lepszy
+
+
+%  Paxos, Raft, 3PC opisane na jednym poziomie szczegółowości
+
+% żeby do zrozumienia pracy nie trzeba było zaglądać gdzieś indziej.
+
+
 \subsection{Raft}
+% TODO napisać jakie to są guarantees
 \emph{Raft} algorithm has same guarantees, as \paxos. \emph{Raft} has been designed to be an example of more understandable distributed consensus algorithm than \paxos. \cite{ongaro2014search} The difference to \paxos  is that \emph{Raft} has been decomposed into independent subproblems which clearly address problems. \emph{Raft} uses \emph{Leader election}. Leader is elected for specific term. \emph{Raft} uses \emph{Log Replication} to arrive at consensus. Leader proposes new value to \emph{followers} which append value to uncommitted log. Once leader has majority of acknowledges it sends commit message. Followers receive commit message and commit value in the log. Visualization of \emph{Raft} algorithm is available at \cite{raftVisual}.
 
 \subsection{RAMP}\label{sec:theory:transactions:ramp}
@@ -39,51 +80,51 @@ Transactions in RDBMS
 enforcement, and materialized view maintenance. \emph{RAMP} ensures \emph{atomic visibility}: either all or none of each transaction's updates are seen by other transactions. \emph{RAMP} is resilient to partial failures (via \emph{synchronization independence}) and has network partition independence by minimized communication between servers. \emph{RAMP} uses multi-versioning with a variable but small amount of metadata per write. \emph{RAMP} transactions are linearly scalable. Scalability has been tested up to 100 servers.
 
 \subsection{LWT}\label{sec:theory:transactions:lwt}
+% TODO źródło w (more on this)
+As mentioned earlier, Light Weight Transactions is the name of compare-and-swap functionality implemented in Cassandra. Internally, LWT uses the Paxos algorithm with some modifications which were aimed to prevent potential single point of failure, thus improving high availability. SPOFs may surface in case the leader fails when it is about to propose a new value (more on this…). The problem was addressed by sacrificing the standard leader election in favour of allowing any node to act as a leader, so that it can propose a value at any time. On the downside, such approach increases the risk of contention. 
 
- How LWT are implemented
-
-
-LWT is based on paxos algorithm without leader election phase. It is done without leader election to avoid having single point of failure for just brief moment of having leader that is going to propose new value. Without leader election any node can act as a leader. Therefore any node can propose new value to other nodes at any time. It increases risk of contention, but it was a tradeoff that creators of C* accepted. 
-
-
-In order to use paxos, it is necessary to have a place to store paxos round’s information. That is proposed value, ballot, most recent commit and so on as required by paxos. That data structure is called Paxos State.
-Value in LWT is an update U for single key K. Key points to one partition with data to be modified. We could also say, that LWT are defined for single token on token ring since partition is represented by a token.
-Therefore value is identified by K and so paxos state can be identified by same key. It is crucial to be able to find paxos state given proposed value. In case where value is a single update, paxos state can be naturally identified by same key. It won’t be the case when paxos value consists of many keys.
+One of the key requirements of Paxos protocol is storage of PaxosState - a data structure composed of the proposed value, proposed ballot, promised ballot and most recent commit. In case of LWT, the value represents the update itself along with the token of the partition key where that update should be applied. That token uniquely identifies PaxosState so that several proposals for the same partition can be associated with the same Paxos instance. 
 
 
-LWT consists of phases which are:
-1. Prepare
-2. Get promise
-3. Read row
-4. Get results
-5. Check condition
-6. Propose new value
-7. Acceptance
-8. Broadcast commit
-9. Wait for acknowledges
+LWT includes the following phases: \begin{enumerate*}
+\item prepare,
+\item get promise,
+\item read row,
+\item get results,
+\item propose a new value,
+\item acceptance,
+\item broadcast commit,
+\item wait for acknowledgements.
+\end{enumerate*} Let us analyze each of them in the environment with 5 nodes, replication factor 3 and request to insert user named \emph{John} to \emph{users} table, but only if \emph{John} does not exist. For simplicity, \emph{users} table has only two columns: \begin{enumerate*} 
+\item name -- text column and primary key, \item email -- text column. \end{enumerate*} LWT begins with a node 5 receiving request. Node 5 is then called coordinator node. The coordinator has to become the leader of paxos round identified by the token computed from partition key of \emph{users} table, thus from string value \emph{John}. To become the leader, the coordinator has to create the new ballot and send it along with the token and table name to replica nodes: node 1, node 2, node 3. Each replica has to check whether the ballot is the highest ballot it has seen, and if it is, then replica saves it in the PaxosState and responds with a promise. The leader has to wait for majority of promises before it proceeds. When majority promises, the coordinator may proceed to read the row and check the condition. The condition is that \emph{John} cannot exist, thus read has to not find any rows querying users by user name \emph{John}. Let us assume that indeed user \emph{John} did not exist, thus condition is met which allows the coordinator to propose an insert of \emph{John} with email \emph{john.doe@gmail.com} to \emph{users} table. The coordinator sends proposal message, with an insert and same ballot, to replicas and waits for acceptances. A replica saves proposed insert to PaxosState and replies with acceptance message.
+When the coordinator receives majority of acceptances it broadcasts the commit message and waits for majority of acknowledgements. Upon receiving commit message a replica applies an update stored in PaxosState, thus it performs the insert of \emph{John} to \emph{users} table and acknowledges commit with a reply.
+
+At any time during whole procedure at minority of replicas might stop responding and LWT can continue. In this case, one node can fail without affecting \emph{LWT}. If more than one node fails, then LWT is aborted. 
+
+Also at any time the leader might lose leadership if other node does prepare with a higher ballot. In that case the coordinator has to wait, giving other leader time to complete its \lwt, and try again with new ballot.
+
+Note that \lwt affects only limited number of nodes -- replicas of the key, thus majority is considered only at the level of replicas, not at the level of the cluster.
 
 
-Let’s analyze flow of actions given first example of LWT with table users and user John.
-Assume that replication factor N=3 so replicas are: node1, node2, node3.
+%1. LWT is initiated by client request: insert John if not exists
+%2. Request is routed to some node X that becomes coordinator of LWT
+%3. Coordinator wants to be a leader so it creates a ballot and sends prepare to replicas: node1, node2, node3. This is prepare phase.
+%4. Replicas promise to not accept values from leaders who have lower ballots.
+%5. Coordinator gets 3 of out 3 promises. Quorum promised to listen.
+%6. Coordinator performs read: SELECT * FROM users WHERE user_id = 1
+%7. Coordinator checks condition “IF NOT EXISTS”. If such row did not exist in quorum of replicas it proceeds further
+%8. Coordinator, as a leader, proposes new value which is an insert to users table.
+%9. All three nodes reply with accept. Quorum accepted insert.
+%10. At this point, insert is an in progress proposal that has been accepted by majority of replicas. Even if coordinator crashes, once someone selects user with id=1 or retries to insert it. This proposal will get committed. Let’s assume that coordinator is well and proceeds to commit.
+%11. Coordinator broadcasts commit message
+%12. Replicas apply insert locally and reply with acknowledge message
+%13. Coordinator receives quorum of acknowledges. LWT has been successfully completed.
+%14. Coordinator responds to client: John was inserted.
 
 
-1. LWT is initiated by client request: insert John if not exists
-2. Request is routed to some node X that becomes coordinator of LWT
-3. Coordinator wants to be a leader so it creates a ballot and sends prepare to replicas: node1, node2, node3. This is prepare phase.
-4. Replicas promise to not accept values from leaders who have lower ballots.
-5. Coordinator gets 3 of out 3 promises. Quorum promised to listen.
-6. Coordinator performs read: SELECT * FROM users WHERE user_id = 1
-7. Coordinator checks condition “IF NOT EXISTS”. If such row did not exist in quorum of replicas it proceeds further
-8. Coordinator, as a leader, proposes new value which is an insert to users table.
-9. All three nodes reply with accept. Quorum accepted insert.
-10. At this point, insert is an in progress proposal that has been accepted by majority of replicas. Even if coordinator crashes, once someone selects user with id=1 or retries to insert it. This proposal will get committed. Let’s assume that coordinator is well and proceeds to commit.
-11. Coordinator broadcasts commit message
-12. Replicas apply insert locally and reply with acknowledge message
-13. Coordinator receives quorum of acknowledges. LWT has been successfully completed.
-14. Coordinator responds to client: John was inserted.
+%Sequence above is a happy path. At any point coordinator might lose his leadership if some other node sends prepare with higher ballot. In that case coordinator waits a bit and retries whole process again. 
+%Also any replica might stop responding, which is fine as long as quorum is up and well. If quorum responds to messages, coordinator can proceed. If there is no quorum then paxos conditions are not met and LWT cannot be continue. However during normal operation is it rather rare to see many nodes down so in general LWT can successfully finish with 2 out of 3 replicas running. Note that cluster size might be much bigger, for example hundred nodes, but since replication factor N=3, only three nodes are interesting from perspective of LWT and Paxos.
 
 
-Sequence above is a happy path. At any point coordinator might lose his leadership if some other node sends prepare with higher ballot. In that case coordinator waits a bit and retries whole process again. 
-Also any replica might stop responding, which is fine as long as quorum is up and well. If quorum responds to messages, coordinator can proceed. If there is no quorum then paxos conditions are not met and LWT cannot be continue. However during normal operation is it rather rare to see many nodes down so in general LWT can successfully finish with 2 out of 3 replicas running. Note that cluster size might be much bigger, for example hundred nodes, but since replication factor N=3, only three nodes are interesting from perspective of LWT and Paxos.
-
-
+\subsection{Datomic}
+% TODO podejście na jeszcze wyższym poziomie abstrakcji. 
