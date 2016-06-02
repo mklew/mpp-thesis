@@ -4,6 +4,10 @@
 \emph{LWT} (\ref{sec:theory:transactions:lwt}) are limited to a single partition. Therefore LWT cannot be used for atomic updates of many partitions. Usual use case for transactions is atomic and consistent update of many rows, thus LWT is not enough to support that use case. \emph{RAMP} transactions (\ref{sec:theory:transactions:ramp}) have support for multi-partition operations. 
 However \emph{RAMP} relies on 64 bit timestamp which is not the current standard, thus \emph{RAMP} cannot be used at the time being.
 
+% TODO nie pisać porównań MPP z Paxos, ani z 3PC
+
+% TODO nie pisać ogólnie o transakcjach w bazach danych => przenieść to do motywacji
+
 \mpp is an algorithm that has multi-partition operations support. \mpp can be used nowadays. Therefore is has advantage over \emph{LWT} and \emph{RAMP}. It has network partition tolerance, therefore has advantage over \emph{3PC} (\ref{sec:theory:transactions:3pc}).
 \mpp is resilient to partial failures, therefore is applicable to distributed environments. \mpp provides serializable isolation level which gives more isolation than read atomic in \emph{RAMP}.
 

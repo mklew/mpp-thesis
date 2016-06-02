@@ -10,7 +10,7 @@ However there are no strict restrictions and algorithm can be used with any dist
 \mpp is resilient to network partitions. In terms of \emph{CAP} \cite{Brewer:2012ba} it uses \emph{AP}
 \mpp is eventually consistent (\ref{sec:theory:eventualConsistency}). Comparison of \mpp to \lwt is shown at Fig. \ref{fig:mppVsLwt}.
 
-
+% TODO poprawić, że w MPP jest read-committed a nie serializable.
 \begin{figure}[hbt]
   %\centering
   \setlength{\unitlength}{1.3cm}  
@@ -19,8 +19,8 @@ However there are no strict restrictions and algorithm can be used with any dist
     \resizebox{\textwidth}{!}{\begin{tabular}{c|c|c|c|c|c|c}
       \toprule
       Algorithm & multi-partition operations & isolation level & atomicity & durability & consistency & \emph{CAP} \\ \midrule
-      \mpp      &   yes                      & serializable    &   yes     & yes        & eventually consistent & \emph{AP}  \\
-      \lwt      &   no, single partition     & read-committed  &   yes     & yes        & eventually consistent & \emph{AP}  \\  \bottomrule      
+      \mpp      &   yes                      & read-committed  &   yes     & yes        & eventually consistent & \emph{AP}  \\
+      \lwt      &   no, single partition     & serializable  &   yes     & yes        & eventually consistent & \emph{AP}  \\  \bottomrule      
     \end{tabular}}
   }
   \caption{\mpp compared to \lwt}
