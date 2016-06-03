@@ -7,7 +7,7 @@
       \begin{pspicture}[showgrid=false](8, 8)
   
         \psset{fillcolor=vertexColor, fillstyle=solid}
-        \cnodeput(2, 7){a}{\color{vertexTextColor} A}
+        \cnodeput(2, 7f{a}{\color{vertexTextColor} A}
         \cnodeput(4, 7){b}{\color{vertexTextColor} B}
         \cnodeput(6, 7){c}{\color{vertexTextColor} C}
         \cnodeput(2, 5){d}{\color{vertexTextColor} D}
@@ -124,3 +124,20 @@ class TransactionItem
     Token token
 }
 \end{lstlisting}
+
+\begin{figure}[h]
+  \centering
+  \subfloat[Unique genes]
+  {\label{fig:compressionBenefitsA}\includegraphics[height=60mm]{images/compressBenefits1.eps}\hspace{10mm}}
+  \subfloat[Reused genes]
+  {\label{fig:compressionBenefitsB}\includegraphics[height=60mm]{images/compressBenefits2.eps}}
+  \caption{The benefits of non-conflict-free encoding}
+  \label{fig:compressionBenefits}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \label{fig:archClusterA}\includegraphics[height=60mm]{images/cassandra-ring.png}\hspace{10mm}
+  \label{fig:archCluster}
+  \caption{A cluster on the ring}
+\end{figure}
