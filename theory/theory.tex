@@ -37,6 +37,16 @@ Rysunek
 \end{description}
 
 \subsubsection{Linear scale performance}
+Cassandra offers linear scale performance, which means that, for example if four nodes can handle hundred thousand requests per second, then adding another four nodes results in the cluster, which can handle twice as much requests per second. 
+
+The key principles behind linear scaling are:  data partitioning and token ranges. 
+Partitioning is the assignment of the token values, which are \emph{long} values, to the keys, and more concretely to the partitioning keys of a primary key. Cassandra provides different \emph{Partitioners}, which implement different algorithms to perform such token assignment. \emph{Murmur3Partitioner} uses \emph{Murmur3} hash algorithm that provides a good distribution over the hash space, and is fast due to the fact that it does not support cryptographic properties, which are not required by Cassandra.
+
+Each node is responsible for a token range, which is a part of the token ring. Responsibility means that a node stores the data for which the token value falls into its token range. When a new node is added, it automatically receives a token range and then the data is moved between the nodes in order to adjust to the new division of the token ring.
+
+Correct data modeling is also an important aspect of the linear scalability, since partitioning keys of tables have to be designed in a way that provides high cardinality of the keys. Otherwise part of the cluster starts to collect more data than its storage capabilities, and it will fail. 
+
+%Linear scale performance is provided by even assignment of token ranges of the token ring to the nodes in the cluster combined with data \emph{partitioning} -- which is assigning a token values to the keys -- that evenly distributes the data around the cluster. When a new node is added to the cluster, it automatically 
 
 Rysunek + opis taki jak wyżej.
 
