@@ -10,7 +10,7 @@ This section provides overview of non-relational distributed databases with main
 \subsection{Cassandra}
 % TODO referencje do Cassandry, krotki wstep o Cassandrze
 % TODO wspomnieć o LWT.
-Cassandra \cite{CassandraApacheDocs} \cite{CassandraDataStaxDocs} is a high performance, extremely scalable, fault tolerant (i.e. no single point of failure), distributed post-relational database solution, which combines all the benefits of Google Bigtable \cite{chang2008bigtable} and Amazon Dynamo \cite{decandia2007dynamo}.
+Cassandra \cite{CassandraApacheDocs} \cite{CassandraDataStaxDocs} is a high performance, scalable, fault tolerant (i.e. no single point of failure), distributed post-relational database solution, which combines benefits of Google Bigtable \cite{chang2008bigtable} and Amazon Dynamo \cite{decandia2007dynamo}.
 % to handle the types of database management needs that traditional RDBMS vendors cannot support. 
 
 %Cassandra offers linear scale performance, which means that, for example if four nodes can handle hundred thousand 
@@ -29,13 +29,18 @@ Its key features are:
 \end{enumerate*}
 
 \subsubsection{Architecture}
-Cassandra has a masterless \emph{ring} architecture, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). \emph{Gossip} is a scalable, distributed protocol used for inter-node communication. Cassandra uses replication, which is keeping copies of the data on multiple nodes, to also avoid SPOF during reads and writes. Replication factor -- number of nodes on which the data is stored -- is configurable per keyspace \ref{sec:theory:cassandra:datamodel}. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime.
+Cassandra has a masterless \emph{ring} architecture, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication, which is keeping copies of the data on multiple nodes, to also avoid SPOF during reads and writes. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime.
+\emph{Gossip} is a scalable, distributed protocol used for inter-node communication.
 
-TODO Read path
-
-TODO Write path
+\subsubsection{Replication}
+Cassandra supports configurable replication via \emph{replication factor N}, which is the total number of nodes on which the data is stored, defined per keyspace \ref{sec:theory:cassandra:datamodel}. A replication factor of 3 means that three copies of the data exist across the cluster on 3 different nodes.
 
 TODO Rysunek z token range i replication -> więcej o replikacji
+Cassandra
+\subsubsection{Read path}
+TODO Read path
+\subsubsection{Write path}
+TODO Write path
 
 %Architecture
 % Token ring
