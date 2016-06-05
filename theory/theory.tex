@@ -36,10 +36,10 @@ Cassandra has a masterless \emph{ring} architecture \ref{fig:archCluster}, in wh
 	\centering
 	%\subfloat[The cluster on the ring]
 	%{
-	\label{fig:archClusterA}\includegraphics[height=60mm]{images/cassandra-ring.png}\hspace{10mm}
-	%}
-	\label{fig:archCluster}
+	\includegraphics[height=60mm]{images/cassandra-ring.png}\hspace{10mm}
+	%}	
 	\caption{A cluster on the ring}
+	\label{fig:archCluster}
 \end{figure}
 
 \subsubsection{Replication}
@@ -49,6 +49,8 @@ Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cl
 Each node is the \emph{primary replica} for the token range placed counter clock-wise to it, thus node $1$ is the primary replica for range $75-0$, node $2$ for $1-25$, node $3$ for $26-50$, and node $4$ for $51-75$. 
 Token value $91$ belongs to the node $1$, and since $N=3$, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $2$ and node $3$, which are \emph{secondary replicas} of the token. 
 
+% źródło https://pandaforme.gitbooks.io/introduction-to-cassandra/content/understand_replication.html
+% prawdziwe źródło to prawdopodobnie kurs z DataStax, ale nie mogę tego znaleźć.
 \begin{figure}[h]
 	\centering
 	%\subfloat[The cluster on the ring]
@@ -85,7 +87,7 @@ Cassandra's data model is a wide-row store, which consists of tables, which resi
 
 \subsubsection{Linear scale performance}
 \label{sec:theory:cassandra:linear}
-Cassandra offers linear scale performance, which means that, for example \ref{fig:archLinearScale} if two nodes can handle hundred thousand requests per second, then adding another two nodes results in the cluster, which can handle twice as much requests per second. 
+Cassandra offers linear scale performance, which means that if two nodes can handle hundred thousand requests per second, then adding another two nodes results in the cluster, which can handle twice as much requests per second. Figure \ref{fig:archLinearScale} depicts the example.
 
 The key principles behind linear scaling are:  data partitioning and token ranges. 
 Partitioning is the assignment of the token values, which are \emph{long} values, to the keys, and more concretely to the partitioning keys of a primary key. Cassandra provides different \emph{Partitioners}, which implement different algorithms to perform such token assignment. \emph{Murmur3Partitioner} uses \emph{Murmur3} hash algorithm that provides a good distribution over the hash space, and is fast due to the fact that it does not support cryptographic properties, which are not required by Cassandra.
@@ -99,9 +101,9 @@ Correct data modeling is also an important aspect of the linear scalability, sin
   \centering  
   % TODO źródło?
   % Źródło http://docs.datastax.com/en/cassandra/2.1/cassandra/images/intro_cassandra.png
-  \includegraphics[width=\textwidth]{images/cassandra-linear-scalability.png}\hspace{10mm}
-  \label{fig:archLinearScale}
+  \includegraphics[width=\textwidth]{images/cassandra-linear-scalability.png}\hspace{10mm}  
   \caption{The linear scalability from 100k to 200k requests per second}
+  \label{fig:archLinearScale}
 \end{figure}
 
 
@@ -140,7 +142,26 @@ Cassandra is a general purpose non-relational database, however there are areas 
 Cassandra does not provide ACID compliant transactions, but it offers Light Weight Transactions, which offer a degree of transactionality limited to the scope of single partition, therefore to the single primary key\footnote{concretely to the partitioning part of the key in terms of the complex key}. Section \ref{sec:theory:transactions:lwt} provides more on this subject in comparison to other distributed transactions. 
 
 \subsubsection{Compared to RDBMS}
-Tablelka + referencja
+\begin{figure}[hbt]
+  %\centering
+  \setlength{\unitlength}{1.3cm}  
+  \subfloat{
+    \renewcommand{\tabcolsep}{0.1cm}
+    \resizebox{\textwidth}{!}{\begin{tabular}{c|c}
+      \toprule
+      RDBMS & Cassandra  \\ \midrule
+      manages structured data      &  manages any type of data    \\
+      ACID transactions 		   &  simple transactions supported by LWT \\
+      SQL & CQL \\
+      scales vertically & scales horizontally \\
+      master-slave architecture & masterless, share nothing architecture \\
+      denormalization is the bad practice & denormalization is the best practice \\
+      single points of failure with failover & no single points of failure \\  \bottomrule      
+    \end{tabular}}
+  }
+  \caption{RDBMS compared to Cassandra}
+  \label{fig:cassandraToRdbms}
+\end{figure}
 
 \subsubsection{Eventual consistency}\label{sec:theory:eventualConsistency}
 In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is the \emph{AP} database with eventual consistency, which means that over time the data becomes consistent on all nodes, but there are no guarantees about time it takes. Cassandra uses techniques such as: \begin{enumerate*} 
@@ -165,18 +186,20 @@ Its core data model is a ordered key-value store. The ordering property increase
 % TODO inne rozproszone bazy z transakcjami, takie jak Cassandra
 
 \subsection{Distributed relational databases}
-% TODO wspomnieć coś o tym, napisać, że jest. Może porównać z Cassandrą
-
-
-
-
-
+Distributed Relational Database Architecture (DRDA) \cite{drda} is an open standard architecture for distributed relational databases, which provide relational data, but distributed among multiple platforms, which communicate with each other. An example of a DRDA compliant database is the DB2 created by IBM. The database supports SQL queries, which can access tables from different platforms. 
 
 \section{Transactions}\label{sec:theory:transactions}
 Transactions in RDBMS
 
 % TODO organizacja rozdziału, czy paxos powinien mieć pełny opis, czy tylko referencja? 
 \subsection{ACID}
+TODO Czy ja w ogóle powinienem to rozszerzac? Czytelnik powinien to znac.
+Transactions in relational databases are ACID compliant, which means that a transaction is \begin{enumerate*} 
+\item Atomic - either all statements in the transaction succeed or none,
+\item Consistent - TODO
+\item Isolated - transactions do not interfere with each other during execution,
+\item Durable - changes made by a committed transaction are preserved even after the database failure.
+\end{enumerate*}
 
 \subsection{2 phase commit}
 
