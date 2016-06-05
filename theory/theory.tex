@@ -10,14 +10,22 @@ This section provides overview of non-relational distributed databases with main
 \subsection{Cassandra}
 % TODO referencje do Cassandry, krotki wstep o Cassandrze
 % TODO wspomnieć o LWT.
-Cassandra \cite{CassandraApacheDocs} \cite{CassandraDataStaxDocs} is a high performance, extremely scalable, fault tolerant (i.e. no single point of failure), distributed post-relational database solution. Cassandra combines all the benefits of Google Bigtable \cite{chang2008bigtable} and Amazon Dynamo \cite{decandia2007dynamo} to handle the types of database management needs that traditional RDBMS vendors cannot support. 
+Cassandra \cite{CassandraApacheDocs} \cite{CassandraDataStaxDocs} is a high performance, extremely scalable, fault tolerant (i.e. no single point of failure), distributed post-relational database solution, which combines all the benefits of Google Bigtable \cite{chang2008bigtable} and Amazon Dynamo \cite{decandia2007dynamo}.
+% to handle the types of database management needs that traditional RDBMS vendors cannot support. 
 
 %Cassandra offers linear scale performance, which means that, for example if four nodes can handle hundred thousand 
 %requests per second, then adding another four nodes results in the cluster, which can handle twice as much requests per second. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime. 
 
 \subsubsection{Key features}
+Its key features are:
 \begin{enumerate*}
-\item adasd
+\item masterless architecture,
+\item linear scale performance \ref{sec:theory:cassandra:linear},
+\item continuous availability,
+\item flexible data model \ref{sec:theory:cassandra:datamodel},
+\item multi data center support,
+\item all nodes accept reads and writes,
+\item Cassandra Query Language \ref{sec:theory:cassandra:cql}.
 \end{enumerate*}
 
 \subsubsection{Architecture}
@@ -56,6 +64,7 @@ Cassandra's data model is a wide-row store, which consists of tables, which resi
 %\end{description}
 
 \subsubsection{Linear scale performance}
+\label{sec:theory:cassandra:linear}
 Cassandra offers linear scale performance, which means that, for example \ref{fig:archLinearScale} if two nodes can handle hundred thousand requests per second, then adding another two nodes results in the cluster, which can handle twice as much requests per second. 
 
 The key principles behind linear scaling are:  data partitioning and token ranges. 
@@ -80,6 +89,7 @@ Correct data modeling is also an important aspect of the linear scalability, sin
 
 
 \subsubsection{Cassandra Query Language}
+\label{sec:theory:cassandra:cql}
 Cassandra Query Language (CQL) is the query language, similar in syntax to SQL, but provides only limited functionality compared to SQL, as there are no joins, inner queries, nor aggregations. CQL provides select, insert, update and delete statements. Select statement's \emph{where} clause supports equality condition on the partition key columns and restrictions such as: IN, =, >, >=, <= and < on the clustering columns. Columns, which are not part of the primary key cannot be restricted in the \emph{where} clause. Listing \ref{lst:cqlSelect} shows two examples of select statements, first with equality restriction on the partition key column \emph{user_id}, second with equality restrictions on the partition key columns: \emph{cluster}, \emph{date}, \emph{datacenter}, and range restrictions on the clustering key columns: \emph{hour} and \emph{minute}.
 %Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. 
 
@@ -113,7 +123,7 @@ Cassandra does not provide ACID compliant transactions, but it offers Light Weig
 Tablelka + referencja
 
 \subsubsection{Eventual consistency}\label{sec:theory:eventualConsistency}
-In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is an \emph{AP} database with eventual consistency, which means that over time data becomes consistent on all nodes, but there are no guarantees about time it takes. Cassandra uses techniques such as: \begin{enumerate*} 
+In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is the \emph{AP} database with eventual consistency, which means that over time the data becomes consistent on all nodes, but there are no guarantees about time it takes. Cassandra uses techniques such as: \begin{enumerate*} 
 \item \emph{hinted handoff} - stores a message for the currently unavailable replica about the modification and sends it to the replica when it comes back up \cite{CassandraHintedHandoff},  
 \item \emph{read repairs} - detects inconsistency in the data during read and repairs it by sending a message with the data \cite{CassandraReadRepair},  \end{enumerate*} to pro-actively reduce incosistency in the data during normal operations.
 
