@@ -29,22 +29,8 @@ Its key features are:
 \end{enumerate*}
 
 \subsubsection{Architecture}
-Cassandra has a masterless \emph{ring} architecture, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication, which is keeping copies of the data on multiple nodes, to also avoid SPOF during reads and writes. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime.
+Cassandra has a masterless \emph{ring} architecture \ref{fig:archCluster}, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication, which is keeping copies of the data on multiple nodes, to also avoid SPOF during reads and writes. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime.
 \emph{Gossip} is a scalable, distributed protocol used for inter-node communication.
-
-\subsubsection{Replication}
-Cassandra supports configurable replication via \emph{replication factor N}, which is the total number of nodes on which the data is stored, defined per keyspace \ref{sec:theory:cassandra:datamodel}. A replication factor of 3 means that three copies of the data exist across the cluster on 3 different nodes.
-
-TODO Rysunek z token range i replication -> więcej o replikacji
-Cassandra
-\subsubsection{Read path}
-TODO Read path
-\subsubsection{Write path}
-TODO Write path
-
-%Architecture
-% Token ring
-% rysunek z klastrem
 
 \begin{figure}[h]
 	\centering
@@ -55,6 +41,35 @@ TODO Write path
 	\label{fig:archCluster}
 	\caption{A cluster on the ring}
 \end{figure}
+
+\subsubsection{Replication}
+Cassandra supports configurable replication via \emph{replication factor N}, which is the total number of nodes on which the data is stored, defined per \emph{keyspace} \ref{sec:theory:cassandra:datamodel}. A replication factor of $3$ means that three copies of the data exist across the cluster on $3$ different nodes.
+
+Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
+Each node is the \emph{primary replica} for the token range placed counter clock-wise to it, thus node $1$ is the primary replica for range $75-0$, node $2$ for $1-25$, node $3$ for $26-50$, and node $4$ for $51-75$. 
+Token value $91$ belongs to the node $1$, and since $N=3$, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $2$ and node $3$, which are \emph{secondary replicas} of the token. 
+
+\begin{figure}[h]
+	\centering
+	%\subfloat[The cluster on the ring]
+	%{
+	\includegraphics[height=100mm]{images/cassandra-replication-ring.png}\hspace{10mm}
+	%}
+	%\label{fig:replicationRing}
+	\caption{Replication of the token 91}
+	\label{fig:replicationRing}
+\end{figure}
+
+%\subsubsection{Read path}
+%TODO Read path
+%\subsubsection{Write path}
+%TODO Write path
+
+%Architecture
+% Token ring
+% rysunek z klastrem
+
+
 
 \subsubsection{Data model}
 \label{sec:theory:cassandra:datamodel}
