@@ -1,0 +1,22 @@
+%!TEX root = ../thesis.tex
+
+\subsection{Conflicting transactions}\label{sec:theory:conflictFunctions}
+In distributed setting in order to have absolute certainty whether two transactions are conflicting it requires to compare their private modifications and see whether they modify same keys. That results in as many round trips as there are items being modified by transactions multiplied by number of concurrent transactions. In distributed settings algorithms should do minimum round trips, because it costs resources and hurts performance \cite{rotem2006fallacies}.
+
+Conflict functions, which consider only local data, and do not require round trips, but as a tradeoff have false positives, are as follows:
+\begin{description}
+\item[Conflict on same transaction items] \hfill \\
+	Transactions are considered conflicting if they share transaction item. 
+	\\
+	If transactions $tx_{1}, tx{_2}$ modify row with key $k_{1}$ in table $t_{1}$ then both transactions have same transaction item. Given transaction states of two transactions, transaction items can be checked for intersection.
+	If they intersect then transactions are considered to be in conflict with each other. \\
+	False positives occur when transactions modify row with key $k_{1}$, but $tx_{1}$ modifies column $c_{1}$ and $tx_{2}$ modifies column $c_{2}$. Since transaction item is not resolved to level of column, but to level of row, then function yields conflict when there is none, because different columns are modified.	
+\item[Conflict on same table] \hfill \\
+		Function marks transactions as conflicting if they have transaction item for same table. It greatly increases number of conflicts, but reduces number of paxos rounds since all conflicting transactions participate in same paxos round.
+		False positives occur when transactions modify different keys $k_{1}, k_{2}$ in same table $t_{1}$. 
+\item[Conflict on same token range slice] \hfill \\
+		Function slices token range into $s$ slices, where $s$ is a configurable parameter. Function takes transaction item and finds slice number for token in transaction item that falls into sliced token range. If two transactions have transaction items which fall into same slice, then transactions are considered conflicting.
+		Fuction allows to have configurable number of concurrent paxos rounds since there will be at most as many rounds as there are slices. False positives are expected result of the function.
+\end{description}
+
+Conflict functions allow to eliminate round trips, put bounds on number of concurrent transactions, but with a cost of false positives. \mpp algorithm works with any conflict resolution function. Conflict resolution functions can be defined per table.

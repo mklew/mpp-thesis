@@ -1,0 +1,39 @@
+%!TEX root = ../thesis.tex
+
+\section{Addressing paxos requirements}
+Paxos requirements have to be met.
+ What is simple in case of LWT becomes troublesome in \mpp considering many partitions. 
+%In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
+
+
+\subsection{Paxos value}
+Proposed \emph{value} in \mpp is transaction state. Given transaction state, we can identify all modifications in transaction. Given transaction state, any node can try to commit transaction, because it can check which nodes participate in transaction and where is the private data stored. This fact is used to satisfy requirement, as to proposing highest value (\ref{sec:mpp:requirements:finishInProgress}).
+Transaction state always is an entry point to algorithm.
+%It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. 
+
+
+\subsection{Ability to find paxos state at node given transaction state}
+In order to have serializability and also to find paxos state given transaction state we need to have two properties:
+%This requirement alone is easy, but if thought about in context of serializability it becomes quite hard. In order to support transactions we need to have property:
+
+\begin{definition}
+  \label{def:samePaxosStateProperty}
+  Conflicting transactions must participate in same paxos round, thus have same \emph{paxos round id} assigned.  
+\end{definition}
+
+\begin{definition}
+  \label{def:txSerializability}
+  If there are many transactions being committed at same time, and those transactions are in conflict with each other, then only one transaction should get committed and rest of them should be rolled back.   
+\end{definition}
+
+%If there are many transactions being committed at same time, and those transactions are in conflict with each other, then only one transaction should get committed and rest of them should be rolled back. 
+%That’s serializability property which we need. How to guarantee it? Let’s look at it differently.
+
+If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
+
+\paxos can guarantee serializability as long as conflicting transactions participate in same paxos round. In case of \lwt \emph{paxos round id} is determined by key \emph{k}. \mpp has support for more than one key, therefore we need a function which maps \emph{transaction} $\rightarrow $ \emph{paxos round id} with properties: 
+\begin{enumerate*}
+%\item It maps transaction to paxos round id
+\item It maps conflicting transactions to same paxos round id 
+\item It maps non-conflicting transactions to different paxos round id
+\end{enumerate*}
