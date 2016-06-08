@@ -117,7 +117,7 @@ I put forward the claim that difference in id between replicas does not have neg
 Providing same paxos round id would require another consensus algorithm of its own which would inherently increase cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
         
 \subsubsection{Making data consistent}
-Transaction’s data is kept in Private Transaction Storage. Private writes by transaction use quorum semantics. I would like to present an example which argues why consistency checking is inevitable.
+Transaction’s data is kept in Private Transaction Storage \ref{sec:mpp:privateTxStorage}. Private writes by transaction use quorum semantics. I would like to present an example which argues why consistency checking is inevitable.
 
 
 Example of inconsistent private data
@@ -146,7 +146,7 @@ Only single node has two modifications which illustrates that we don’t have qu
 
 
 On these grounds, we can argue that making data consistent at each replica is a mandatory step.
-Algorithm to making private transaction data consistent looks as follows:
+The algorithm to making private transaction data consistent looks as follows:
 
 
 Inputs:
@@ -183,35 +183,38 @@ For example, given row with key K and columns C1 and C2 we could have updates:
 Each case is valid as long as others do not happen. If we allow 1) and later on 2) we won’t have any guarantees if we have data for both updates. If one update is lost on the way, replica won’t know whether it has all the updates associated with given key or not. This is because it has only one token and one key. 
 Without such restriction, replica would think it[k] has consistent data, but in reality is has missing second update.
 % TODO Replika nie mysli, unikac 
-To summarize, optimizations are possible, but only with further constraints. I argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization could remain opt-in and configurable even per transaction. Which would yield best performance for specific cases without restricting other kinds of transactions.
+
+ I argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization could remain opt-in and configurable even per transaction, which could yield best performance for specific cases without restricting other kinds of transactions.
        
 
 \subsection{Rollback phase}
-Rollback phase was briefly mentioned at high level overview of multi partition paxos algorithm. 
-Rollback phase for replica, means that transaction was rolled back at given replica node. 
+Replica in a rollback phase, means that transaction was rolled back at the given replica node. 
 This phase is special, because if even one replica group decides to move to rollback phase, then all the other replicas have to move to rollback phase. Secondly, there is no transition out of rollback phase. Multi partition paxos algorithm ends and yields result that transaction has been rolled back.
 Any replica affected by transaction can transition to rollback phase just after pre prepare phase, but only from following phases:
 
-
-* Prepare phase
-* Propose phase
-* Repairing phase
+\begin{enumerate*}
+\item prepare phase,
+\item propose phase,
+\item repairing phase.
+\end{enumerate*}
 
 
 Transaction cannot be rolled back once its proposal was accepted by all replica groups. Paxos guarantees that once proposal has been accepted, current or other leader will finish in progress proposal in that round and effectively transaction will be committed. Process of repairing in progress transaction is described in repairing phase.
 
 
-If replica has to move to rollback phase upon decision of all replica groups and not by its own. It should notify node about rollback. Node will then purge its private data, remove transaction from index and add information about rolled back transaction to transaction log.
+If replica has to move to rollback phase upon decision of all replica groups and not by its own, then it should notify the node about rollback, which then purges its private data, remove transaction from the index and adds information about rolled back transaction to the transaction log.
 
 
 \subsection{Prepare phase}
-Prepare phase is the expected next phase after pre prepare phase. During prepare each replica receives ballot, which is just a name for timestamp. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by id which is stored in Transaction Index. To find that id, we need to look up index using Transaction State. That requires that ballot is passed along with transaction state, but this state cannot be treated as paxos value. That’s not how paxos algorithm was designed. Transaction State is used only to find id of Paxos State and to compare ballots.
+Prepare phase is the expected next phase after pre prepare phase. During prepare each replica receives ballot, which is just a name for a timestamp. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by id which is stored in Transaction Index. To find that id, we need to look up index using Transaction State. That requires that ballot is passed along with transaction state, but this state cannot be treated as paxos value. That’s not how paxos algorithm was designed. Transaction State is used only to find id of Paxos State and to compare ballots.
 
 
 In order to find Paxos Id using Transaction State, Transaction Index is exclusively acquired and queried. Assumption is that transaction has successfully registered in index beforehand. Therefore if it is not found in index it can mean one of:
-* Transaction was rolled back by concurrent transaction
-* Transaction was committed by other leader which repaired in progress transaction - this is the case, when replicas go back in phase but at least one of them has successfully proposed transaction state.
-* This replica was down during pre prepare phase and did not get the message. It could happen due to network partition or hardware failure.
+\begin{enumerate*}
+\item transaction was rolled back by concurrent transaction,
+\item transaction was committed by other leader which repaired in progress transaction - this is the case, when replicas go back in phase but at least one of them has successfully proposed transaction state,
+\item this replica was down during pre prepare phase and did not get the message. It could happen due to network partition or hardware failure.
+\end{enumerate*}
 
 
 In order to check which case it is, Transaction Log can be queried. Transaction Log knows which transactions have committed and which were rolled back. If transaction id exists in transaction log, then it was either committed or rolled back.
@@ -224,50 +227,54 @@ In other case, when transaction is neither in index nor in transaction log we ca
 
 
 Answer from prepare request has information:
-* Boolean promised - whether this replica promises to listen to leader
-* Boolean present in index - if transaction was present in the index at this node
-* Committed/Rolled back/Unknown - enum value representing status of transaction. It is either known from Transaction Log and then it is one of committed or rolled back or it is unknown
+\begin{itemize}
+\item Boolean promised -- whether this replica promises to listen to leader
+\item Boolean present in index -- if transaction was present in the index at this node
+\item Committed/Rolled back/Unknown -- enum value representing status of transaction. It is either known from Transaction Log and then it is one of committed or rolled back or it is unknown
 But also it has information as in original paxos
-* In progress value - if replica has already accepted other transaction state and this transaction interrupted its execution becoming new leader then the in progress proposal - some other transaction state - is returned to the leader. In that case leader will have to repair multi partition paxos round. Replica will transition into repairing phase.
+\item In progress value -- if replica has already accepted other transaction state and this transaction interrupted its execution becoming new leader then the in progress proposal - some other transaction state - is returned to the leader. In that case leader will have to repair multi partition paxos round. Replica will transition into repairing phase.
+\end{itemize}
 
 
-To summarize prepare phase, it extends original paxos’s prepare phase, because it returns more information. Its purpose stays the same. Replica has to compare ballots and promise to listen to a leader with highest ballot. There might be in progress proposal that has to be completed. Additional information allows to identify whether transaction can continue or not. Responses from all replicas are considered according to moving in phase logic.
+Prepare phase extends original paxos’s prepare phase, since it returns more information, but its purpose stays the same: replica has to compare ballots and promise to listen to a leader with highest ballot. 
+There might be in progress proposal that has to be completed. Additional information allows to identify whether transaction can continue or not. Responses from all replicas are considered according to moving in phase logic.
 After successful transition of all replicas to prepare phase, next transition can be applied.
 
 
 \subsection{Propose phase}
-Propose phase is the next expected phase from prepare phase, but also from repairing phase. Its purpose is to propose transaction state as paxos value to replicas and get majority of acceptances. 
+Propose phase is the next expected phase from prepare phase, but also from repairing phase. Its purpose is to propose transaction state as paxos value to replicas and to get majority of acceptances. 
 
+In the propose phase, it is known that transaction existed in the Transaction Index, therefore if during proposal,  transaction index does not know about transaction then it has to be recorded in the Transaction Log, as either committed or rolled back transaction.
 
-Similarly to prepare phase it is slightly extended. Since previous phase is prepare phase and it was successful, hence transition to proposal, transaction had to exist in Transaction Index. If now, during proposal,  transaction index does not know about transaction then it has to be present in Transaction Log. It has to be either Committed or Rolled back. 
+Proposal with Transaction State can be accepted if the proposer still is the leader and has highest ballot. Proposal is saved in the Paxos State and replica can reply with success. Otherwise leader could have lost his leadership and value cannot be accepted which results in refusal response.
 
-
-Proposal phase is quite simple. Proposal with Transaction State can be accepted if leader still is the leader and has highest ballot. Proposal is saved in the Paxos State and replica can reply with success. Otherwise leader could have lost his leadership and value cannot be accepted which results in refusal response.
-
-
-When transaction cannot be found in index, it has to be present in Transaction Log which also helps the leader to make decision whether algorithm should continue.
-
+%When transaction cannot be found in index, it has to be present in Transaction Log which also helps the leader to make decision whether algorithm should continue.
 
 \subsection{Commit phase}
-Commit phase comes after successful propose phase. It can only happen when transaction was accepted by all quorums in all replica groups. Upon commit message replica has to do couple of things:
-* Flush transaction’s data locally
-   * Find transaction’s data in Private Transaction Storage 
-   * Assert that it is consistent hence frozen
-   * Apply modifications locally on database -- move modifications from private storage into targeted tables
-* Add this transaction to Transaction Log marked as Committed.[l]
-* Rollback other concurrent and conflicting transactions
-   * Look up other participants in Transaction Index
-   * Rollback each conflicting transaction
-   * Add conflicting transaction to Transaction Log marked as Rolled back.[m]
-* Remove itself from Transaction Index
-* Respond with acknowledge
+Commit phase comes after successful propose phase. It can only happen when transaction was accepted by all quorums in all replica groups. Upon commit message replica performs:
+\begin{enumerate}
+\item flush of transaction’s data locally
+\begin{enumerate}
+   \item find transaction’s data in the Private Transaction Storage
+   \item assert that it is consistent hence frozen
+   \item apply modifications locally on database -- move modifications from private storage into targeted tables
+   \end{enumerate}
+\item add this transaction to Transaction Log marked as committed.
+\item rollback other concurrent and conflicting transactions
+ \begin{enumerate}
+   \item Look up other participants in the Transaction Index
+   \item Rollback each conflicting transaction
+   \item Add conflicting transaction to the Transaction Log marked as rolled back.
+  \end{enumerate}
+\item remove itself from Transaction Index
+\item respond with acknowledge
+\end{enumerate}
 
-
-When leader sees that all replica groups received acknowledges it can safely finish multi partition paxos round and respond to a client that transaction has been committed.
+When leader receives acknowledgments from all replica groups, it can safely finish \mpp round and respond to a client, that transaction has been committed.
 
 
 \subsection{Repairing phase}
-It might happen that during prepare leader receives in progress proposal. It means that it has interrupted some other leader which was executing his transaction. As required by paxos algorithm, in progress proposal has to be completed before first transaction can continue. When replica group sees that it has in progress proposal, this replica group has to transition to repairing phase. 
+It might happen that during prepare leader receives in progress proposal which means that it has interrupted some other leader which was executing his transaction. As required by paxos algorithm, in progress proposal has to be completed before first transaction can continue. When replica group sees that it has in progress proposal, this replica group has to transition to repairing phase. 
 Other replica groups are also affected because they cannot advance in phase until in progress transaction is repaired. Repaired means that multi partition paxos round is run on in progress transaction until it finishes with commit or rollback. Only after repair first transaction might continue. If it turns out that repaired transaction was rolled back, first transaction has a chance to be committed. If however repaired transaction is committed, main transaction will see that it was rolled back and will also stop.
 This means that another multi partition paxos is nested in main multi partition paxos. It is slightly different because it can start from more advanced phase.
 If other transaction managed to proposed itself it means that is was in prepared phase hence in pre prepared phase also. Therefore repairing in progress transaction can start with replicas in pre prepare phase. First transition run on replicas is transition to prepare phase skipping registration in index and making transactions data consistent as it was already done by previous leader.

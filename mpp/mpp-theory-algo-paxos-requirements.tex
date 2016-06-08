@@ -13,12 +13,12 @@ Transaction state always is an entry point to algorithm.
 
 
 \subsection{Ability to find paxos state at node given transaction state}
-In order to have serializability and also to find paxos state given transaction state we need to have two properties:
+In order to find a paxos state given a transaction state we need to have two properties:
 %This requirement alone is easy, but if thought about in context of serializability it becomes quite hard. In order to support transactions we need to have property:
 
 \begin{definition}
   \label{def:samePaxosStateProperty}
-  Conflicting transactions must participate in same paxos round, thus have same \emph{paxos round id} assigned.  
+  Conflicting transactions must participate in a same paxos round, thus have same \emph{paxos round id} assigned.  
 \end{definition}
 
 \begin{definition}
@@ -31,7 +31,7 @@ In order to have serializability and also to find paxos state given transaction 
 
 If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
 
-\paxos can guarantee serializability as long as conflicting transactions participate in same paxos round. In case of \lwt \emph{paxos round id} is determined by key \emph{k}. \mpp has support for more than one key, therefore we need a function which maps \emph{transaction} $\rightarrow $ \emph{paxos round id} with properties: 
+Other concurrent, conflicting transactions can be rolledback, as long as they participate in the same paxos round. In case of \lwt \emph{paxos round id} is determined by partition key \emph{k}. \mpp supports more than one key, therefore we need a function which maps \emph{transaction} $\rightarrow $ \emph{paxos round id} with properties: 
 \begin{enumerate*}
 %\item It maps transaction to paxos round id
 \item It maps conflicting transactions to same paxos round id 

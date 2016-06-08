@@ -1,18 +1,18 @@
 %!TEX root = ../thesis.tex
 
-\subsection{Transactions index}
+\subsection{Transaction index}
 \label{sec:mpp:txIndex}
-Paxos round id for a transaction is obtained through \emph{Transactions Index}. This is an index in which transactions have to successfully register. Registration in index of part of \mpp algorithm. Transaction Index exists on each node and is local to a node, thus independent from other nodes.
-
+Transaction Index is a service, local to a node, thus independent from other nodes, which accepts registrations of transactions and assigns to them paxos round ids. Registration in the index is part of \mpp.
+%Paxos round id for a transaction is obtained through \emph{Transactions Index}. This is an index in which transactions have to successfully register. Registration in index of part of \mpp algorithm. Transaction Index exists on each node and is local to a node, thus independent from other nodes.
 Transaction Index has to guarantee that: 
 \begin{enumerate*}
-\item Transactions that are in conflict must be registered in index and obtain same paxos id
-\item Transaction can register in index only if there is single paxos id which can be assigned to this transaction.
+\item transactions that are in conflict must be registered in index and obtain same paxos id,
+\item transaction can register in index only if there is single paxos id which can be assigned to this transaction.
 \end{enumerate*}
 
 In this work, I put forward the claim that \emph{paxos round id} does not have to be globally assigned to same id, but only locally at each node. Therefore, at each node transaction can participate in paxos round with different id. However, at any node, transaction always participates in the same round as conflicting transactions.
 
-Transaction cannot be registered in index when locally it can obtain more than one paxos round id. Algorithm to register is presented at Fig. \ref{alg:indexRegistration}.
+Transaction cannot be registered in index when locally it can obtain more than one paxos round id. Registration algorithm is depicted in the Fig. \ref{alg:indexRegistration}.
 
 \begin{algorithm}
 \algblockdefx[NAME]{ForEach}{EndForEach}%

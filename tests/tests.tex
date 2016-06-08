@@ -2,16 +2,17 @@
 
 \chapter{Tests and performance analysis}\label{chapter:testing}
 
-Testing chapter is focused on explaining theory behind testing of \mpp algorithm and its components that gives high certainty about correctness of algorithm and its implementation. I’ve run many tests on different levels that had to verify if implementation is correct, but what is more important if new multi partition paxos algorithm delivers its promise of multi--partition serializable transactions. 
-Paxos algorithm has formal proof, whereas \mpp algorithm developed during this research has been proven to work in practice for all written tests. Writing a formal proof is a complex task which would require further research and is out of scope of this work.
+This chapter is focused on explaining theory behind testing of \mpp algorithm and its components that gives high certainty about correctness of algorithm and its implementation. Many tests were performed on different levels that had to verify if implementation is correct, but what is more important if new multi partition paxos algorithm delivers its promise of multi--partition read-committed transactions. 
+\mpp algorithm developed during this research has been proven to work in practice for all written tests. 
+%Writing a formal proof is a complex task which would require further research and is out of scope of this work.
 
 \section{Unit testing}
-Many aspects of algorithm could be and were unit tested. Components such as \emph{Transaction Index}, \emph{Transaction Log}, \emph{Private Transaction Storage} were  tested for their expected behaviour. Tests also covered parts of \mpp which were not cluster dependent such as \emph{phase} transitions. Unit tests are not enough to check for correctness especially when testing distributed algorithms which are  exposed to network latencies, concurrency issues like deadlocks and other problems in the distributed environement. 
+Components such as \emph{Transaction Index}, \emph{Transaction Log}, \emph{Private Transaction Storage} were  tested for their expected behaviour. Tests also covered parts of \mpp which were not cluster dependent such as \emph{phase} transitions. Unit tests are not enough to check for correctness especially when testing distributed algorithms which are  exposed to network latencies, concurrency issues like deadlocks and other problems in the distributed environment. 
 
 \section{Cluster tests}
 Tests on real cluster of nodes were major part of all tests performed to validate \mpp correctness. I have conducted multiple experiments which covered all aspects of \mpp algorithm. 
 
-\subsection{Testing environement}
+\subsection{Testing environment}
 Cluster tests were performed independently on two clusters with $3$ and $5$ nodes per cluster. Tests run on $5$ nodes yielded important results, because with $5$ nodes and $N=3$ there are at most $10$ replica groups. 
 
 Clusters were run locally using \emph{Cassandra Cluster Manager} which is a tool to quickly set up local cluster.
@@ -19,7 +20,7 @@ Clusters were run locally using \emph{Cassandra Cluster Manager} which is a tool
 \subsection{Testing method}
 
 \subsubsection{Counters}
-Tests are performed using testing schema with counter tables. Counter table is shown on Fig. (\ref{fig:counterTable}). It has $5$ columns with \emph{int} counter values: $c1,c2,c3,c4,c5$
+Tests are performed using testing schema with counter tables. Counter table is shown on Fig. \ref{fig:counterTable}. It has $5$ columns with \emph{int} counter values: $c1,c2,c3,c4,c5$
 Testing schema consists of $2$ keyspaces with number of counter tables in each. Counter tables in each keyspace differ in name, but structure is the same.
 
 \begin{figure}[h]
@@ -39,7 +40,7 @@ Each test case is done in many iterations i.e. $300$. During each iteration, the
 
 \subsubsection{Counter executors}
 Counter executors run in parallel through all iterations. 
-Counter executors operate on set of counters. They perform same operation on each counter in each iteration, where each iteration is a new transaction that is committed at the end of iteration. 
+Counter executors operate on set of counters. They perform same operation on each counter in each iteration, where each iteration is a new transaction that is committed at the end of an iteration. 
 Basic executor increments specific counter column $c$ of each counter in the set.
 
 \subsection{Testing of repair of in progress proposal}

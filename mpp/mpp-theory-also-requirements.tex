@@ -14,7 +14,12 @@ These are requirements that need to be satisfied in order to be sure that \paxos
 % TODO wspomnieć o tym, że LWT używa wielu instacji paxosa które ze sobą nie kolidują bo dotyczą różnych partycji, a u mnie jest inaczej ponieważ transakcja może dotyczyć wiele partycji i dodatkowo mogą się pokrywać.
 % TODO w LWT żeby poznać instacje paxosa  wystarczy klucz partycji.
 % TODO MPP jest to problem bo jest wiele partycji
-\lwt supports many instances of paxos protocol at any given time, as opposed to appending to single replicated log \cite{chandra2007PaxosMadeLive}. \mpp has to run many instances of paxos protocol as well. Thus \mpp needs to have ability to identify \emph{paxos round} at node given proposed \emph{value}. \lwt identifies \emph{paxos round} by a partition key. \mpp is a multi-partition protocol, therefore identification of \emph{paxos round} poses a problem and a requirement. \label{sec:mpp:requirements:identifyRound}
+\lwt supports many instances of paxos protocol at any given time, as opposed to appending to single replicated log \cite{chandra2007PaxosMadeLive}. \lwt instances do not collide with each other, unless same partition keys are considered, but \lwt for different keys does not overlap nor stall other \lwt transaction.
+\mpp supports many instances as well, but an instance of \mpp might overlap with different instance of \mpp, in which case such instances are considered conflicting. 
+
+\lwt identifies \emph{paxos round} by a partition key. The key difference to \lwt is that \mpp instance relates to many keys, thus instance of \mpp cannot be identified by the partition key, as is the case in \lwt. Identification of the paxos round in \mpp becomes troublesome, since it is not obvious how to relate many different keys to single paxos round id. \label{sec:mpp:requirements:identifyRound}
+
+ %\mpp has to run many instances of paxos protocol as well. Thus \mpp needs to have ability to identify \emph{paxos round} at node given proposed \emph{value}.  \mpp is a multi-partition protocol, therefore identification of \emph{paxos round} poses a problem and a requirement. 
 
 % TODO dac referencje na to skad te wymagania sie wziely
 

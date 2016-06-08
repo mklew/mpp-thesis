@@ -3,6 +3,8 @@
 \section{Isolation from other transactions}
 Transactions must run in isolation from each other. Transactions cannot see each other, nor anyone else can see effects of transactions before it completes with commit or rollback.
 
+\subsection{Private transaction storage}
+\label{sec:mpp:privateTxStorage}
 Each key's value modification done in transaction should be stored at replicas responsible for given key keeping it private for that transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
 
 Each transactional operation is executed, but instead of operating on current live data, modifications are put into private storage. Interface of the storage is presented in the listing \ref{lst:privateTransactionStorage}. \emph{Modification} returned by \code{getModifications} method is the Cassandra's representation of any modification operation, such as: \begin{enumerate*} \item insert, \item update, \item delete. \end{enumerate*}

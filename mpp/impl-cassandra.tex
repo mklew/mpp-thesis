@@ -25,7 +25,7 @@ There are few assumptions as to implementation.
 \end{enumerate*}
 
 \section{Terms of use}
-Implementation does not prevent user from misusing transactions. Implementation allows to use Cassandra in transactional way, but only if it is done according to specification. In principle transactions are run with other transactions whereas normal updates are completely independent from each other as well as from transactions. 
+Implementation does not prevent user from misusing transactions. Implementation allows to use Cassandra in transactional way, but only if it is done according to specification. In principle transactions are run with other transactions whereas normal updates are completely independent from each other as well as from transactions, which means that an normal update might be perceived, as inconsistent modification of the data.
 
 % \subsubsection{Typical use case}
 % Assume bank transfers and moving money from account $acc_{1}$ to account $acc_{2}$. Each account has a balance which is reflected by transfers to and from an account.
@@ -51,12 +51,10 @@ Cassandra can operate on different consistency levels performing reads and write
 \item[SERIAL / LOCAL_SERIAL] -- uses \lwt to do read/write with condition
 \end{description}
 
-New transactional consistency levels are \textbf{TRANSACTIONAL, LOCAL_TRANSACTIONAL}. Both use \mpp, but latter is confined to the local data center.
+New transactional consistency levels are \code{TRANSACTIONAL, LOCAL_TRANSACTIONAL}. Both use \mpp, but latter is confined to the local data center.
 
 \section{Transaction state}
-Cassandra organizes tables in \emph{keyspaces}, thus transaction items need additional information about keyspace to locate data at a node.
-
-Transaction item in Cassandra becomes:
+Cassandra organizes tables in \emph{keyspaces}, thus transaction items need additional information about keyspace to locate data at a node. Transaction item in Cassandra becomes:
 
 \begin{lstlisting}[language=Java,style=outcode,label={lst:txState},caption={Transaction item in Cassandra}]
 
@@ -127,12 +125,10 @@ Transaction State is also required in order to send rollback messages only to no
 
 \section{Write path extensions}
 Write path of Cassandra \cite{CassandraWritePath} was modified in order to support transactional writes to private memtables. 
-Cassandra’s write path is known to be very fast. Implementation of transactions won’t slow it down, because data is only kept in-memory. Therefore write is acknowledged by coordinator node as soon as modification has been written to quorum of replica nodes.
+Transactional data is only kept in-memory, therefore write is acknowledged by coordinator node as soon as modification has been written to quorum of replica nodes.
 
 
-Write path has been extended by detecting whether \emph{using transaction} clause has been used and if so if transaction id is present. All changes to data in Cassandra are represented by Mutation class. If transaction is detected, mutation is wrapped with TransactionalMutation which besides having mutation has also transaction id.
-
-
+Write path has been extended by detecting whether \emph{using transaction} clause has been used and if so if transaction id is present. All changes to data in Cassandra are represented by \code{Mutation} class. If transaction is detected, mutation is wrapped with \code{TransactionalMutation} which besides having mutation has also transaction id.
 When transactional mutation is applied by its apply method, all the changes go to Private Transaction Storage instead of main tables.
 
 
@@ -168,7 +164,7 @@ Read is only performed when coordinator has became a leader and completed all of
 
 
 \section{Private Transaction Storage}
-\emph{Private Transaction Storage} implementation which uses private \emph{memtables} to store transaction's modifications. It maps transaction id to its data \code{TransactionData}. Transaction data stores \emph{mutations} mapped by keyspace, table and \textbf{full key}, thus storage has information about what keys are modified in transaction. Each owned transaction item has corresponding entry in transaction data map.
+\emph{Private Transaction Storage} implementation which uses private \emph{memtables} to store transaction's modifications. It maps transaction id to its data \code{TransactionData}. Transaction data stores \emph{mutations} mapped by keyspace, table and \textbf{full key}, thus storage has information about which keys are modified in transaction. Each owned transaction item has corresponding entry in transaction data map.
 
 When new modification is done in trasaction, then new mutation is added to transaction data. It is either merged with already present mutation for same partition key, or it is added as new entry in the map.
 
@@ -246,22 +242,11 @@ PRIMARY KEY (paxos_id))
 %This section discusses few details about implementation of multi partition paxos algorithm in Cassandra.
 
 \section{Replica Groups Phases Executor}
+Replica groups phases executor is the implementation of the state machine that performs transition operations on the replicas, and moves them in phases according to the specification.
 
-TODO more info about MPP
-
-
-Replica
-Replica is simply identified by its IP address. 
-
-
-Replica group
-TODO
-
-
-Phase
 Phases need to be compared with each other for their advancement. Enums with proper ordering of enum values is suitable for java implementation.
 
-
+\begin{lstlisting}[style=outcode,label={lst:phaseEnum},caption={Phase enum}]
 public enum Phase
 {
    NO_PHASE,
@@ -273,12 +258,7 @@ public enum Phase
    COMMIT_PHASE,
    AFTER_COMMIT_PHASE;
 }
-It is important that, begin and repair phase (repairing phase) is less advanced than prepare phase. Otherwise some replicas could try to propose new value instead of waiting till all replica groups are at least in prepared phase.
+\end{lstlisting}
 
-
-
-
-% \subsection{Obstacles}
-% There were several obstacles during implementation of transactions in Cassandra. One of the major problems is that Cassandra has very big codebase and is a very mature project. It requires significant knowledge of how everything fits together before anything can be changed. 
-% Another issue is that most of the key services are singletons and in many places these singletons are directly referenced. Highly coupled code is sometimes impossible to test in isolation. In addition, it becomes impossible to test Cassandra creating embedded instances. Due to this limitation, more complex tests had to be done on real cluster.
+It is important that, begin and repair phase (repairing phase) is less advanced than prepare phase. Otherwise some replicas could try to propose a new value instead of waiting until all replica groups are at least in the prepared phase.
 
