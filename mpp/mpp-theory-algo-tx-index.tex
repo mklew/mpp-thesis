@@ -1,6 +1,7 @@
 %!TEX root = ../thesis.tex
 
 \subsection{Transactions index}
+\label{sec:mpp:txIndex}
 Paxos round id for a transaction is obtained through \emph{Transactions Index}. This is an index in which transactions have to successfully register. Registration in index of part of \mpp algorithm. Transaction Index exists on each node and is local to a node, thus independent from other nodes.
 
 Transaction Index has to guarantee that: 

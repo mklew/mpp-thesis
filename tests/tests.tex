@@ -75,9 +75,42 @@ First counter executor, \emph{Next Two Counter Executor}, in each iteration incr
 Rationale behind test is that when \emph{Next Two Counter Executor} fails to commit and receives rollback, then for this particular iteration counter with odd index should not be incremented by executor, thus must have initial $0$ count. Otherwise transaction should be committed instead of rolled back.
 
 \subsection{Testing during partial failure}
+
 All previously described tests were also run with cluster during partial failure. Node was shutdown and tests were run. Since \mpp tolerates partial failures, as long as quorum is alive and responds to requests, tests yield same results.
 
 \section{Theoretical performance analysis}
+
+\subsection{Theoretical number of requests during algorithm}
+> \code{TODO to nie jest gotowe, tylko zostalo przeniesione z rozdzialu o implementacji} <
+There can be many modifications to different keys resulting in many transaction items, but what is important are the number of replicas. At worst case each key will reside on different replica set. Most likely case is that some replica groups have replicas in common.
+
+
+Assuming worst case scenario we have number of replica groups: RGC (Replica Group count)
+And replication factor N. For sake of argument let’s assume that all modifications share same replication factor although it is not required by algorithm.
+
+
+Total number of replicas: TR = N * RGC
+
+
+Pre prepare phase requires reads from other replicas to make data consistent. Number of requests to make data consistent depends on number of replica groups to which keys owned by given node are replicated. So we have:
+keys per node: KPN
+And replica groups which own data for these keys: RGOC
+We know that RGOC < RGC and at worst case it will be just less than 1 so RGOC = RGC - 1
+
+
+To make data consistent each node has to make at least quorum of RGOC, but since each node belongs to all the other replica groups, number of requests can be further reduced to QUORUM-1 which equals to (((RGC -1 ) / 2 + 1) - 1 = (RGC -1) / 2
+Since each nodes has to do it pre prepare phase requires TR * (RGC -1) / 2 of requests. Plus each replica has to receive message in order to do pre prepare phase therefore pre prephase phase looking at whole algorithm requires TR + TR * ((RGC -1) / 2) 
+
+
+Prepare phase, propose phase and commit phase require TR requests each.
+
+
+To sum it up, total number of requests at worst case equals to 
+TR ((RGC-1) / 2) + 4*TR
+
+
+For a five nodes cluster with replication factor N=3 it has
+10 different replica sets.
 
 % TODO opis teoretyczny od czego zależy wydajność
 % liczba partycji

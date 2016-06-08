@@ -1,119 +1,81 @@
 %!TEX root = ../thesis.tex
 
 \section{The algorithm's description}
-Multi partition paxos algorithm depends on previously described concepts and guarantees they provide. This part of whole solution is responsible for committing transaction. Transaction is committed by performing multi partition paxos round, in which transaction is accepted by majority from all replica groups \ref{sec:mpp:replicaGroups}. 
-% TODO wyjaśnić czym są replica groups.
+\mpp algorithm depends on previously described concepts and guarantees they provide. 
+This part of whole solution is responsible for committing transaction. 
+A transaction is committed by performing multi partition paxos round, 
+in which transaction is accepted by majority in each replica group, 
+which is a set of nodes that replicates the key $k$, for all replica groups \ref{sec:mpp:replicaGroups}. 
 
 \subsection{Phases}
-The algorithm consists of \emph{phases}, which are: 
+The algorithm execution occurs in \emph{phases}, which are the following: 
 \begin{enumerate*}
-\item no phase
-\item pre prepare phase
-\item repair phase
-\item prepare phase
-\item propose phase
-\item commit phase
-\item rollback phase
+\item no phase,
+\item pre prepare phase,
+\item repair phase,
+\item prepare phase,
+\item propose phase,
+\item commit phase,
+\item rollback phase.
 \end{enumerate*}
-Following sections contain descriptions of each phase.
+
+Three phases: prepare, propose and commit, might be already recognizable, since they are parts of the \paxos algorithm. Similar phases could be identified for \lwt, since it also relies on \paxos.
+
+One of phases, specific to \mpp, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after pre prepare phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
+
+%         High level description
+% Algorithm works in phases. Phases are:
+% 1. Pre prepare phase
+% At each node:
+%    1. Transaction has to successfully register in Transaction Index
+%    2. Node has to make transaction’s data consistent and freeze it
+% 1. Prepare phase
+% Send ballot and receive promise
+% 1. Propose phase
+% Propose TransactionState, wait for acceptance
+% 1. Commit phase
+%         Broadcast commit message. Each replica on commit has to
+%    1. Flush transaction’s data from Private Transaction Storage
+%    2. Rollback other round participants
 
 
 
-        High level description
-Algorithm works in phases. Phases are:
-1. Pre prepare phase
-At each node:
-   1. Transaction has to successfully register in Transaction Index
-   2. Node has to make transaction’s data consistent and freeze it
-1. Prepare phase
-Send ballot and receive promise
-1. Propose phase
-Propose TransactionState, wait for acceptance
-1. Commit phase
-        Broadcast commit message. Each replica on commit has to
-   1. Flush transaction’s data from Private Transaction Storage
-   2. Rollback other round participants
-        
-It looks very like paxos implementation, but details are significantly different. 
-Paxos works for single partition, therefore it communicates with replica group of size N. It can proceed to next phase after quorum successfully responds. 
-MPP is designed for operations on many partitions therefore there are many replica groups. 
-Furthermore, there is another phase not existing in paxos, which is named rollback phase. Replicas can transition to rollback phase at anytime after pre prepare phase. When replica is in such phase it simply means that transaction was rolled back by other concurrent transaction at that replica. 
-
-
-\subsection{Replica groups in details}
+\subsection{Replica groups}
 \label{sec:mpp:replicaGroups}
-Assume $N=3$ and transaction for keys: $k1$, $k2$, $k3$, $k4$.
+\mpp is designed for operations on many partitions, therefore there are many replica groups. \lwt supports single key, thus it communicates with single replica group, whereas \mpp supports many keys, therefore it communicates with many replica groups, which can overlap, due to the fact that a node is a replica for many different keys. 
+
+Let us consider an example of transaction affecting different replica groups. Let us assume $N=3$ and transaction for keys: $k1$, $k2$, $k3$, $k4$.
 Key $k1$ belongs to replica group $n1$, $n2$, $n3$.
 Key $k2$ belongs to replica group $n2$, $n3$, $n4$.
 Key $k3$ belongs to replica group $n1$, $n5$, $n7$.
 Key $k4$ belongs to replica group $n1$, $n2$, $n3$.
 
-
-Replica groups for a key\footnote{each transaction item} might have some or all nodes in common.
 In this example, $k1$ and $k4$ belong to the same replica group. Keys $k2$, $k3$ however have one node in common with $k1$ and $k4$.
 
-As a corollary, any operation done in \mpp must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, $n7$ in order to not repeat operation on same nodes, but the results of these operations have to be evaluated in context of the replica groups. 
+As a corollary, any operation done in \mpp must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, and $n7$ in order to not repeat operation on same nodes. However the results of these operations must be evaluated in the context of the whole replica group. 
 
 
-\subsubsection{Moving forward in phases}
-Each replica starts without any phase. In ideal scenario it has to transition from no phase to pre prepared phase, then to prepared phase followed by proposed phase finishing by committed phase. Its transitions however depend on results of transitions of other replicas and other replica groups.
+\subsection{Moving forward in phases}
+Replicas start in \emph{no phase}, which is a starting phase for all replicas, and move to more advanced phases through phase transitions, which are operations that include node to node communication, until they reach an end phase, which is either committed or rolled back phase.
+
+The most basic optimistic phase transition sequence is: \begin{enumerate*} \item no phase, \item pre prepared phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
+%Its transitions however depend on results of transitions of other replicas and other replica groups.
 
 
-Replica advances in phase only if conditions are met: \begin{enumerate*}
-\item its operation is successful, and
-\item each replica group to which that node belongs has quorum of nodes with same advancement of phase, and
-\item minimum phase among quorums in all replica groups has same advancement.
-\end{enumerate*}
+Replica advances in phase only if conditions are met: \begin{description}
+\item[successful transition] -- its transition operation is successful, and
+\item[same advancement within replica group] -- each replica group to which that node belongs has quorum of nodes with same advancement of phase, and
+\item[in sync with other replica groups] -- minimum phase among quorums in all replica groups must have same advancement, for example all replica groups must promise to the leader, before any proposal is sent to any replica, therefore all replica groups must be in \emph{prepared phase}.
+\end{description}
 
 
-In consequence, all replicas and all replica groups move in sync with each other. None of nodes will do a proposal if there is some replica group for which quorum is not in prepare phase. Similarly, none of nodes will do commit if there exists at least one replica group which didn’t get acceptance of proposal.
+In consequence, all replicas and all replica groups move in sync with each other. None of nodes will do a proposal if there is some replica group for which quorum is not in prepare phase. 
+Similarly, none of nodes will do the commit if there exists at least one replica group which did not get acceptance of the proposal.  
+
+Given contention with other transactions, it might happen that replica groups need to go back in phase and retry operation in order to stay in synchronized phase with other replica groups, then all of them proceed in same phase.
 
 
-Given contention with other transactions, it is possible that replica groups have to go back in phase in order to stay with other replica groups. Either all of them proceed in same phase or none.
-
-
-\subsubsection{Example}
-For example, let us consider two replica groups within a cluster of $5$ nodes.
-Replica group 1 ($RG1$) has nodes: $node1$, $node2$ and $node3$. 
-Replica group 2 ($RG2$) has nodes $node3$, $node4$ and $node5$.
-
-\begin{enumerate}
-\item Nodes start at no phase, and first transition has to move them to pre prepared phase.
-\item Run transition to pre prepared phase. Assume all nodes do the pre prepare operation successfully.
-\item Quorums in $RG1$, $RG2$ are in \emph{pre prepare phase}.
-\item Minimum phase among replica groups is \emph{pre prepare phase}, therefore all replica groups have same advancement in phase.
-\item Run transition to prepare phase. Let us assume successful transition, after which all replica groups are in prepared phase.
-\item a
-\end{enumerate}
-
-8. Next transition will do proposal in order to move to proposed phase, however in the meantime other transaction did prepare on node3 and node5 and received promise. Now things should get complicated. 
-9. Node 1 gets proposal and accepts it. Replica 1 wants to transition to Proposed phase
-10. Node 2 gets proposal and accepts it. Replica 2 wants to transition to Proposed phase
-11. Node 3 receives proposal, but it promised to accept higher ballot therefore it responds with refusal. Replica 3 has failed to transition, it is no longer prepared, because it sees that proposal was refused. It knows that it is at most in pre prepared phase. 
-12. Node 4 gets proposal and accepts it. Replica 4 wants to transition to Proposed phase
-13. Node 5 does exactly same as Node 3.
-14. Phases of replicas in RG1 were { node 1 -> prepared, node 2 -> prepared, node 3 -> prepared } and in RG2 { node 3 -> prepared, node 4 -> prepared, node 5 -> prepared }
-        After transition replica groups look as following:
-
-
-RG1 { node 1 -> proposed, node 2 -> proposed, node 3 -> pre prepared }
-RG2 { node 3 -> pre prepared, node 4 -> proposed, node 5 -> pre prepared }
-
-
-Quorum of replicas in RG1 is in proposed phase.
-Quorum of replicas in RG2 is in pre prepared phase.
-Minimum phase among replica groups is pre prepare phase.
-        Therefore replicas cannot advance further than pre prepared phase. However node 1 for example has already advanced to proposed phase. It will be forced to go back in phase in order to stay in sync with all replica groups. It does not necessarily mean that it has repeat operation. Actual transition performed on replica depends on current phase for all replica groups and current phase of replica. Replica can just do nothing and wait till rest of replicas catch up in phase.
-1. Phase of all replica groups is pre prepared phase.
-2. Next transition has to transition replica from its phase to prepared phase.
-3. Node 1, node 2, node 4 can do a no-operation and just wait.
-4. Node 3, node 5 have to do actual prepare request with new high ballot
-5. Phases after transitions are evaluated and algorithm continues.
-        
-Above example shows how different multi partition paxos is from LWT. Example shows how phase depends on all replica groups which depend on replicas and all the other replica groups. All of that is required to simply have replicas that stay in sync and where each replica group has satisfied quorum. That is requirement which comes from paxos and all these dependencies relations make it possible.
-
-
-\subsubsection{Algorithm requirements on cluster}
+\subsection{Algorithm requirements on cluster}
 Algorithm can make progress as long as quorum in each replica group is satisfied, thus the algorithm is resilient to failures of n nodes:
 
 % TODO tableka, 
@@ -130,21 +92,29 @@ Therefore resilience scales with size of transaction.
 
 
 \section{Replica phases}
-TODO co to jest, po co, lista tych phases a potem konkretny opis.
-        Detailed description of phases
-In this section discussion will point to details of each phase.
+In this section discussion points to details of each phase.
 
+\subsection{No phase}
+No phase is a technical representation of starting phase.
 
 \subsection{Pre prepare phase}
-Pre prepare phase is the first phase in multi partition paxos. There two main components in that phase:
-* Transaction registers in transaction index 
-* Transaction makes it data consistent
+Pre prepare phase provides a foundation for further phases and makes guarantees that if a replica is in pre prepare phase, then it is eligible to participate in paxos round, and its private data is eligible for commit. Whether commit occurs or not depends on results of the next phases. Two main components in the phase are: \begin{enumerate*}
+\item transaction registers in transaction index, in order to participate in a paxos round,
+\item transaction performs data consistency check, in order to have local data ready for commit.
+\end{enumerate*}
 
 
 \subsubsection{Registering in transaction index}
-Transaction Index alone was described in previous section, but here we put more light on it in context of multi partition paxos algorithm. When transaction registers in index, from that moment on transaction participates in paxos round. It might participate alone or with other concurrent transactions that are known to be conflicting. Therefore transaction is vulnerable to rollback by other transaction as soon as it has registered itself in the index.
-        Since Transaction Index is accessed by many concurrent transactions, it has to be exclusively acquired by transaction before any operation that changes it state takes place. Locking, or other concurrency control mechanism can be used to guarantee that state of Transaction Index stays consistent.
-        Paxos round id used to find Paxos State data at each node locally is synthetic id and is different at each replica during multi partition paxos. I put forward the claim that difference in id between replicas does not have negative effect as long as conflicting transactions are put into same round. If, for some reason, we wanted to use same paxos round id it would require another consensus algorithm of its own which would inherently increase cost of whole algorithm. It is suitable to avoid as many round-trip requests as possible.
+When transaction registers in the transaction index \ref{sec:mpp:txIndex}, from that moment on transaction participates in a paxos round.
+It might participate alone or with other concurrent transactions that are known to be conflicting. 
+Transaction is vulnerable to rollback by other transaction, as soon as it has registered itself in the index.
+Since Transaction Index is accessed by many concurrent transactions, it has to be exclusively acquired by transaction before any operation that changes it state takes place. 
+Locking, or other concurrency control mechanism can be used to guarantee that state of Transaction Index stays consistent.
+
+
+\emph{Paxos round id}, used to find Paxos State data at each node locally, is synthetic id and is different at each replica during multi partition paxos. 
+I put forward the claim that difference in id between replicas does not have negative effect, as long as conflicting transactions are put into same round. 
+Providing same paxos round id would require another consensus algorithm of its own which would inherently increase cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
         
 \subsubsection{Making data consistent}
 Transaction’s data is kept in Private Transaction Storage. Private writes by transaction use quorum semantics. I would like to present an example which argues why consistency checking is inevitable.
@@ -214,9 +184,7 @@ Each case is valid as long as others do not happen. If we allow 1) and later on 
 Without such restriction, replica would think it[k] has consistent data, but in reality is has missing second update.
 % TODO Replika nie mysli, unikac 
 To summarize, optimizations are possible, but only with further constraints. I argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization could remain opt-in and configurable even per transaction. Which would yield best performance for specific cases without restricting other kinds of transactions.
-        
-To conclude pre prepare phase, it lays out foundation for further paxos phases and makes guarantees that if replica is in pre prepare phase, then it is eligible to participate in paxos round and its private data is eligible for commit. Whether commit occurs or not, it depends on results of next phases.
-
+       
 
 \subsection{Rollback phase}
 Rollback phase was briefly mentioned at high level overview of multi partition paxos algorithm. 
@@ -309,51 +277,77 @@ If other transaction managed to proposed itself it means that is was in prepared
 Since all replicas have to wait with further transitions until in progress transactions are repaired for all replica groups, repair phase has to be less advanced than prepare phase, but more advanced than pre prepare phase since without being in pre prepare none of replicas would notice any in progress transaction. This is an example where replicas have to move back in phase in order to stay in sync with all replicas executing transaction.
 
 
-
-
-\section{Theoretical number of requests during algorithm}
-There can be many modifications to different keys resulting in many transaction items, but what is important are the number of replicas. At worst case each key will reside on different replica set. Most likely case is that some replica groups have replicas in common.
-
-
-Assuming worst case scenario we have number of replica groups: RGC (Replica Group count)
-And replication factor N. For sake of argument let’s assume that all modifications share same replication factor although it is not required by algorithm.
-
-
-Total number of replicas: TR = N * RGC
-
-
-Pre prepare phase requires reads from other replicas to make data consistent. Number of requests to make data consistent depends on number of replica groups to which keys owned by given node are replicated. So we have:
-keys per node: KPN
-And replica groups which own data for these keys: RGOC
-We know that RGOC < RGC and at worst case it will be just less than 1 so RGOC = RGC - 1
-
-
-To make data consistent each node has to make at least quorum of RGOC, but since each node belongs to all the other replica groups, number of requests can be further reduced to QUORUM-1 which equals to (((RGC -1 ) / 2 + 1) - 1 = (RGC -1) / 2
-Since each nodes has to do it pre prepare phase requires TR * (RGC -1) / 2 of requests. Plus each replica has to receive message in order to do pre prepare phase therefore pre prephase phase looking at whole algorithm requires TR + TR * ((RGC -1) / 2) 
-
-
-Prepare phase, propose phase and commit phase require TR requests each.
-
-
-To sum it up, total number of requests at worst case equals to 
-TR ((RGC-1) / 2) + 4*TR
-
-
-For a five nodes cluster with replication factor N=3 it has
-10 different replica sets.
+\subsection{The example of \mpp}
+Let us consider a cluster of $5$ nodes, and a transaction $t$, which modifies two keys: $k_{1}, k_{2}$ with updates: $u_{1}, u_{2}$. Assume that key $k_{1}$ is replicated by replica group $RG1$, which consists of nodes: $n1$, $n2$ and $n3$, and key $k_{2}$ is replicated by $RG2$, which consists of nodes: $n3, n4, n5$.
+Let us assume that updates are already existing in the private transaction storage at each node, and transaction is ready for the commit process, which we analyze step by step:
 
 
 
+\begin{enumerate}
+\item Nodes start at \emph{no phase}, and first transition has to move them to pre prepared phase.
 
-\subsection{Key points regarding phases} 
--- TODO summary is better instead, chyba trzeba to przeniesc po prostu do Phases
+\item Run transition to pre prepared phase. Assume all nodes do the pre prepare operation successfully. \\
+ After the transition, quorums in $RG1$, $RG2$ are in \emph{pre prepare phase}. Minimum phase among replica groups is \emph{pre prepare phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a message does:
+ \begin{enumerate}
+ 	\item registers transaction $t$ in the Transaction Index, since there are no concurrent transactions, a new paxos round is created for transaction,
+ 	\item execute data consistency procedure, for example $n2$ responsible for $k_{1}$ has to read from other replicas of the key: $n1, n3$ and then merge the data, and save it in the private transaction storage.
+ \end{enumerate}
+
+\item Run transition to prepare phase. Let us assume successful transition, after which all replica groups are in prepared phase. \\
+  After the transition, quorums in $RG1$, $RG2$ are in \emph{prepare phase}. Minimum phase among replica groups is \emph{prepare phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a message does:
+
+  \begin{enumerate}
+  	\item finds paxos state querying transaction index using transaction state from the message and checks whether the ballot is the higher than promised ballot, since it will be the first ballot in this round, all replicas promise successfully and register the ballot in the paxos state.
+  \end{enumerate}
+
+\item Run transition to \emph{propose phase}, let us assume successful transition. \\
+	Each replica upon receing a propose message performs:
+
+	\begin{enumerate}
+		\item finds paxos state using transaction state,
+		\item checks whether ballot from the message is the promised one,
+		\item records the proposal from the message, which is the transaction state in the paxos state for transaction $t$, and replies with acceptance.
+	\end{enumerate}
+
+\item Run transition to \emph{commit phase}, in which each replica receives a commit message and performs:
+
+	\begin{enumerate}
+		\item finds the transaction's data in private transaction storage. In case of $RG1$ it is $k_{1} -> u_{1}$, and in case of $k_{2} -> u_{2}$,
+		\item applies the modifications locally,
+		\item performs rollback on other concurrent conflicting transactions present in the Transaction Index which are assigned to same paxos round,
+		\item adds transaction $t$ to the Transaction Log as committed,
+		\item replies to the message with acknowledgement.
+	\end{enumerate}
+
+\item The algorithm ends with the committed transaction $t$.
+
+\end{enumerate}
+
+TODO wczesniej byl tutaj bardziej skomplikowany przyklad, ale wydaje mi sie, że jego opis nie wyjasni za wiele.
+Moze jako nastepny przyklad? Na pewno musze miec ten prosty bazowy przyklad zeby bylo wiadomo o co chodzi.
+
+% 8. Next transition will do proposal in order to move to proposed phase, however in the meantime other transaction did prepare on node3 and node5 and received promise. Now things should get complicated. 
+% 9. Node 1 gets proposal and accepts it. Replica 1 wants to transition to Proposed phase
+% 10. Node 2 gets proposal and accepts it. Replica 2 wants to transition to Proposed phase
+% 11. Node 3 receives proposal, but it promised to accept higher ballot therefore it responds with refusal. Replica 3 has failed to transition, it is no longer prepared, because it sees that proposal was refused. It knows that it is at most in pre prepared phase. 
+% 12. Node 4 gets proposal and accepts it. Replica 4 wants to transition to Proposed phase
+% 13. Node 5 does exactly same as Node 3.
+% 14. Phases of replicas in RG1 were { node 1 -> prepared, node 2 -> prepared, node 3 -> prepared } and in RG2 { node 3 -> prepared, node 4 -> prepared, node 5 -> prepared }
+%         After transition replica groups look as following:
 
 
-\subsection{Example of multi partition paxos}
-tutaj diagram musi jakis byc
+% RG1 { node 1 -> proposed, node 2 -> proposed, node 3 -> pre prepared }
+% RG2 { node 3 -> pre prepared, node 4 -> proposed, node 5 -> pre prepared }
 
 
-
-
-Summary of algorithm
-MPPaxos algorithm supports multi partition transactions which are serializable. Serializability has been achieved by means of distributed consensus provided by extended paxos algorithm and other components required for isolation and conflict resolution. Extended paxos proceeds only when quorum of each replica group agree on phase of algorithm. At its core it is still paxos, but with higher number of constraints which guarantee atomicity and serializability of whole transaction spanning many partitions.
+% Quorum of replicas in RG1 is in proposed phase.
+% Quorum of replicas in RG2 is in pre prepared phase.
+% Minimum phase among replica groups is pre prepare phase.
+%         Therefore replicas cannot advance further than pre prepared phase. However node 1 for example has already advanced to proposed phase. It will be forced to go back in phase in order to stay in sync with all replica groups. It does not necessarily mean that it has repeat operation. Actual transition performed on replica depends on current phase for all replica groups and current phase of replica. Replica can just do nothing and wait till rest of replicas catch up in phase.
+% 1. Phase of all replica groups is pre prepared phase.
+% 2. Next transition has to transition replica from its phase to prepared phase.
+% 3. Node 1, node 2, node 4 can do a no-operation and just wait.
+% 4. Node 3, node 5 have to do actual prepare request with new high ballot
+% 5. Phases after transitions are evaluated and algorithm continues.
+        
+% Above example shows how different multi partition paxos is from LWT. Example shows how phase depends on all replica groups which depend on replicas and all the other replica groups. All of that is required to simply have replicas that stay in sync and where each replica group has satisfied quorum. That is requirement which comes from paxos and all these dependencies relations make it possible.
