@@ -1,14 +1,5 @@
 %!TEX root = ../thesis.tex
 
 \section{The advantage}
-\emph{LWT} (\ref{sec:theory:transactions:lwt}) are limited to a single partition. Therefore LWT cannot be used for atomic updates of many partitions. Usual use case for transactions is atomic and consistent update of many rows, thus LWT is not enough to support that use case. \emph{RAMP} transactions (\ref{sec:theory:transactions:ramp}) have support for multi-partition operations. 
-However \emph{RAMP} relies on 64 bit timestamp which is not the current standard, thus \emph{RAMP} cannot be used at the time being.
-
-% TODO nie pisać porównań MPP z Paxos, ani z 3PC
-
-% TODO nie pisać ogólnie o transakcjach w bazach danych => przenieść to do motywacji
-
-\mpp is an algorithm that has multi-partition operations support. \mpp can be used nowadays. Therefore is has advantage over \emph{LWT} and \emph{RAMP}. It has network partition tolerance, therefore has advantage over \emph{3PC} (\ref{sec:theory:transactions:3pc}).
-\mpp is resilient to partial failures, therefore is applicable to distributed environments. \mpp provides serializable isolation level which gives more isolation than read atomic in \emph{RAMP}.
-
-Atomic multi-partition updates can be used for many different use cases. Databases can properly enforce foreign keys, do secondary indexing, update materialized views. Users can benefit, because their applications already rely on multi-partition operations. Therefore logic does not have to change dramatically in order to adapt to distributed databases. Transactions also remove burden of ensuring consistency in other ways. One way of doing many consistent updates to single partition with \emph{LWT} is to have a \emph{step} column representing current progress of \emph{transaction}. Flag is updated during each \emph{LWT} operation. If flag matches expected value, operation succeeds. Such model puts restrictions on how user uses database. Note that even with the special flag LWTs are still restricted to single partition. \mpp allows users to perform their operations in more natural way without additional restrictions. 
+\emph{LWT} \ref{sec:theory:transactions:lwt} is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt.
+Multi Partition Paxos (\mpp) is an algorithm that supports multi-partition operations. Since at its core lays \paxos then it has network partition tolerance, therefore is applicable to distributed environments. \mpp provides read-committed isolation level, whereas \lwt provides serializable isolation.

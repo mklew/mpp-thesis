@@ -3,11 +3,11 @@
 
 \chapter{Implementation of algorithm in Cassandra}\label{sec:mpp:impl}
 % Implementation in Cassandra (concrete part, implementation in Cassandra)
-In this section the discussion will point to implementation details of algorithm and its components in Cassandra. 
+In this section the discussion will point to implementation details of the algorithm and its components in Cassandra. 
 
 
 \section{Proof of concept}
-\paxos algorithm has a formal mathematical proof of its correctness. \cite{Lamport1998partTimeParliment} Formal proof of \emph{Mutli Partition Paxos} algorithm is out of scope for this work. Implementation of algorithm in Cassandra database is done instead, as proof of concept. Details of implementation specific for Cassandra are the main focus of the following sections.
+\paxos algorithm has a formal mathematical proof of its correctness. \cite{Lamport1998partTimeParliment} Formal proof of \emph{Mutli Partition Paxos} algorithm is out of scope for this work. Implementation of algorithm in Cassandra database is done instead, as proof of concept. 
 
 % TODO do usuniecia bo temat raczej wyczerpany
 %Since it has token ring architecture it is well suited for proof of concept implementation of Multi Partition Paxos algorithm.
@@ -24,7 +24,7 @@ There are few assumptions as to implementation.
 \item Transactions should not block normal updates - implementation won’t block user from doing non transactional updates to tables.
 \end{enumerate*}
 
-\section{Indended use of transactions}
+\section{Terms of use}
 Implementation does not prevent user from misusing transactions. Implementation allows to use Cassandra in transactional way, but only if it is done according to specification. In principle transactions are run with other transactions whereas normal updates are completely independent from each other as well as from transactions. 
 
 % \subsubsection{Typical use case}
@@ -40,7 +40,7 @@ Implementation does not prevent user from misusing transactions. Implementation 
 
 % Illegal scenario from business perspective would be to update balances within transaction, but to register transfer outside transaction because if transaction fails then there is a transfer in the system that does not have reflection in accounts balances. 
 
-\section{New consistency levels}
+\section{Transactional consistency levels}
 Transactions are implemented as opt-in feature of Cassandra. New consistency levels  are introduced that represent transactional workload. Adding new levels follows convention of how new features are added to Cassandra, as was the case with \lwt. 
  
 Cassandra can operate on different consistency levels performing reads and writes. Different consistency levels have different performance, but also different guarantees. Examples of consistency levels are:
@@ -73,7 +73,7 @@ Keyspace and table name are always required. Type of a token is just \emph{long}
 % Transaction has unique id. I’ve used 
 
 
-\section{Extending binary protocol}
+\section{Extending CQL}
 %Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. 
 %I’ve used Cassandra Java Driver which is most standard implementation of C* driver.
 Cassandra Query Language has been extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. I wanted to reuse as much of functionality as possible, but I had to modify syntax of: insert, update and delete statements. Fortunately all modification statements share same \emph{USING} clause, as in examples \ref{lst:insertUsing}, \ref{lst:updateUsing} which can be used to represent modification in a transaction.
@@ -125,7 +125,7 @@ Transaction State is also required in order to send rollback messages only to no
 
 
 
-\section{Write path}
+\section{Write path extensions}
 Write path of Cassandra \cite{CassandraWritePath} was modified in order to support transactional writes to private memtables. 
 Cassandra’s write path is known to be very fast. Implementation of transactions won’t slow it down, because data is only kept in-memory. Therefore write is acknowledged by coordinator node as soon as modification has been written to quorum of replica nodes.
 
@@ -136,7 +136,7 @@ Write path has been extended by detecting whether \emph{using transaction} claus
 When transactional mutation is applied by its apply method, all the changes go to Private Transaction Storage instead of main tables.
 
 
-\section{Read path}
+\section{Read path extensions}
 Read path \cite{CassandraReadPath} was also modified. Syntax of select statement stays without changes, because logic of executing select depends only on consistency level used to execute query.  When select is performed with one of new consistency levels, then coordinator performs transactional read.
 
 
@@ -167,7 +167,7 @@ Read is only performed when coordinator has became a leader and completed all of
 
 
 
-\section{MPP Private Transaction Storage}
+\section{Private Transaction Storage}
 \emph{Private Transaction Storage} implementation which uses private \emph{memtables} to store transaction's modifications. It maps transaction id to its data \code{TransactionData}. Transaction data stores \emph{mutations} mapped by keyspace, table and \textbf{full key}, thus storage has information about what keys are modified in transaction. Each owned transaction item has corresponding entry in transaction data map.
 
 When new modification is done in trasaction, then new mutation is added to transaction data. It is either merged with already present mutation for same partition key, or it is added as new entry in the map.
@@ -184,7 +184,7 @@ Another issue can be raised that data is lost when node shuts down and comes bac
 
 
 
-\section{MPP Transaction Index}
+\section{Transaction Index}
 Index needs to be thread-safe and stay consistent when many concurrent transactions try to register. One solution is to create global lock on index, but this can cause contention. Other solution with less contention uses many locks acquired per transaction item owned by the node. 
 
 \subsection{Locking of index}
@@ -195,8 +195,10 @@ Index is a map from \code{MppIndexKey} to \code{MppParticipants}. Index keys are
 When transaction wants to register in index, it first has to acquire it. Then \code{MpPaxosParticipant} is created for this transaction. All participants from all index keys are iterated over and checked if there is a single paxos round id. If there are more potential rounds, transaction cannot be registered. Given at most one paxos round id, new participant is added to participants for all computed index keys.
 
 
-\section{Configurable conflict functions per column family}
-Conflict functions are configured per transaction item, thus conflict functions are configured per table. Per table configuration is an additional feature to algorithm. In Cassandra conflict functions configuration is implemented using column family metadata which can be changed dynamically at runtime of the cluster by executing \code{ALTER TABLE} commands. Listing \ref{lst:configureConflictFunctions} shows how conflict function is set to resolve conflict on same token range slice number, which puts bounds on number of concurrent transactions in table \code{sliced_counters} to $2000$ transactions. 
+\section{Configurable conflict functions}
+The implementation provides configuration of conflict functions per column family, enabling different choice of conflict functions for different tables depending on intended workload.
+
+Per table configuration is an additional feature to the algorithm implemented using column family metadata, which can be changed dynamically at runtime of the cluster by executing \code{ALTER TABLE} commands. Listing \ref{lst:configureConflictFunctions} shows how the conflict function is set to resolve conflict on same token range slice number, which puts bounds on number of concurrent transactions in table \code{sliced_counters} to $2000$ transactions. 
 
 \begin{lstlisting}[style=outcode,label={lst:configureConflictFunctions},caption={Configuring conflict function on Cassandra table}]
 CREATE TABLE counters.sliced_counters 
@@ -210,14 +212,12 @@ ALTER TABLE counters.sliced_counters WITH extensions = {
 
 %It will divide token range into 2000 even slices. Such configuration allows to have at most 2000 transactions running on single node for that particular table.
 
-All proposed conflict functions (\ref{sec:theory:conflictFunctions}) are available with following names:
+Conflict functions (\ref{sec:theory:conflictFunctions}) are available with following names:
 \begin{enumerate*}
-\item \code{COMMON_TX_ITEMS} -- conflict on same transaction items
+\item \code{COMMON_TX_ITEMS} -- conflict on same transaction items, used as the default conflict function,
 \item \code{TOKEN_RANGE_SLICES} -- conflict on same token range slice number. Function has additional configurable parameter \code{int token_range_slices}
 \item \code{ONE_FOR_ALL} -- conflict on same table.
 \end{enumerate*}
-By default tables are configured with conflict function on same transaction items.
-
 
 \section{Transaction Log}
 Transaction log is implemented using cassandra table local to each node. 
@@ -225,11 +225,10 @@ Committed transactions are added to the table with flag \code{commited = true}.
 % Since transaction log needs to preserve information about transaction after transaction is done it is better to keep it off memory. I’ve implemented it using cassandra table local to each node. 
 
 
-\section{Mp Paxos State}
-Multi partition paxos state has been also implemented as table in Cassandra local to each node. It stores information about paxos state as described in theoretical part.
+\section{Paxos State}
+Multi partition paxos state is implemented as a table in \emph{system} keyspace, which is local to each node and is not replicated, and stores information about paxos round's state, as in the listing \ref{lst:paxosStateImpl}.
 
-
-It is implemented by table:
+\begin{lstlisting}[style=outcode,label={lst:paxosStateImpl},caption={Table definition for multi partition paxos state}]
 CREATE TABLE multi_partition_paxos (
 paxos_id UUID,
 in_progress_ballot timeuuid,
@@ -240,12 +239,11 @@ proposal blob,
 proposal_ballot timeuuid,
 proposal_version int,
 PRIMARY KEY (paxos_id))
-
-
+\end{lstlisting}
 
 
 %\subsection{Multi partition paxos implementation}
-This section discusses few details about implementation of multi partition paxos algorithm in Cassandra.
+%This section discusses few details about implementation of multi partition paxos algorithm in Cassandra.
 
 \section{Replica Groups Phases Executor}
 

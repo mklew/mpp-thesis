@@ -1,14 +1,16 @@
 %!TEX root = ../thesis.tex
 
 \section{The rationale}
-Algorithm \mpp in its current form has been designed for distributed databases that have token ring architecture. 
-However there are no strict restrictions and algorithm can be used with any distributed database which uses \emph{keys} to lookup replicated data in the cluster. 
+The \mpp algorithm is designed for distributed databases with token ring architecture,
+which uses \emph{keys} to lookup replicated data in the cluster. However, there are no strict restrictions, thus the algorithm potentially supports any distributed database.
 
 \mpp supports multi-partition operations.
-\mpp supports transactions with serializable isolation level. 
+\mpp supports transactions with read-committed isolation level. 
 \mpp supports transactions that are atomic and durable.
 \mpp is resilient to network partitions. In terms of \emph{CAP} \cite{Brewer:2012ba} it uses \emph{AP}
-\mpp is eventually consistent (\ref{sec:theory:eventualConsistency}). Comparison of \mpp to \lwt is shown at Fig. \ref{fig:mppVsLwt}.
+\mpp is eventually consistent (\ref{sec:theory:eventualConsistency}). 
+
+Comparison of \mpp to \lwt is shown at fig. \ref{fig:mppVsLwt}.
 
 % TODO poprawić, że w MPP jest read-committed a nie serializable.
 \begin{figure}[hbt]
@@ -32,9 +34,8 @@ However there are no strict restrictions and algorithm can be used with any dist
 
 % Algorithm’s rationale (theoretical part) - TODO, wstępny akapit przenieść do motywacji
 
-
-\subsection{Inspired by Paxos and LWT}
-Similarly to LWT, \mpp also relies on \paxos, but with many more pieces added, changed and extended. 
-\paxos with couple of modifications is part of main \mpp algorithm. As a consequence, \mpp has to satisfy all \paxos requirements in addition to requirements which are defined for transaction like behaviour. \mpp is also inspired by \lwt, therefore similarities exist.        
+\subsection{Inspired by LWT}
+Similarly to LWT, \mpp also relies on \paxos, but with pieces added and changed, thus extended
+\paxos is part of the \mpp algorithm. As a consequence, \mpp has to adhere to \paxos requirements in addition to requirements which are defined for transaction like behaviour. 
 
 

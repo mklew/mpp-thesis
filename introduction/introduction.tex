@@ -2,17 +2,17 @@
 
 \chapter{Introduction}\label{chapter:introduction}
 
-% TODO czemu transakcje są potrzebne
-
-% TODO work aroundy wobec braku pełnych transakcji, 
-
 \section{Preface}\label{sec:introduction:preface}
 
 \section{Motivation}\label{sec:introduction:motivation}
 
+\subsection{Transactions matter}
+% TODO czemu transakcje są potrzebne
+Transactions are important for performing operations on different entities and ensuring consistency among them, as well as for other reasons. They simplify making changes to the model, and provide guarantees on top of which applications are built. Without transactions, all guarantees disappear, and suddenly developers have to take care of things which were taken for granted.
+
 \subsection{Current state of transactions in Cassandra}	
 Cassandra due to its distributed nature, cannot have full acid transactions, but it supports transactional behaviour with so called Lightweight Transactions (LWT).
-LWT guarantees atomic modification of single partition iff specified condition is met. Main guarantee however is that after a successful LWT quorum of replicas agree on given value.
+LWT guarantees atomic modification of single partition, which is the clustering of the rows in the table, iff specified condition is met. Main guarantee however is that after a successful LWT quorum of replicas agree on given value.
 
 Conditions allow for example to do only insert if that row hasn’t existed before. 
 
@@ -29,8 +29,13 @@ UPDATE balances SET balance = 2500 WHERE user_id = 1 IF balance = 2000;
 Second example shows that conditions can have expressions that are evaluated during LWT. LWT will proceed further only if condition is met. Such expressions are restricted only to row that is being updated.
 
 LWT is a tool which allows to have some consistency guarantees, but it is limited to single row. It cannot be used to have some transaction that spans two rows with conditions between them. 
-To put LWT in terms of ACID, LWTs have serial isolation level, are atomic and durable. Consistency is preserved in terms of quorum, but not in terms of all nodes involved which is the case in relational world.
+To put LWT in terms of ACID, LWTs have serial isolation level, are atomic and durable. Consistency is preserved in terms of quorum, but not in terms of all nodes involved which is the case in relational world. Section \ref{sec:theory:transactions:lwt} contains more information about \lwt.
 
+\subsection{Workarounds for no ACID}
+Atomic multi-partition updates are missing in the Cassadra, but workarounds exist, and one of them is to use \lwt and a special \emph{step} column, which represents current progress of a \emph{transaction}. Although there is no transaction enforced by the database, there is a transactional code in the logic of the client, which updates \emph{step} column on each operation, and checks the condition against that column in the subsequent operation if its value matches expected step. That way the next operation succeeds only if previous succeeded. Such model puts restrictions on how user uses database and how client's logic is written. Note that even with the special flag LWTs are still restricted to a single partition.  
+
+Multi partition transactions would remove burden of ensuring consistency using flags and would allow users to perform their operations in more natural way without additional restrictions, and changes in the logic. 
+Atomic multi-partition updates would support different use cases, for example databases could properly enforce foreign keys, do secondary indexing, update materialized views. Users would also benefit, since their applications already rely on multi-partition operations, thus logic would not have to change to completely different model in order to adapt to a distributed database. 
 \section{Structure}\label{sec:introduction:structure}
 
 \input{introduction/introduction-terms.tex}

@@ -1,8 +1,8 @@
 %!TEX root = ../thesis.tex
 
-\section{Representation of transaction}
-Transaction state includes \emph{unique id} (UUID\footnote{universally unique identifier}) along with all operations and data done within transaction, thus all modifications. 
-Each modification refers to a single partition. Key belongs to a partition, thus modification is performed for single partition. There can be many modifications done within transaction. 
+\section{Representation of a transaction}
+A transaction state includes a \emph{unique id} (UUID\footnote{universally unique identifier}) along with all the operations and data done within the transaction, thus all modifications. 
+Each modification refers to a single partition. Key belongs to a partition, thus modification is performed for a single partition. There can be many modifications done within transaction. 
 
 \subsection{Tokens}
 % Napisać, że Token to najmniejsza jednostka replikacji. Token należy do token range, 
@@ -16,7 +16,7 @@ Ranges of token ring are divided among nodes in cluster. Division and assignment
 %Therefore node knows which nodes to ask for data with certain key because of token computed from that key and topology of cluster.
 
 \subsection{Transaction state}
-Transaction state has to allow to find all modifications done in transaction. Transaction state is updated with each operation done within transaction. Each update is a \emph{transaction item}. \emph{Transaction item} is a pointer to the operation, thus to its data. Since there are many transactions, transaction state should use least amount of memory possible. Tokens can be used to keep memory usage in bounds. Data structure is proposed at listing (\ref{lst:txState}).
+Transaction state has to allow to find all modifications done in transaction. Transaction state is updated with each operation done within transaction. Each update is a \emph{transaction item}. \emph{Transaction item} is a pointer to the operation, thus to its data. Since there are many concurrent transactions, transaction state should use least amount of memory possible. Tokens can be used to keep memory usage in bounds. Data structure for transaction state is proposed in the listing \ref{lst:txState}.
 %Coming back to transaction state, it needs to have information about what pieces of data were modified. Requirements recap:
 
 % TODO problem z label
@@ -45,7 +45,7 @@ class TransactionItem
 % TODO nie mozna uzywac 'something', 'so', 'thing'
 %Transaction state is unique id plus something that allows us to find all modifications. That something is called transaction item, which has token and table name. 
 
-Transaction items point to concrete replicas. Existance of transaction item means that replicas identified by \emph{token} store modification of a key done in transaction. Keys are unknown to transaction state, but keys are known to replicas. Each replica has full information about key and operations performed on its value. 
+Transaction items point to concrete replicas. Existance of a transaction item means that replicas identified by the \emph{token} store modification of the key done in transaction. Keys are unknown to the transaction state, but keys are known to the replicas. Each replica has full information about the key and operations performed on its value. 
 
 Transaction item has table name, because two tables can have same keys which would result in same tokens and it is necessary to differentiate between those two keys, hence table name is added. This can be extended to any other name spacing. Note that, token ring is unaware of database schema, therefore token alone only directs us to nodes with modified data, but to know what has been modified, we also need names of tables.
 
@@ -53,16 +53,15 @@ Transaction item has table name, because two tables can have same keys which wou
  
 % Transaction State is just a container for all of these transaction items.
 
-Transaction state is concise data structure, because it uses tokens instead of keys. 
+Transaction state has deterministic memory footprint, since it stores fixed-length tokens instead of keys with unknown size.
 
 \subsubsection{Without tokens}
-Transaction state with keys instead of tokens has same functionality, but varies in memory usage. This is why \mpp is applicable to \emph{key-value} databases in general.
+Transaction state which stores keys instead of tokens provides same functionality, but varies in memory footprint, hence \mpp is applicable to \emph{key-value} databases in general, but its memory usage might not be deterministic.
 %Same functionality could be achieved storing real keys in transaction items, but then each key could have arbitrary size and same would apply to transaction state.
 
 \subsubsection{Without transaction items}
-Transaction items identify nodes that own part of transaction's data. 
-In case there were are no transaction items, all we would know would be an id of a transaction.
-Using just an id we would need to ask each node in the cluster if it has data associated with transaction. As a corollary algorithm would be dependent on all nodes in the cluster, thus resilience to partial failure would be lost.
+Transaction items identify nodes that own part of transaction's data. Without them we would know only an id of a transaction.
+Using just an id we would need to ask each node in the cluster if it has data associated with transaction. As a corollary the algorithm would be dependent on all nodes in the cluster, thus resilience to partial failure would be lost.
 
 \subsubsection{Updates}
 Transaction state changes as transaction progresses. It has to be updated with new transaction items for each operation. As a corollary, each operation should return new transaction item which can be appended to transaction state. 
@@ -114,8 +113,8 @@ Transaction state changes as transaction progresses. It has to be updated with n
   \end{algorithmic}
 \end{algorithm}
 
-Appending transaction items is the crucial step of the algorithm \ref{alg:updateTxState}, because client is responsible for keeping track of all performed operations within transaction. Transaction state is assumed to be source of truth about transaction.
-Note that, user can be unaware of transaction items, but client i.e. driver has to keep track of transaction items and append them to transaction state.
+Appending transaction items is the crucial step of the algorithm \ref{alg:updateTxState}, because a client is responsible for keeping track of all performed operations within transaction. Transaction state is assumed to be source of truth about transaction, which means that is has valid information about which replicas are affected by the transaction.
+Note that, client i.e. database driver has to keep track of transaction items and append them to the transaction state, but an end user of the driver is potentially unaware of transaction items.
 
 %Nodes are unaware of modifications done at other nodes. Only client can gather all that information and keep track of it.
  %       Merging two transaction states, simply means concatenating collections of transaction items from two transactions given that transaction id is the same. In terms of functional programming, transaction state is a monoid.

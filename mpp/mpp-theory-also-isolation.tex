@@ -5,7 +5,7 @@ Transactions must run in isolation from each other. Transactions cannot see each
 
 Each key's value modification done in transaction should be stored at replicas responsible for given key keeping it private for that transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
 
-Each transactional operation is executed, but instead of operating on current live data, modifications is put into private storage. Interface of the storage is presented in the listing \ref{lst:privateTransactionStorage}.
+Each transactional operation is executed, but instead of operating on current live data, modifications are put into private storage. Interface of the storage is presented in the listing \ref{lst:privateTransactionStorage}. \emph{Modification} returned by \code{getModifications} method is the Cassandra's representation of any modification operation, such as: \begin{enumerate*} \item insert, \item update, \item delete. \end{enumerate*}
 
 \begin{lstlisting}[language=Java,style=outcode,label={lst:privateTransactionStorage},caption={API of private transaction storage}]
 PrivateTransactionStorage {
@@ -19,16 +19,16 @@ PrivateTransactionStorage {
 \end{lstlisting}
 
 
-From perspective of algorithm it does not matter whether modifications are stored in memory or in any other way as long as modifications are accessible during transaction.
+From perspective of the algorithm it does not matter whether modifications are stored in memory or in any other way as long as modifications are accessible during transaction's execution.
 
-Private transaction storage also satisfies requirement of performing many operations within transaction. Each operation is stored in private storage and mapped to transaction item.
+Private transaction storage satisfies requirement of performing many operations within transaction. Each operation is stored in the private storage and mapped to a transaction item.
 
 
 \subsection{Quorum requirements}
-Each modification within transaction should be written to at least quorum of nodes responsible for modified key. Otherwise modification has to be either tried again or whole transaction needs to be rolled back. 
+Each modification within transaction should be written to at least quorum of nodes responsible for the modified key in order to depend on majority during the commit process. If quorum is not available, then whole transaction needs to be rolled back. 
 
 \subsection{Isolated operations}
-Algorithm (\ref{alg:transactionalInsert}) shows how transactional operations are performed, concretely transactional inserts. All transactional operations are executed in the same way. 
+The algorithm in the figure \ref{alg:transactionalInsert} shows how transactional operations, concretely transactional inserts, are performed. All transactional operations are executed in the same way. 
 % TODO napisac algorytm
 %\subsection{Algorithm for adding operations to private transaction storage}
 

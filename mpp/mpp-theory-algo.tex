@@ -13,11 +13,9 @@
 \input{mpp/mpp-theory-also-isolation.tex}
 
 
-
-
-
 \section{Addressing paxos requirements}
-Paxos requirements have to be met. What was easy in case of LWT becomes troublesome considering many partitions. 
+Paxos requirements have to be met.
+ What is simple in case of LWT becomes troublesome in \mpp considering many partitions. 
 %In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
 
 
@@ -55,9 +53,9 @@ If there are many values being proposed at same time, only one value should be a
 
 
 \subsection{Conflicting transactions}\label{sec:theory:conflictFunctions}
-In relational world it is well defined what a conflict is. In distributed setting in order to have absolute certainty whether two transactions are conflicting it requires to compare their private modifications and see whether they modify same keys. That results in as many round trips as there are items being modified by transactions multiplied by number of concurrent transactions. In distributed settings algorithms should do minimum round trips, because it costs resources and hurts performance \cite{rotem2006fallacies}.
+In distributed setting in order to have absolute certainty whether two transactions are conflicting it requires to compare their private modifications and see whether they modify same keys. That results in as many round trips as there are items being modified by transactions multiplied by number of concurrent transactions. In distributed settings algorithms should do minimum round trips, because it costs resources and hurts performance \cite{rotem2006fallacies}.
 
-Example of conflict checking functions, that are local, this do not require round trips, but as a tradeoff have false positives include:
+Conflict functions, which consider only local data, and do not require round trips, but as a tradeoff have false positives, are as follows:
 \begin{description}
 \item[Conflict on same transaction items] \hfill \\
 	Transactions are considered conflicting if they share transaction item. 
@@ -208,10 +206,7 @@ Successfully committed transaction uses \emph{Transaction Index} to find conflic
 Client that wants to rollback transaction has to pass transaction state. Then replicas responsible for items are found and rollback messages are sent. When node receives rollback message it purges all the private data stored in \emph{Private Transaction Storage} associated with transaction id.
 
 \section{Transaction Log}
-\emph{Transaction Log} is a similar concept to \emph{Transaction Index}. It also has to be present at each node in the cluster. Its responsibility is to record committed and rolled back transactions. \emph{Transaction Index} changes frequently, because transactions are registered in it and removed on rollback. Since \emph{transaction index} is the only way to find Paxos State and since transactions are removed from index once they are finished, we need a log that has information whether transaction is committed or not.
-
-
-It has to support operations:
+\emph{Transaction Log} is a similar concept to \emph{Transaction Index}. It also has to be present at each node in the cluster. Its responsibility is to record committed and rolled back transactions. \emph{Transaction Index} changes frequently, because transactions are registered in it and removed on rollback. Since \emph{transaction index} is the only way to find Paxos State and since transactions are removed from index once are finished, we need a log that has information whether transaction is committed or not. It has to support following operations:
 \begin{description}
 \item[\code{addAsCommitted (transaction id)}] -- records committed transaction
 \item[\code{addAsRolledBack (transaction id)}] -- records rolled back transaction
@@ -221,14 +216,15 @@ It has to support operations:
 		\item \code{Unknown} -- when transaction with given id hasn’t been added to a log yet
 		\end{enumerate*} 
 \end{description}
-Log should store information off memory in order to preserve information about transaction after it is removed from \emph{Transaction Index}.
+The log stores information off memory, in dedicated table, in order to preserve information about transaction after it is removed from \emph{Transaction Index}.
 
 \section{The algorithm's description}
-Multi partition paxos algorithm depends on previously described concepts and guarantees they provide. This part of whole solution is responsible for committing transaction. Transaction is committed by performing multi partition paxos round in which transaction is accepted by majority from all replica groups. 
+Multi partition paxos algorithm depends on previously described concepts and guarantees they provide. This part of whole solution is responsible for committing transaction. Transaction is committed by performing multi partition paxos round, in which transaction is accepted by majority from all replica groups \ref{sec:mpp:replicaGroups}. 
+% TODO wyjaśnić czym są replica groups.
 
 \subsection{Phases}
-Algorithm works in \emph{phases}. All possible phases are: 
-\begin{enumerate}
+The algorithm consists of \emph{phases}, which are: 
+\begin{enumerate*}
 \item no phase
 \item pre prepare phase
 \item repair phase
@@ -236,8 +232,8 @@ Algorithm works in \emph{phases}. All possible phases are:
 \item propose phase
 \item commit phase
 \item rollback phase
-\end{enumerate}
-All phases have corresponding descriptions in the following sections.
+\end{enumerate*}
+Following sections contain descriptions of each phase.
 
 
 
@@ -263,28 +259,29 @@ Furthermore, there is another phase not existing in paxos, which is named rollba
 
 
 \subsection{Replica groups in details}
-Assume N=3 and transaction for keys: k1, k2, k3, k4 
-K1 belongs to replica group n1, n2, n3
-K2 belongs to replica group n2, n3, n4
-K3 belongs to replica group n1, n5, n7
-K4 belongs to replica group n1, n2, n3
+\label{sec:mpp:replicaGroups}
+Assume $N=3$ and transaction for keys: $k1$, $k2$, $k3$, $k4$.
+Key $k1$ belongs to replica group $n1$, $n2$, $n3$.
+Key $k2$ belongs to replica group $n2$, $n3$, $n4$.
+Key $k3$ belongs to replica group $n1$, $n5$, $n7$.
+Key $k4$ belongs to replica group $n1$, $n2$, $n3$.
 
 
-Replica groups for key (each transaction item) might have some or all nodes in common.
-In this example, K1 and K4 belong to same replica group. K2, K3 however have one node in common with K1 and K4.
+Replica groups for a key\footnote{each transaction item} might have some or all nodes in common.
+In this example, $k1$ and $k4$ belong to the same replica group. Keys $k2$, $k3$ however have one node in common with $k1$ and $k4$.
 
-
-As a corollary, any operation done in MPP must be done once per node that is affected by transaction, so in this example, once per n1, n2, n3, n4, n5, n7 in order to not repeat operation on same nodes, but results of these operations have to be evaluated in context of replica groups. 
+As a corollary, any operation done in \mpp must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, $n7$ in order to not repeat operation on same nodes, but the results of these operations have to be evaluated in context of the replica groups. 
 
 
 \subsubsection{Moving forward in phases}
 Each replica starts without any phase. In ideal scenario it has to transition from no phase to pre prepared phase, then to prepared phase followed by proposed phase finishing by committed phase. Its transitions however depend on results of transitions of other replicas and other replica groups.
 
 
-Replica can advance in phase only if:
-* Its operation is successful, and
-* Each replica group to which that node belongs has quorum of nodes with same advancement of phase, and
-* Minimum phase among quorums in replica groups has same advancement
+Replica advances in phase only if conditions are met: \begin{enumerate*}
+\item its operation is successful, and
+\item each replica group to which that node belongs has quorum of nodes with same advancement of phase, and
+\item minimum phase among quorums in all replica groups has same advancement.
+\end{enumerate*}
 
 
 In consequence, all replicas and all replica groups move in sync with each other. None of nodes will do a proposal if there is some replica group for which quorum is not in prepare phase. Similarly, none of nodes will do commit if there exists at least one replica group which didn’t get acceptance of proposal.
@@ -294,21 +291,19 @@ Given contention with other transactions, it is possible that replica groups hav
 
 
 \subsubsection{Example}
-Minimal example with two replica groups and 4 nodes.
-To see it more clearly, let’s go through following scenario where there are 2 replica groups and only 5 nodes. 
+For example, let us consider two replica groups within a cluster of $5$ nodes.
+Replica group 1 ($RG1$) has nodes: $node1$, $node2$ and $node3$. 
+Replica group 2 ($RG2$) has nodes $node3$, $node4$ and $node5$.
 
+\begin{enumerate}
+\item Nodes start at no phase, and first transition has to move them to pre prepared phase.
+\item Run transition to pre prepared phase. Assume all nodes do the pre prepare operation successfully.
+\item Quorums in $RG1$, $RG2$ are in \emph{pre prepare phase}.
+\item Minimum phase among replica groups is \emph{pre prepare phase}, therefore all replica groups have same advancement in phase.
+\item Run transition to prepare phase. Let us assume successful transition, after which all replica groups are in prepared phase.
+\item a
+\end{enumerate}
 
-Replica group 1 (RG1) has nodes node1, node2 and node3. 
-Replica group 2 (RG2) has nodes node3, node4 and node5.
-
-
-1. Nodes start at no phase.[d] First transition should bring them to pre prepared phase.
-2. Transition to pre prepared phase: assume all nodes do pre prepare operation successfully.
-3. Quorum in RG1, RG2 is in pre prepare phase.[e]
-4. Minimum phase among replica groups is pre prepare phase.
-5. Therefore all replica groups are in pre prepare phase.
-6. Transition to prepare phase. Let’s assume same successful transition.
-7. All replica groups are in prepared phase.
 8. Next transition will do proposal in order to move to proposed phase, however in the meantime other transaction did prepare on node3 and node5 and received promise. Now things should get complicated. 
 9. Node 1 gets proposal and accepts it. Replica 1 wants to transition to Proposed phase
 10. Node 2 gets proposal and accepts it. Replica 2 wants to transition to Proposed phase
