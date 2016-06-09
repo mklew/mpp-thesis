@@ -56,10 +56,13 @@ Multi partition transactions would remove burden of ensuring consistency using f
 Atomic multi-partition updates would support different use cases, for example databases could properly enforce foreign keys, do secondary indexing, update materialized views. Users would also benefit, since their applications already rely on multi-partition operations, thus logic would not have to change to completely different model in order to adapt to a distributed database. 
 
 \section{Goals}
-TODO chcemy mieć transakcje która działaja dla wielu partycji. 
-5-6 zdań
-Bez nawiązywania. Napisać co ma mój algorytm robić.
+The main goal of the thesis is to design an algorithm that provides more than \lwt and supports multi-partition transactions; moreover it has to be scalable by its design and it cannot have a single point of failure. Additionally, the algorithm should be efficient in terms of memory consumption and network usage. To verify the designed algorithm, its proof of concept implementation has to be done in the Cassandra, and tested in the cluster employing variety of experiments to be carried out. The results will be analyzed afterwards.
 
 \section{Structure}\label{sec:introduction:structure}
+The organization of the work is as follows: 
+in the next chapter we will introduce concepts of distributed databases followed by transactions and different algorithms related to them, along with descriptions of the databases with main focus on the Cassandra. 
+The proposed algorithm will be discussed in Chapter 3 and its experimental implementation in Chapter 4.
+Chapter 5 will present tests and theoretical analysis of the algorithm.
+We will recapitulate the work in Chapter 6.
 
 \input{introduction/introduction-terms.tex}

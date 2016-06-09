@@ -2,32 +2,15 @@
 
 \section{The rationale}
 The \mpt algorithm is designed for distributed databases with token ring architecture,
-which uses \emph{keys} to lookup replicated data in the cluster. However, there are no strict restrictions, thus the algorithm potentially supports any distributed database.
+which uses \emph{keys} to lookup replicated data in the cluster. However, there are no strict restrictions, thus the algorithm potentially supports any distributed database, its key features are: \begin{enumerate*}
+\item supports multi-partition operations,
+\item supports transactions with read-committed isolation level,
+\item supports transactions that are atomic and durable,
+\item is resilient to network partitions. In terms of \emph{CAP} \cite{Brewer:2012ba} it uses \emph{AP}.
+\end{enumerate*}
+% Nie piszę o eventuall consistency, bo to Cassandra jest eventual consistent, a sam algorytm nie ma do tego środków oprócz tego, że bazuje na Quorums więc jest na pewno AP.
+%\item is eventually consistent \ref{sec:theory:eventualConsistency}, since sacrafices .
 
-\mpt supports multi-partition operations.
-\mpt supports transactions with read-committed isolation level. 
-\mpt supports transactions that are atomic and durable.
-\mpt is resilient to network partitions. In terms of \emph{CAP} \cite{Brewer:2012ba} it uses \emph{AP}
-\mpt is eventually consistent \ref{sec:theory:eventualConsistency}. 
-
-Comparison of \mpt to \lwt is shown at fig. \ref{fig:mppVsLwt}.
-
-% TODO poprawić, że w MPP jest read-committed a nie serializable.
-\begin{figure}[hbt]
-  %\centering
-  \setlength{\unitlength}{1.3cm}  
-  \subfloat{
-    \renewcommand{\tabcolsep}{0.1cm}
-    \resizebox{\textwidth}{!}{\begin{tabular}{c|c|c|c|c|c|c}
-      \toprule
-      Algorithm & multi-partition operations & isolation level & atomicity & durability & consistency & \emph{CAP} \\ \midrule
-      \mpt      &   yes                      & read-committed  &   yes     & yes        & eventually consistent & \emph{AP}  \\
-      \lwt      &   no, single partition     & serializable  &   yes     & yes        & eventually consistent & \emph{AP}  \\  \bottomrule      
-    \end{tabular}}
-  }
-  \caption{\mpt compared to \lwt}
-  \label{fig:mppVsLwt}
-\end{figure}
 
 %MPPaxos provides serializable transactions that span multiple tokens on token ring. Provides transactions which are isolated from each other. Transactions that are atomic and durable.
 %Consistency is eventual for all nodes, but reads are always consistent as long as quorum of nodes is considered. This is the same as in LWT.
