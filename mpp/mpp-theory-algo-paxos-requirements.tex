@@ -2,12 +2,12 @@
 
 \section{Addressing paxos requirements}
 Paxos requirements have to be met.
- What is simple in case of LWT becomes troublesome in \mpp considering many partitions. 
+ What is simple in case of LWT becomes troublesome in \mpt considering many partitions. 
 %In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
 
 
 \subsection{Paxos value}
-Proposed \emph{value} in \mpp is transaction state. Given transaction state, we can identify all modifications in transaction. Given transaction state, any node can try to commit transaction, because it can check which nodes participate in transaction and where is the private data stored. This fact is used to satisfy requirement, as to proposing highest value (\ref{sec:mpp:requirements:finishInProgress}).
+Proposed \emph{value} in \mpt is transaction state. Given transaction state, we can identify all modifications in transaction. Given transaction state, any node can try to commit transaction, because it can check which nodes participate in transaction and where is the private data stored. This fact is used to satisfy requirement, as to proposing highest value (\ref{sec:mpp:requirements:finishInProgress}).
 Transaction state always is an entry point to algorithm.
 %It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. 
 
@@ -31,7 +31,7 @@ In order to find a paxos state given a transaction state we need to have two pro
 
 If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
 
-Other concurrent, conflicting transactions can be rolledback, as long as they participate in the same paxos round. In case of \lwt \emph{paxos round id} is determined by partition key \emph{k}. \mpp supports more than one key, therefore we need a function which maps \emph{transaction} $\rightarrow $ \emph{paxos round id} with properties: 
+Other concurrent, conflicting transactions can be rolledback, as long as they participate in the same paxos round. In case of \lwt \emph{paxos round id} is determined by partition key \emph{k}. \mpt supports more than one key, therefore we need a function which maps \emph{transaction} $\rightarrow $ \emph{paxos round id} with properties: 
 \begin{enumerate*}
 %\item It maps transaction to paxos round id
 \item It maps conflicting transactions to same paxos round id 

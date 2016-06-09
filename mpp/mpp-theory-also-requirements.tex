@@ -15,11 +15,11 @@ These are requirements that need to be satisfied in order to be sure that \paxos
 % TODO w LWT żeby poznać instacje paxosa  wystarczy klucz partycji.
 % TODO MPP jest to problem bo jest wiele partycji
 \lwt supports many instances of paxos protocol at any given time, as opposed to appending to single replicated log \cite{chandra2007PaxosMadeLive}. \lwt instances do not collide with each other, unless same partition keys are considered, but \lwt for different keys does not overlap nor stall other \lwt transaction.
-\mpp supports many instances as well, but an instance of \mpp might overlap with different instance of \mpp, in which case such instances are considered conflicting. 
+\mpt supports many instances as well, but an instance of \mpt might overlap with different instance of \mpt, in which case such instances are considered conflicting. 
 
-\lwt identifies \emph{paxos round} by a partition key. The key difference to \lwt is that \mpp instance relates to many keys, thus instance of \mpp cannot be identified by the partition key, as is the case in \lwt. Identification of the paxos round in \mpp becomes troublesome, since it is not obvious how to relate many different keys to single paxos round id. \label{sec:mpp:requirements:identifyRound}
+\lwt identifies \emph{paxos round} by a partition key. The key difference to \lwt is that \mpt instance relates to many keys, thus instance of \mpt cannot be identified by the partition key, as is the case in \lwt. Identification of the paxos round in \mpt becomes troublesome, since it is not obvious how to relate many different keys to single paxos round id. \label{sec:mpp:requirements:identifyRound}
 
- %\mpp has to run many instances of paxos protocol as well. Thus \mpp needs to have ability to identify \emph{paxos round} at node given proposed \emph{value}.  \mpp is a multi-partition protocol, therefore identification of \emph{paxos round} poses a problem and a requirement. 
+ %\mpt has to run many instances of paxos protocol as well. Thus \mpt needs to have ability to identify \emph{paxos round} at node given proposed \emph{value}.  \mpt is a multi-partition protocol, therefore identification of \emph{paxos round} poses a problem and a requirement. 
 
 % TODO dac referencje na to skad te wymagania sie wziely
 
@@ -50,9 +50,9 @@ Transactions are expected to have the following functionality:
 
 \subsubsection{Compared to LWT}
 \lwt is for single partition, therefore it is a single operation. As such, operation itself is a \emph{transaction} that begins, performs and possibly commits. Data for \lwt transaction is passed within operation itself, therefore data does not have to be stored anywhere for the duration of the transaction. It exists in memory as the \lwt executes.
-\mpp supports many operations within transaction. Therefore operations with data have to be stored for the duration of transaction. Storage has to be private for the transaction, because of isolation requirement.
+\mpt supports many operations within transaction. Therefore operations with data have to be stored for the duration of transaction. Storage has to be private for the transaction, because of isolation requirement.
 
-%Proposed \mpp holds all imposed requirements. Following sections address requirements in context of \mpp.
+%Proposed \mpt holds all imposed requirements. Following sections address requirements in context of \mpt.
 
 %Transactions should have following functionality:
 

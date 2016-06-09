@@ -1,16 +1,16 @@
 %!TEX root = ../thesis.tex
 
 \section{The rationale}
-The \mpp algorithm is designed for distributed databases with token ring architecture,
+The \mpt algorithm is designed for distributed databases with token ring architecture,
 which uses \emph{keys} to lookup replicated data in the cluster. However, there are no strict restrictions, thus the algorithm potentially supports any distributed database.
 
-\mpp supports multi-partition operations.
-\mpp supports transactions with read-committed isolation level. 
-\mpp supports transactions that are atomic and durable.
-\mpp is resilient to network partitions. In terms of \emph{CAP} \cite{Brewer:2012ba} it uses \emph{AP}
-\mpp is eventually consistent (\ref{sec:theory:eventualConsistency}). 
+\mpt supports multi-partition operations.
+\mpt supports transactions with read-committed isolation level. 
+\mpt supports transactions that are atomic and durable.
+\mpt is resilient to network partitions. In terms of \emph{CAP} \cite{Brewer:2012ba} it uses \emph{AP}
+\mpt is eventually consistent (\ref{sec:theory:eventualConsistency}). 
 
-Comparison of \mpp to \lwt is shown at fig. \ref{fig:mppVsLwt}.
+Comparison of \mpt to \lwt is shown at fig. \ref{fig:mppVsLwt}.
 
 % TODO poprawić, że w MPP jest read-committed a nie serializable.
 \begin{figure}[hbt]
@@ -21,11 +21,11 @@ Comparison of \mpp to \lwt is shown at fig. \ref{fig:mppVsLwt}.
     \resizebox{\textwidth}{!}{\begin{tabular}{c|c|c|c|c|c|c}
       \toprule
       Algorithm & multi-partition operations & isolation level & atomicity & durability & consistency & \emph{CAP} \\ \midrule
-      \mpp      &   yes                      & read-committed  &   yes     & yes        & eventually consistent & \emph{AP}  \\
+      \mpt      &   yes                      & read-committed  &   yes     & yes        & eventually consistent & \emph{AP}  \\
       \lwt      &   no, single partition     & serializable  &   yes     & yes        & eventually consistent & \emph{AP}  \\  \bottomrule      
     \end{tabular}}
   }
-  \caption{\mpp compared to \lwt}
+  \caption{\mpt compared to \lwt}
   \label{fig:mppVsLwt}
 \end{figure}
 

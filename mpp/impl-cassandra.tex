@@ -7,10 +7,7 @@ In this section the discussion will point to implementation details of the algor
 
 
 \section{Proof of concept}
-\paxos algorithm has a formal mathematical proof of its correctness. \cite{Lamport1998partTimeParliment} Formal proof of \emph{Mutli Partition Paxos} algorithm is out of scope for this work. Implementation of algorithm in Cassandra database is done instead, as proof of concept. 
-
-% TODO do usuniecia bo temat raczej wyczerpany
-%Since it has token ring architecture it is well suited for proof of concept implementation of Multi Partition Paxos algorithm.
+\paxos algorithm has a formal mathematical proof of its correctness. \cite{Lamport1998partTimeParliment} Formal proof of \emph{Mutli Partition Transactions} algorithm is out of scope for this work. Implementation of algorithm in Cassandra database is done instead, as proof of concept. 
 
 
 
@@ -51,7 +48,7 @@ Cassandra can operate on different consistency levels performing reads and write
 \item[SERIAL / LOCAL_SERIAL] -- uses \lwt to do read/write with condition
 \end{description}
 
-New transactional consistency levels are \code{TRANSACTIONAL, LOCAL_TRANSACTIONAL}. Both use \mpp, but latter is confined to the local data center.
+New transactional consistency levels are \code{TRANSACTIONAL, LOCAL_TRANSACTIONAL}. Both use \mpt, but latter is confined to the local data center.
 
 \section{Transaction state}
 Cassandra organizes tables in \emph{keyspaces}, thus transaction items need additional information about keyspace to locate data at a node. Transaction item in Cassandra becomes:
@@ -222,10 +219,10 @@ Committed transactions are added to the table with flag \code{commited = true}.
 
 
 \section{Paxos State}
-Multi partition paxos state is implemented as a table in \emph{system} keyspace, which is local to each node and is not replicated, and stores information about paxos round's state, as in the listing \ref{lst:paxosStateImpl}.
+Paxos state is implemented as a table in \emph{system} keyspace, which is local to each node and is not replicated, and stores information about paxos round's state, as in the listing \ref{lst:paxosStateImpl}.
 
-\begin{lstlisting}[style=outcode,label={lst:paxosStateImpl},caption={Table definition for multi partition paxos state}]
-CREATE TABLE multi_partition_paxos (
+\begin{lstlisting}[style=outcode,label={lst:paxosStateImpl},caption={Table definition for multi partition transactions paxos state}]
+CREATE TABLE mpt_paxos (
 paxos_id UUID,
 in_progress_ballot timeuuid,
 most_recent_commit blob,
@@ -237,9 +234,6 @@ proposal_version int,
 PRIMARY KEY (paxos_id))
 \end{lstlisting}
 
-
-%\subsection{Multi partition paxos implementation}
-%This section discusses few details about implementation of multi partition paxos algorithm in Cassandra.
 
 \section{Replica Groups Phases Executor}
 Replica groups phases executor is the implementation of the state machine that performs transition operations on the replicas, and moves them in phases according to the specification.

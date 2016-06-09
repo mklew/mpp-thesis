@@ -19,4 +19,4 @@ Conflict functions, which consider only local data, and do not require round tri
 		Fuction allows to have configurable number of concurrent paxos rounds since there will be at most as many rounds as there are slices. False positives are expected result of the function.
 \end{description}
 
-Conflict functions allow to eliminate round trips, put bounds on number of concurrent transactions, but with a cost of false positives. \mpp algorithm works with any conflict resolution function. Conflict resolution functions can be defined per table.
+Conflict functions allow to eliminate round trips, put bounds on number of concurrent transactions, but with a cost of false positives. \mpt algorithm works with any conflict resolution function. Conflict resolution functions can be defined per table.

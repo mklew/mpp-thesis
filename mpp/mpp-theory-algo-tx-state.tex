@@ -8,7 +8,7 @@ Each modification refers to a single partition. Key belongs to a partition, thus
 % Napisać, że Token to najmniejsza jednostka replikacji. Token należy do token range, 
 % TODO zostało to pokazane na rysunku gdzieś tam
 
-Each key has a token, which is a number computed by a hash function, which belongs to the token ring. \mpp is not dependent on concrete hash function. In case of \emph{JVM} tokens are of type \emph{long} which occupies 8 bytes of memory. Keys are not restricted by any type, thus for example a key can be a 100 character long string which requires around $232$ bytes\footnote{concrete size depends on \emph{JVM} options used}. Size of the key is then 29 times size of a token. Complex keys can have even bigger size. Token is deterministic in size and in most cases occupies less memory than key itself.
+Each key has a token, which is a number computed by a hash function, which belongs to the token ring. \mpt is not dependent on concrete hash function. In case of \emph{JVM} tokens are of type \emph{long} which occupies 8 bytes of memory. Keys are not restricted by any type, thus for example a key can be a 100 character long string which requires around $232$ bytes\footnote{concrete size depends on \emph{JVM} options used}. Size of the key is then 29 times size of a token. Complex keys can have even bigger size. Token is deterministic in size and in most cases occupies less memory than key itself.
 
 Ranges of token ring are divided among nodes in cluster. Division and assignment of ranges to nodes is a topology. Given topology replicas of particular key can be identified. Concretely, token is computed from key and then topology tells us which nodes are assigned to a token range that includes the token. As a consequence, any node in the cluster can point to replicas of particular key or its token.
 
@@ -56,7 +56,7 @@ Transaction item has table name, because two tables can have same keys which wou
 Transaction state has deterministic memory footprint, since it stores fixed-length tokens instead of keys with unknown size.
 
 \subsubsection{Without tokens}
-Transaction state which stores keys instead of tokens provides same functionality, but varies in memory footprint, hence \mpp is applicable to \emph{key-value} databases in general, but its memory usage might not be deterministic.
+Transaction state which stores keys instead of tokens provides same functionality, but varies in memory footprint, hence \mpt is applicable to \emph{key-value} databases in general, but its memory usage might not be deterministic.
 %Same functionality could be achieved storing real keys in transaction items, but then each key could have arbitrary size and same would apply to transaction state.
 
 \subsubsection{Without transaction items}

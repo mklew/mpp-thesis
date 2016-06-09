@@ -1,9 +1,9 @@
 %!TEX root = ../thesis.tex
 
 \section{The algorithm's description}
-\mpp algorithm depends on previously described concepts and guarantees they provide. 
+\mpt algorithm depends on previously described concepts and guarantees they provide. 
 This part of whole solution is responsible for committing transaction. 
-A transaction is committed by performing multi partition paxos round, 
+A transaction is committed by performing multi partition transactions paxos round, 
 in which transaction is accepted by majority in each replica group, 
 which is a set of nodes that replicates the key $k$, for all replica groups \ref{sec:mpp:replicaGroups}. 
 
@@ -21,7 +21,7 @@ The algorithm execution occurs in \emph{phases}, which are the following:
 
 Three phases: prepare, propose and commit, might be already recognizable, since they are parts of the \paxos algorithm. Similar phases could be identified for \lwt, since it also relies on \paxos.
 
-One of phases, specific to \mpp, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after pre prepare phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
+One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after pre prepare phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
 
 %         High level description
 % Algorithm works in phases. Phases are:
@@ -42,7 +42,7 @@ One of phases, specific to \mpp, is a \emph{rollback phase}. Replicas can transi
 
 \subsection{Replica groups}
 \label{sec:mpp:replicaGroups}
-\mpp is designed for operations on many partitions, therefore there are many replica groups. \lwt supports single key, thus it communicates with single replica group, whereas \mpp supports many keys, therefore it communicates with many replica groups, which can overlap, due to the fact that a node is a replica for many different keys. 
+\mpt is designed for operations on many partitions, therefore there are many replica groups. \lwt supports single key, thus it communicates with single replica group, whereas \mpt supports many keys, therefore it communicates with many replica groups, which can overlap, due to the fact that a node is a replica for many different keys. 
 
 Let us consider an example of transaction affecting different replica groups. Let us assume $N=3$ and transaction for keys: $k1$, $k2$, $k3$, $k4$.
 Key $k1$ belongs to replica group $n1$, $n2$, $n3$.
@@ -52,7 +52,7 @@ Key $k4$ belongs to replica group $n1$, $n2$, $n3$.
 
 In this example, $k1$ and $k4$ belong to the same replica group. Keys $k2$, $k3$ however have one node in common with $k1$ and $k4$.
 
-As a corollary, any operation done in \mpp must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, and $n7$ in order to not repeat operation on same nodes. However the results of these operations must be evaluated in the context of the whole replica group. 
+As a corollary, any operation done in \mpt must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, and $n7$ in order to not repeat operation on same nodes. However the results of these operations must be evaluated in the context of the whole replica group. 
 
 
 \subsection{Moving forward in phases}
@@ -112,7 +112,7 @@ Since Transaction Index is accessed by many concurrent transactions, it has to b
 Locking, or other concurrency control mechanism can be used to guarantee that state of Transaction Index stays consistent.
 
 
-\emph{Paxos round id}, used to find Paxos State data at each node locally, is synthetic id and is different at each replica during multi partition paxos. 
+\emph{Paxos round id}, used to find Paxos State data at each node locally, is synthetic id and is different at each replica during \mpt round. 
 I put forward the claim that difference in id between replicas does not have negative effect, as long as conflicting transactions are put into same round. 
 Providing same paxos round id would require another consensus algorithm of its own which would inherently increase cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
         
@@ -189,7 +189,7 @@ Without such restriction, replica would think it[k] has consistent data, but in 
 
 \subsection{Rollback phase}
 Replica in a rollback phase, means that transaction was rolled back at the given replica node. 
-This phase is special, because if even one replica group decides to move to rollback phase, then all the other replicas have to move to rollback phase. Secondly, there is no transition out of rollback phase. Multi partition paxos algorithm ends and yields result that transaction has been rolled back.
+This phase is special, because if even one replica group decides to move to rollback phase, then all the other replicas have to move to rollback phase. Secondly, there is no transition out of rollback phase. \mpt algorithm ends and yields result that transaction has been rolled back.
 Any replica affected by transaction can transition to rollback phase just after pre prepare phase, but only from following phases:
 
 \begin{enumerate*}
@@ -232,7 +232,7 @@ Answer from prepare request has information:
 \item Boolean present in index -- if transaction was present in the index at this node
 \item Committed/Rolled back/Unknown -- enum value representing status of transaction. It is either known from Transaction Log and then it is one of committed or rolled back or it is unknown
 But also it has information as in original paxos
-\item In progress value -- if replica has already accepted other transaction state and this transaction interrupted its execution becoming new leader then the in progress proposal - some other transaction state - is returned to the leader. In that case leader will have to repair multi partition paxos round. Replica will transition into repairing phase.
+\item In progress value -- if replica has already accepted other transaction state and this transaction interrupted its execution becoming new leader then the in progress proposal - some other transaction state - is returned to the leader. In that case leader will have to repair \mpt round. Replica will transition into repairing phase.
 \end{itemize}
 
 
@@ -270,13 +270,13 @@ Commit phase comes after successful propose phase. It can only happen when trans
 \item respond with acknowledge
 \end{enumerate}
 
-When leader receives acknowledgments from all replica groups, it can safely finish \mpp round and respond to a client, that transaction has been committed.
+When leader receives acknowledgments from all replica groups, it can safely finish \mpt round and respond to a client, that transaction has been committed.
 
 
 \subsection{Repairing phase}
 It might happen that during prepare leader receives in progress proposal which means that it has interrupted some other leader which was executing his transaction. As required by paxos algorithm, in progress proposal has to be completed before first transaction can continue. When replica group sees that it has in progress proposal, this replica group has to transition to repairing phase. 
-Other replica groups are also affected because they cannot advance in phase until in progress transaction is repaired. Repaired means that multi partition paxos round is run on in progress transaction until it finishes with commit or rollback. Only after repair first transaction might continue. If it turns out that repaired transaction was rolled back, first transaction has a chance to be committed. If however repaired transaction is committed, main transaction will see that it was rolled back and will also stop.
-This means that another multi partition paxos is nested in main multi partition paxos. It is slightly different because it can start from more advanced phase.
+Other replica groups are also affected because they cannot advance in phase until in progress transaction is repaired. Repaired means that \mpt round is run on in progress transaction until it finishes with commit or rollback. Only after repair first transaction might continue. If it turns out that repaired transaction was rolled back, first transaction has a chance to be committed. If however repaired transaction is committed, main transaction will see that it was rolled back and will also stop.
+This means that another \mpt round is nested in main \mpt round. It is slightly different because it can start from more advanced phase.
 If other transaction managed to proposed itself it means that is was in prepared phase hence in pre prepared phase also. Therefore repairing in progress transaction can start with replicas in pre prepare phase. First transition run on replicas is transition to prepare phase skipping registration in index and making transactions data consistent as it was already done by previous leader.
 
 
@@ -284,7 +284,7 @@ If other transaction managed to proposed itself it means that is was in prepared
 Since all replicas have to wait with further transitions until in progress transactions are repaired for all replica groups, repair phase has to be less advanced than prepare phase, but more advanced than pre prepare phase since without being in pre prepare none of replicas would notice any in progress transaction. This is an example where replicas have to move back in phase in order to stay in sync with all replicas executing transaction.
 
 
-\subsection{The example of \mpp}
+\subsection{The example of \mpt}
 Let us consider a cluster of $5$ nodes, and a transaction $t$, which modifies two keys: $k_{1}, k_{2}$ with updates: $u_{1}, u_{2}$. Assume that key $k_{1}$ is replicated by replica group $RG1$, which consists of nodes: $n1$, $n2$ and $n3$, and key $k_{2}$ is replicated by $RG2$, which consists of nodes: $n3, n4, n5$.
 Let us assume that updates are already existing in the private transaction storage at each node, and transaction is ready for the commit process, which we analyze step by step:
 
@@ -357,4 +357,4 @@ Moze jako nastepny przyklad? Na pewno musze miec ten prosty bazowy przyklad zeby
 % 4. Node 3, node 5 have to do actual prepare request with new high ballot
 % 5. Phases after transitions are evaluated and algorithm continues.
         
-% Above example shows how different multi partition paxos is from LWT. Example shows how phase depends on all replica groups which depend on replicas and all the other replica groups. All of that is required to simply have replicas that stay in sync and where each replica group has satisfied quorum. That is requirement which comes from paxos and all these dependencies relations make it possible.
+% Above example shows how different \mpt is from LWT. Example shows how phase depends on all replica groups which depend on replicas and all the other replica groups. All of that is required to simply have replicas that stay in sync and where each replica group has satisfied quorum. That is requirement which comes from paxos and all these dependencies relations make it possible.

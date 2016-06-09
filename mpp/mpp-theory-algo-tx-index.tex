@@ -2,8 +2,8 @@
 
 \subsection{Transaction index}
 \label{sec:mpp:txIndex}
-Transaction Index is a service, local to a node, thus independent from other nodes, which accepts registrations of transactions and assigns to them paxos round ids. Registration in the index is part of \mpp.
-%Paxos round id for a transaction is obtained through \emph{Transactions Index}. This is an index in which transactions have to successfully register. Registration in index of part of \mpp algorithm. Transaction Index exists on each node and is local to a node, thus independent from other nodes.
+Transaction Index is a service, local to a node, thus independent from other nodes, which accepts registrations of transactions and assigns to them paxos round ids. Registration in the index is part of \mpt.
+%Paxos round id for a transaction is obtained through \emph{Transactions Index}. This is an index in which transactions have to successfully register. Registration in index of part of \mpt algorithm. Transaction Index exists on each node and is local to a node, thus independent from other nodes.
 Transaction Index has to guarantee that: 
 \begin{enumerate*}
 \item transactions that are in conflict must be registered in index and obtain same paxos id,
