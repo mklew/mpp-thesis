@@ -10,6 +10,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+%\usepackage[polish]{babel}
 \usepackage{glossaries}
 \usepackage{todonotes}
 \usepackage{amsthm}
@@ -84,6 +85,8 @@ framerule=0.1pt,
 \newtheorem{lemma}{Lemma}[chapter]
 
 \newcommand{\code}[1]{\texttt{#1}}
+\newcommand\manydots{\leavevmode\xleaders\hbox{\dots}\hfill\kern0pt}
+
 
 % Shortcuts
 \newcommand{\paxos}{\emph{Paxos}\xspace}
@@ -141,9 +144,17 @@ framerule=0.1pt,
 %\input{titlePage.tex}
 \includepdf[pages=-]{master-thesis-front}
 
+\input{second-page.tex}
+
 \input{abstract.tex}
 
 \tableofcontents
+
+% clearpage i pagenumbering resetują numerowanie stron
+\clearpage
+\pagenumbering{arabic}% Arabic page numbers (and reset to 1)
+
+
 
 \input{introduction/introduction.tex}
 
