@@ -1,32 +1,77 @@
 %!TEX root = ../thesis.tex
 \section{Transactions}\label{sec:theory:transactions}
-Transactions in RDBMS
+Transactions in RDBMS are fully ACID compliant, whereas transactions in non-relational databases, support, if any, only a subset of the traditional transactions, or approach the subject differently and provide a scheme for performing consistent operations.
 
-TODO napisac ze transakcje w relational sa ACID a w noSql sa to jakies podzbiory tych funkcjonalnosci lub inne rozwiania
+\subsection{Regular transactions}
+Regular transactions, as in RDBMS, are ACID compliant. ACID is an acronym that stands for \emph{Atomicity} -- many operations, such as updates, are performed all together or none is, \emph{Consistency} -- operations move the data in the database from one consistent state to the other consistent state, which satisfies all data integrity constraints, \emph{Isolation} -- transactions do not interfere with each other during execution, \emph{Durability} -- changes made by a committed transaction are preserved even after the database failure.
 
-% TODO organizacja rozdziału, czy paxos powinien mieć pełny opis, czy tylko referencja? 
-\subsection{ACID}
-TODO Czy ja w ogóle powinienem to rozszerzac? Czytelnik powinien to znac.
-Transactions in relational databases are ACID compliant, which means that a transaction is \begin{enumerate*} 
-\item Atomic - either all statements in the transaction succeed or none,
-\item Consistent - TODO
-\item Isolated - transactions do not interfere with each other during execution,
-\item Durable - changes made by a committed transaction are preserved even after the database failure.
+\subsubsection{A transactional system}
+A transactional system should provide following operations to run transactions:
+% TODO żeby wymagania na operacje nie były pomiesznae. Napisać że wymagania które chce spełnić są takie: ... alg ma zapewniać ... 
+% Napisać co jest charakterystyczne dla transakcji rozproszonych, wspomnieć o BASE
+\begin{enumerate*}
+%\item isolation from other transactions -- transaction's state and data should be isolated from other transaction's state and data.
+\item begin transaction operation -- transaction is begun, subsequent operations are part of the transaction. 
+\item commit transaction operation -- as a result, transaction is either committed or rolled back.
+\item rollback transaction operation -- rollback whole transaction and its modification if needed
+\item do an operation within a transaction -- any data manipulation operation should be possible to execute in context of a transaction
 \end{enumerate*}
+% \item concurrency control -- 
+% \item atomicity
+% \item durability
+% \item consistency 
 
-\subsection{2 phase commit}
 
-\section{Distributed transactions}
+The system should also provide \emph{concurrency control} -- if two transactions modify same piece of data and commit at same time, only one transaction can be committed, as a corollary second has to be rolled back.
+
+
+\subsubsection{The consensus}
+In general terms, a database has to reach a \emph{consensus} on the state of the database, which means that it has to know which transaction can be committed, and which should be rolled back, as well what is the data after operations.
+
+Reaching a consensus is a general problems, for which algorithms exist, and this paper presents some of them, starting with 2 phase commit. 
+Solving the problem of consensus is the backbone of the distributed transactions. 
+
+\subsubsection{2 phase commit}
+
+TODO opis \cite{2phaseC} http://the-paper-trail.org/blog/consensus-protocols-two-phase-commit/
+
+
+\subsection{Distributed transactions}
+
 % TODO rozrysować co czym jest, Raft, Paxos -> distributed consensous algorithm
 % RAMP atomic commit
 
-% LWT (CAS) distributed transaction, compare and set with distributed consensous. Implementacja w Cassandrze.
+This section presents more algorithms: \emph{3PC}, \paxos, and \emph{Raft} to solve the consensus problem, which can lead to the implementation of distributed transactions. \lwt is the implementation of the distributed transaction, which uses \paxos to provide distributed consensus. \emph{RAMP} is an algorithm, which provides atomic commit.
 
-\subsection{3 phase commit}\label{sec:theory:transactions:3pc}
 
-\subsection{Paxos}
+\subsubsection{3 phase commit}\label{sec:theory:transactions:3pc}
+TODO opis \cite{3phaseC}
 
-since it has network partition tolerance, it has advantage over \emph{3PC} \ref{sec:theory:transactions:3pc}.
+\subsubsection{Paxos}
+Paxos is another algorithm to solve distributed consensus problem, originally presented in \cite{Lamport1998partTimeParliment}, caused confusion among researchers, due to its complicated explaination and mathematical proofs, and had to be explained in simpler terms in \cite{lamport2001paxosMadeSimple}. 
+
+Paxos has been employed, as the solution to the distributed consensus problem, as part of the larger systems in \cite{chandra2007PaxosMadeLive}, \cite{lampson1996build}, and more recently in the Google's Chubby service \cite{burrows2006chubby}, which is a lock service intended to provide coarse-grained locking, as well as reliable storage.
+
+Paxos has advantage over \emph{3PC}, since provides network partition tolerance.
+
+\paragraph{Paxos requirements}
+Paxos defines requirements and constraints that the protocol must operate within \cite{lamport2001paxosMadeSimple}. Some of them are: \begin{enumerate}
+  \item every proposal has a sequence number, that can be generated by any proposer,
+  \item majority has to promise to a proposer, before proposer can make proposal,
+  \item acceptors reply with a value associated with the highest numbered proposal already accepted by them. Then proposer is bound to ask acceptors to only commit that value (which might be different from its original proposal) -- this forces proposer to commit other completed proposals instead of his own,\label{sec:mpp:requirements:finishInProgress}
+  \item proposer can finish protocol only when majority of acceptors acknowledge commit.
+\end{enumerate}
+These are requirements that need to be satisfied in order to be sure that \paxos can work the way it was designed and proven formally \cite{Lamport1998partTimeParliment}. 
+
+\paragraph{Paxos guarantees}
+\label{sec:theory:paxos:guarantees}
+TODO co gwarantuje Paxos, tak zeby opis Rafta do tego nawiazywal ale bez referencji, bo Raft jest zaraz po Paxosie.
+
+\begin{example}
+
+	TODO przyklad Paxosa, jakos trzeba go wytlumaczyc
+
+\end{example}
 
 % TODO opisać na tyle szczegółowo żeby móc je porównać. 
 % bez dokładnego schematu
@@ -42,7 +87,7 @@ since it has network partition tolerance, it has advantage over \emph{3PC} \ref{
 % żeby do zrozumienia pracy nie trzeba było zaglądać gdzieś indziej.
 
 
-\subsection{Raft}
+\subsubsection{Raft}
 % TODO napisać jakie to są guarantees
 \emph{Raft} algorithm offers the same guarantees, as \paxos. 
 The aim of Raft designers was to create a consensus algorithm which would be more understandable to its predecessor \cite{ongaro2014search}. 
@@ -67,7 +112,7 @@ The main idea behind the algorithm is decomposition of the consensus problem int
 
 \emph{Raft} algorithm is visualized in \cite{raftVisual}.
 
-\subsection{RAMP}\label{sec:theory:transactions:ramp}
+\subsubsection{RAMP}\label{sec:theory:transactions:ramp}
 \emph{Read Atomic Multi Partition} transactions \cite{Bailis:2014} is the newest algorithm among the algorithms discussed in this chapter. 
 \emph{RAMP} algorithm was designed to address the requirements of the following use cases: secondary indexing, foreign key
 enforcement, and materialized view maintenance.
@@ -86,7 +131,7 @@ There are three variants of \emph{RAMP} algorithm and the difference between the
 % However \emph{RAMP} relies on 64 bit timestamp \cite[p. 8]{Bailis:2014} which is not the current standard \cite{timestamp64wiki}, thus \emph{RAMP} cannot be used at the time being.
 %
 
-\subsection{LWT}\label{sec:theory:transactions:lwt}
+\subsubsection{LWT}\label{sec:theory:transactions:lwt}
 % TODO źródło w (more on this)
 As mentioned earlier, Light Weight Transactions is the name of compare-and-swap functionality implemented in Cassandra. Internally, LWT uses the Paxos algorithm with some modifications which were aimed to prevent potential single point of failure, thus improving high availability. SPOFs may surface in case the leader fails when it is about to propose a new value (more on this…). The problem was addressed by sacrificing the standard leader election in favour of allowing any node to act as a leader, so that it can propose a value at any time. On the downside, such approach increases the risk of contention. 
 
@@ -112,6 +157,8 @@ Secondly, at any time the leader might lose leadership if a other node does prep
 
 Note that \lwt affects only limited number of nodes -- replicas of the key, thus majority is considered only at the level of replicas, not at the level of the cluster.
 
+\lwt is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt.
+The proposed algorithm supports multi-partition operations, and provides read-committed isolation level, whereas \lwt provides serializable isolation.
 
 %1. LWT is initiated by client request: insert John if not exists
 %2. Request is routed to some node X that becomes coordinator of LWT
