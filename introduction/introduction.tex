@@ -7,24 +7,42 @@
 \section{Motivation}\label{sec:introduction:motivation}
 
 \subsection{Transactions matter}
+
 % TODO czemu transakcje są potrzebne
 Transactions are important for performing operations on different entities and ensuring consistency among them, as well as for other reasons. They simplify making changes to the model, and provide guarantees on top of which applications are built. Without transactions, all guarantees disappear, and suddenly developers have to take care of things which were taken for granted.
 
 \subsection{Current state of transactions in Cassandra}	
-Cassandra due to its distributed nature, cannot have full acid transactions, but it supports transactional behaviour with so called Lightweight Transactions (LWT).
+Cassandra due to its distributed nature, cannot have full acid transactions, but it supports transactional behaviour with so called Lightweight Transactions (\lwt).
+Transactional behaviour in \lwt is implemented by the means of the condition clause, which specifies whether statement can execute or not, and guarantees that any LWT performed for the same key obeys to the condition, since conditions are evaluated on the consistent state of the data, as if statements were executed one after the other, thus provides serializability of modifications. \lwt transaction spans only single partition, which is the clustering of the rows in the table, therefore \lwt does not support consistent modifications to many rows.
+
+
+TODO example
 LWT guarantees atomic modification of single partition, which is the clustering of the rows in the table, iff specified condition is met. Main guarantee however is that after a successful LWT quorum of replicas agree on given value.
 
-Conditions allow for example to do only insert if that row hasn’t existed before. 
+
+for example to do only insert if that row hasn’t existed before. 
+
+\begin{example}
+\begin{lstlisting}[style=outcode,label={lst:intro:lwtInsert},caption={LWT Insert with if not exists clause}]
+INSERT INTO users (user_id, name, email)  
+VALUES (1, 'John', 'john@yahoo.com') 
+IF NOT EXISTS
+\end{lstlisting}
+\end{example}
 
 Examples of LWT:
 
 1)
-INSERT INTO users (user_id, name, email)  VALUES (1, ‘John’, ‘john@yahoo.com’) IF NOT EXISTS
 
 First example uses LWT to add user John with id=1 if John was not present in database. To put it differently, to insert a row to users table only if row with given key=1 didn’t exist.
 
-2)
+
+
+\begin{example}
+\begin{lstlisting}[style=outcode,label={lst:intro:lwtUpdate},caption={LWT Update with column condition}]
 UPDATE balances SET balance = 2500 WHERE user_id = 1 IF balance = 2000;
+\end{lstlisting}
+\end{example}
 
 Second example shows that conditions can have expressions that are evaluated during LWT. LWT will proceed further only if condition is met. Such expressions are restricted only to row that is being updated.
 
@@ -36,6 +54,12 @@ Atomic multi-partition updates are missing in the Cassadra, but workarounds exis
 
 Multi partition transactions would remove burden of ensuring consistency using flags and would allow users to perform their operations in more natural way without additional restrictions, and changes in the logic. 
 Atomic multi-partition updates would support different use cases, for example databases could properly enforce foreign keys, do secondary indexing, update materialized views. Users would also benefit, since their applications already rely on multi-partition operations, thus logic would not have to change to completely different model in order to adapt to a distributed database. 
+
+\section{Goals}
+TODO chcemy mieć transakcje która działaja dla wielu partycji. 
+5-6 zdań
+Bez nawiązywania. Napisać co ma mój algorytm robić.
+
 \section{Structure}\label{sec:introduction:structure}
 
 \input{introduction/introduction-terms.tex}

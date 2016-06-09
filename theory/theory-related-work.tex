@@ -1,0 +1,54 @@
+%!TEX root = ../thesis.tex
+\section{Related work}
+Section presents databases that provide a level of transactional operations, which are compared to the algorithm proposed in the paper.
+
+\subsection{Cassandra}
+Cassandra is a NoSql database with a token ring masterless architecture and key to wide-row store data model, 
+in which different rows are accessible by arbitrary keys. 
+The data in Cassandra is accessible through Cassandra Query Language (CQL) \ref{sec:theory:cassandra:cql}, which is similar to SQL, but provides limited functionality. Cassandra supports \lwt transactions \ref{sec:theory:transactions:lwt}.
+
+\lwt is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt providing multi partition transactions.
+Comparison of the proposed algorithm to \lwt is shown at fig. \ref{fig:mppVsLwt}.
+
+\begin{figure}[hbt]
+  %\centering
+  \setlength{\unitlength}{1.3cm}  
+  \subfloat{
+    \renewcommand{\tabcolsep}{0.1cm}
+    \resizebox{\textwidth}{!}{\begin{tabular}{c|c|c|c|c|c|c}
+      \toprule
+      Algorithm & multi-partition operations & isolation level & atomicity & durability & consistency & \emph{CAP} \\ \midrule
+      the proposed algorithm      &   yes                      & read-committed  &   yes     & yes        & eventually consistent & \emph{AP}  \\
+      \lwt      &   no, single partition     & serializable  &   yes     & yes        & eventually consistent & \emph{AP}  \\  \bottomrule      
+    \end{tabular}}
+  }
+  \caption{The proposed algorithm compared to \lwt}
+  \label{fig:mppVsLwt}
+\end{figure}
+
+\subsection{MarkLogic}
+MarkLogic is a NoSql database with the document-centric schema-agnostic data model \cite{markLogicDataModel} with native support for formats such as JSON, XML and RDF, and support of ACID transactions \cite{markLogicAcid}.
+
+ACID transactions are implemented by the means of multi-version concurrency control (MVCC) and locking. In an MVCC system, changes are tracked with a timestamp number on each document. 
+The database uses these timestamps to ensure that all users see consistent data. 
+Transaction has to acquire write locks on all of the updated documents and read locks on all of the queried documents in order to complete evaluation. Acquired locks are held until the transaction ends, which prevents other transactions from updating the read locked documents and ensures a read-consistent view of the documents. 
+Deadlocks might happen, but are detected by the database, and are dealt with by aborting one or the other request and retrying it later \cite{markLogicUnderstandingTransactions}.
+
+MarkLogic's transactions rely on the locks that provide pesimistic concurrency control.
+By principle, the solution with locks provides less performance, due to contention and waiting on the locks, than the lock-free solution proposed in this paper, which uses \paxos algorithm.
+
+% Bazy które wspierają jakieś transakcje
+% ACID transactions
+
+\subsection{FoundationDB}
+FoundationDB is a NoSql database with ACID compliant transactions, strong scalability and SQL querying capabilities, that chooses \emph{CP} in terms of \emph{CAP} theorem.
+Its core data model is a ordered key-value store, in which the ordering property increases efficiency of range reads. It also supports document store and relational DBMS as layers on top of the core model. 
+
+FoundationDB was acquired by Apple \cite{foundationDbAcquired} and since then no information is available. Its website is shutdown, documentation is not accessible nor downloads of the database. According to the press, the database scaled up to $14,4$ million random writes per second.
+
+Since FoundationDB disappeared the advantage of the proposed algorithm is that it is and will remain Open Source and accessible for studies.
+
+\subsection{Distributed relational databases}
+Distributed Relational Database Architecture (DRDA) \cite{drda} is an open standard architecture for distributed relational databases, which provide relational data, but distributed among multiple platforms, which communicate with each other. An example of a DRDA compliant database is the DB2 created by IBM. The database supports SQL queries, which can access tables from different platforms. 
+
+Since there are only few DRDA databases existing mostly around IBM ecosystem and since there are many distributed NoSql databases, which gain on popularity, then the conclusion is that distributed relational databases are not the right solution to the problem of big data.

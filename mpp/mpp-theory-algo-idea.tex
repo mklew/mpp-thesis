@@ -1,5 +1,12 @@
 %!TEX root = ../thesis.tex
 
+TODO nie pisać o tym, że rozszerzam Paxosa tylko, że używam go.
+
+\mpp also relies on \paxos, but with pieces added and changed, thus extended
+\paxos is part of the \mpp algorithm. As a consequence, \mpp has to adhere to \paxos requirements in addition to requirements which are defined for transaction like behaviour. 
+
 \section{The advantage}
+TODO przeniesc jako porównanie do LWT
+
 \emph{LWT} \ref{sec:theory:transactions:lwt} is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt.
 Multi Partition Paxos (\mpp) is an algorithm that supports multi-partition operations. Since at its core lays \paxos then it has network partition tolerance, therefore is applicable to distributed environments. \mpp provides read-committed isolation level, whereas \lwt provides serializable isolation.
