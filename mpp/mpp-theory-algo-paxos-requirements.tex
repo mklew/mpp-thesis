@@ -7,7 +7,7 @@ Paxos requirements have to be met.
 
 
 \subsection{Paxos value}
-Proposed \emph{value} in \mpt is transaction state. Given transaction state, we can identify all modifications in transaction. Given transaction state, any node can try to commit transaction, because it can check which nodes participate in transaction and where is the private data stored. This fact is used to satisfy requirement, as to proposing highest value (\ref{sec:mpp:requirements:finishInProgress}).
+Proposed \emph{value} in \mpt is transaction state. Given transaction state, we can identify all modifications in transaction. Given transaction state, any node can try to commit transaction, because it can check which nodes participate in transaction and where is the private data stored. This fact is used to satisfy requirement, as to proposing highest value \ref{sec:mpp:requirements:finishInProgress}.
 Transaction state always is an entry point to algorithm.
 %It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. 
 

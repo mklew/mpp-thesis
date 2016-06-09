@@ -1,7 +1,7 @@
 %!TEX root = ../thesis.tex
 
 
-\chapter{Implementation of algorithm in Cassandra}\label{sec:mpp:impl}
+\chapter{Implementation of the algorithm in Cassandra}\label{sec:mpp:impl}
 % Implementation in Cassandra (concrete part, implementation in Cassandra)
 In this section the discussion will point to implementation details of the algorithm and its components in Cassandra. 
 
@@ -205,7 +205,7 @@ ALTER TABLE counters.sliced_counters WITH extensions = {
 
 %It will divide token range into 2000 even slices. Such configuration allows to have at most 2000 transactions running on single node for that particular table.
 
-Conflict functions (\ref{sec:theory:conflictFunctions}) are available with following names:
+Conflict functions \ref{sec:theory:conflictFunctions} are available with following names:
 \begin{enumerate*}
 \item \code{COMMON_TX_ITEMS} -- conflict on same transaction items, used as the default conflict function,
 \item \code{TOKEN_RANGE_SLICES} -- conflict on same token range slice number. Function has additional configurable parameter \code{int token_range_slices}

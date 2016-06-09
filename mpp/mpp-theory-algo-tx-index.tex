@@ -57,7 +57,7 @@ Transaction cannot be registered in index when locally it can obtain more than o
 Assume $3$ transactions: $tx_{1}, tx_{2}, tx_{3}$ and $4$ different transaction items: $ti_{1}, ti_{2}, ti_{3}, ti_{4}$. Assume conflict function on same transaction items.
 Assume items in transactions $tx_{1} \rightarrow (ti_{1}, ti_{2}, ti_{3})$, 
  $tx_{2} \rightarrow (ti_{2}, ti_{4})$, $tx_{3} \rightarrow (ti_{4})$
-Assume that registration of transactions happens in arbitrary order. Registration in index is done according to algorithm (\ref{alg:indexRegistration}). Two different orderings yield different outcomes. 
+Assume that registration of transactions happens in arbitrary order. Registration in index is done according to algorithm \ref{alg:indexRegistration}. Two different orderings yield different outcomes. 
  \begin{description}
  \item[Order $tx_{1} \rightarrow tx_{2} \rightarrow tx_{3}$] \hfill \\
  	$tx_{1}$ registers in index and obtains paxos id $id_{1}$ \\

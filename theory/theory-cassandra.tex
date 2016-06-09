@@ -9,7 +9,7 @@ Cassandra \cite{CassandraApacheDocs} \cite{CassandraDataStaxDocs} is a high perf
 %Cassandra offers linear scale performance, which means that, for example if four nodes can handle hundred thousand 
 %requests per second, then adding another four nodes results in the cluster, which can handle twice as much requests per second. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime. 
 
-\subsubsection{Key features}
+\subsection{Key features}
 Its key features are:
 \begin{enumerate*}
 \item masterless architecture,
@@ -21,7 +21,7 @@ Its key features are:
 \item Cassandra Query Language \ref{sec:theory:cassandra:cql}.
 \end{enumerate*}
 
-\subsubsection{Architecture}
+\subsection{Architecture}
 Cassandra has a masterless \emph{ring} architecture \ref{fig:archCluster}, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication, which is keeping copies of the data on multiple nodes, to also avoid SPOF during reads and writes. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime.
 Cassandra supports \emph{gossip} protocol, which is a scalable, distributed protocol used for inter-node communication.
 
@@ -35,7 +35,7 @@ Cassandra supports \emph{gossip} protocol, which is a scalable, distributed prot
 	\label{fig:archCluster}
 \end{figure}
 
-\subsubsection{Replication}
+\subsection{Replication}
 Cassandra supports configurable replication via \emph{replication factor N}, which is the total number of nodes on which the data is stored, defined per \emph{keyspace} \ref{sec:theory:cassandra:datamodel}. A replication factor of $3$ means that three copies of the data exist across the cluster on $3$ different nodes.
 
 Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
@@ -66,7 +66,7 @@ Token value $91$ belongs to the node $1$, and since $N=3$, then the value is rep
 
 
 
-\subsubsection{Data model}
+\subsection{Data model}
 \label{sec:theory:cassandra:datamodel}
 Cassandra's data model is a wide-row store, which consists of tables, which reside in keyspaces\footnote{comparable to schemas in RDBMS} with rows, identified by primary keys, with up to 2 billion columns. Although data model concepts are similar to relational ones, data modeling techniques depart from the relational modeling, since models are supposed to be highly denormalized, which provide ability to perform fast queries by reading a single partition, which is the unit of the data replication in Cassandra, in order to fetch all the data the query needs without further communication with other nodes and performing joins\footnote{which do not exist in Cassandra}.
 
@@ -78,7 +78,7 @@ Cassandra's data model is a wide-row store, which consists of tables, which resi
 %\item[primary key]
 %\end{description}
 
-\subsubsection{Linear scale performance}
+\subsection{Linear scale performance}
 \label{sec:theory:cassandra:linear}
 Cassandra offers linear scale performance, which means that if two nodes can handle hundred thousand requests per second, then adding another two nodes results in the cluster, which can handle twice as much requests per second. Figure \ref{fig:archLinearScale} depicts the example.
 
@@ -103,7 +103,7 @@ Correct data modeling is also an important aspect of the linear scalability, sin
 %Linear scale performance is provided by even assignment of token ranges of the token ring to the nodes in the cluster combined with data \emph{partitioning} -- which is assigning a token values to the keys -- that evenly distributes the data around the cluster. When a new node is added to the cluster, it automatically 
 
 
-\subsubsection{Cassandra Query Language}
+\subsection{Cassandra Query Language}
 \label{sec:theory:cassandra:cql}
 Cassandra Query Language (CQL) is the query language, similar in syntax to SQL, but provides only limited functionality compared to SQL, as there are no joins, inner queries, nor aggregations. CQL provides select, insert, update and delete statements. Select statement's \emph{where} clause supports equality condition on the partition key columns and restrictions such as: IN, =, >, >=, <= and < on the clustering columns. Columns, which are not part of the primary key cannot be restricted in the \emph{where} clause. Listing \ref{lst:cqlSelect} shows two examples of select statements, first with equality restriction on the partition key column \emph{user_id}, second with equality restrictions on the partition key columns: \emph{cluster}, \emph{date}, \emph{datacenter}, and range restrictions on the clustering key columns: \emph{hour} and \emph{minute}.
 %Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. 
@@ -121,7 +121,7 @@ SELECT * FROM app.requests
 \end{lstlisting}
 
  
-\subsubsection{Use cases}
+\subsection{Use cases}
 Cassandra is a general purpose non-relational database, however there are areas in which Cassandra excels over other databases:
 \begin{enumerate*}
 \item internet of things applications - Cassandra is able to consume large quantity of incoming data\footnote{depends on cluster size} from devices, sensors and similar internet connected devices,
@@ -131,7 +131,7 @@ Cassandra is a general purpose non-relational database, however there are areas 
 \item storage of time series data - Cassandra's fast writes, wide-rows and ability to read only particular data ranges are well suited for time series based applications, because such data fits natively into the data model.
 \end{enumerate*} 
 
-\subsubsection{Transactions}
+\subsection{Transactions}
 Cassandra does not provide ACID compliant transactions, but it offers Light Weight Transactions, which offer a degree of transactionality limited to the scope of single partition, therefore to the single primary key\footnote{concretely to the partitioning part of the key in terms of the complex key}. Section \ref{sec:theory:transactions:lwt} provides more on this subject in comparison to other distributed transactions. 
 
 \subsubsection{Compared to RDBMS}
@@ -156,7 +156,7 @@ Cassandra does not provide ACID compliant transactions, but it offers Light Weig
   \label{fig:cassandraToRdbms}
 \end{figure}
 
-\subsubsection{Eventual consistency}\label{sec:theory:eventualConsistency}
+\subsection{Eventual consistency}\label{sec:theory:eventualConsistency}
 In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is the \emph{AP} database with eventual consistency, which means that over time the data becomes consistent on all nodes, but there are no guarantees about the time it takes. Cassandra uses techniques such as: \begin{enumerate*} 
 \item \emph{hinted handoff} - stores a message for the currently unavailable replica about the modification and sends it to the replica when it comes back up \cite{CassandraHintedHandoff},  
 \item \emph{read repairs} - detects inconsistency in the data during read and repairs it by sending a message with the data \cite{CassandraReadRepair},  \end{enumerate*} to pro-actively reduce incosistency in the data during normal operations.
