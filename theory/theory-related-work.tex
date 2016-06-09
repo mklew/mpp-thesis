@@ -52,3 +52,15 @@ Since FoundationDB disappeared the advantage of the proposed algorithm is that i
 Distributed Relational Database Architecture (DRDA) \cite{drda} is an open standard architecture for distributed relational databases, which provide relational data, but distributed among multiple platforms, which communicate with each other. An example of a DRDA compliant database is the DB2 created by IBM. The database supports SQL queries, which can access tables from different platforms. 
 
 Since there are only few DRDA databases existing mostly around IBM ecosystem and since there are many distributed NoSql databases, which gain on popularity, then the conclusion is that distributed relational databases are not the right solution to the problem of big data.
+
+\subsection{Oracle RAC}
+Oracle Real Application Clusters (RAC) is a relational database with fully ACID compliant transactions available in the distributed cluster, which overcomes the limitations of traditional shared-nothing and
+shared-disk architectures for higher performance scalability and
+reliability without requiring changes to existing applications, which use Oracle database.
+In a clustered server environment, the database
+itself is shared across a pool of servers, which means that if any server in the server pool fails,
+the database continues to run on surviving servers.
+
+ Oracle RAC is a commercial, rather expensive product, whereas the proposed solution is free and its implementation uses Open Source components.
+
+ % Źródło: http://www.oracle.com/technetwork/database/options/clustering/rac-ds-12c-1898881.pdf
