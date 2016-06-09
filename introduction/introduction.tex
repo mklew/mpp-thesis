@@ -13,41 +13,33 @@ Transactions are important for performing operations on different entities and e
 
 \subsection{Current state of transactions in Cassandra}	
 Cassandra due to its distributed nature, cannot have full acid transactions, but it supports transactional behaviour with so called Lightweight Transactions (\lwt).
-Transactional behaviour in \lwt is implemented by the means of the condition clause, which specifies whether statement can execute or not, and guarantees that any LWT performed for the same key obeys to the condition, since conditions are evaluated on the consistent state of the data, as if statements were executed one after the other, thus provides serializability of modifications. \lwt transaction spans only single partition, which is the clustering of the rows in the table, therefore \lwt does not support consistent modifications to many rows.
+Transactional behaviour in \lwt is implemented by the means of the condition clause, which specifies whether statement can execute or not, and guarantees that any LWT performed for the same key obeys to the condition, since conditions are evaluated on the consistent state of the data, as if statements were executed one after the other, thus provides serializability of modifications. \lwt transaction spans only single partition, which is the clustering of the rows in the table, therefore \lwt does not support consistent modifications of many rows.
 
+Let us look at examples of \lwt. An example \ref{lst:intro:lwtInsert} presents a transaction, which inserts the user \emph{John} only if it is not already present in the database. \lwt guarantees consistency of the insert, and guarantees that if another client performs same insert at the same time, then \emph{John} is inserted only once, by one or the other transaction.
 
-TODO example
-LWT guarantees atomic modification of single partition, which is the clustering of the rows in the table, iff specified condition is met. Main guarantee however is that after a successful LWT quorum of replicas agree on given value.
-
-
-for example to do only insert if that row hasn’t existed before. 
+Second example \ref{lst:intro:lwtUpdate} presents an update transaction, which executes only if the \code{balance} column has the expected value. If another transaction changes the balance to value different than expected, the former transaction will not update the balance. Note that, conditions in the \lwt \code{IF} clause can only refer to the columns in the row that is being modified, and not to different rows.
 
 \begin{example}
-\begin{lstlisting}[style=outcode,label={lst:intro:lwtInsert},caption={LWT Insert with if not exists clause}]
+\label{lst:intro:lwtInsert}
+\begin{lstlisting}[style=outcode,caption={LWT Insert with if not exists clause}]
 INSERT INTO users (user_id, name, email)  
 VALUES (1, 'John', 'john@yahoo.com') 
 IF NOT EXISTS
 \end{lstlisting}
 \end{example}
 
-Examples of LWT:
-
-1)
-
-First example uses LWT to add user John with id=1 if John was not present in database. To put it differently, to insert a row to users table only if row with given key=1 didn’t exist.
-
-
-
 \begin{example}
-\begin{lstlisting}[style=outcode,label={lst:intro:lwtUpdate},caption={LWT Update with column condition}]
+\label{lst:intro:lwtUpdate}
+\begin{lstlisting}[style=outcode,caption={LWT Update with column condition}]
 UPDATE balances SET balance = 2500 WHERE user_id = 1 IF balance = 2000;
 \end{lstlisting}
 \end{example}
 
-Second example shows that conditions can have expressions that are evaluated during LWT. LWT will proceed further only if condition is met. Such expressions are restricted only to row that is being updated.
 
-LWT is a tool which allows to have some consistency guarantees, but it is limited to single row. It cannot be used to have some transaction that spans two rows with conditions between them. 
-To put LWT in terms of ACID, LWTs have serial isolation level, are atomic and durable. Consistency is preserved in terms of quorum, but not in terms of all nodes involved which is the case in relational world. Section \ref{sec:theory:transactions:lwt} contains more information about \lwt.
+\lwt provides a subset of transactional behaviour limited to a single partition, but it still provides a transaction, only a small one. It does not support consistent, atomic updates across different rows. 
+
+In terms of ACID, \lwt provides serial isolation level, is atomic and durable.
+Consistency is preserved in terms of quorum, but not in terms of all nodes involved which is the case in relational world. Section \ref{sec:theory:transactions:lwt} contains more information about \lwt.
 
 \subsection{Workarounds for no ACID}
 Atomic multi-partition updates are missing in the Cassadra, but workarounds exist, and one of them is to use \lwt and a special \emph{step} column, which represents current progress of a \emph{transaction}. Although there is no transaction enforced by the database, there is a transactional code in the logic of the client, which updates \emph{step} column on each operation, and checks the condition against that column in the subsequent operation if its value matches expected step. That way the next operation succeeds only if previous succeeded. Such model puts restrictions on how user uses database and how client's logic is written. Note that even with the special flag LWTs are still restricted to a single partition.  
