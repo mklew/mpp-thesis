@@ -1,11 +1,21 @@
 %!TEX root = thesis.tex
 \newpage
-\paragraph{Abstract} Multiple-inheritance hierarchies are data structures of a high importance in the area of
-the artificial intelligence. The problem with them is lack of comprehensive and efficient methods of indexing, which
-limits the practical applications. The proposed hybrid indexing method can adapt to the particular topology of the data
-structure being processed. We have achieved this by tuning the proportion between the member encoding methods to gain
-compactness of the index and fast responses of the search requests. Moreover, we have found that combining a few methods
-together preserves and even improves the ability to encode the changes incrementally.
+\paragraph{Abstract} 
+Transactions in non-relational databases, are a rare feature, but a useful and desirable one if present, such as Light Weight Transactions (\lwt) in the Cassandra.
+The problem with \lwt is lack of a multi partition operations, which limits the practical applications, and puts the burden of maintaining the data consistency in other ways on the users.
+The proposed multi-partition transactions algorithm removes the burden, supports transactions spanning many rows with read-committed isolation, and has a scalable design without a single point of failure.
+We have achieved this by using \paxos algorithm for the distributed consensus, private memtables for isolation, and other techniques, which reduce memory footprint, and increase scalability.
+
+% Multiple-inheritance hierarchies are data structures of a high importance in the area of
+% the artificial intelligence. 
+% The problem with them is lack of comprehensive and efficient methods of indexing, which
+% limits the practical applications.
+% The proposed hybrid indexing method can adapt to the particular topology of the data
+% structure being processed. 
+% We have achieved this by tuning the proportion between the member encoding methods to gain
+% compactness of the index and fast responses of the search requests.
+% Moreover, we have found that combining a few methods
+% together preserves and even improves the ability to encode the changes incrementally.
 
 % We have devised two member encoding methods: the first that bases on inheritance of some features and the second that
 % bases on numbering schemes. The correctness of the developed solutions has been proved and their performance has been
