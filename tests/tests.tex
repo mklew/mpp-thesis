@@ -98,6 +98,49 @@ The algorithm makes progress, as long as quorum in each replica group moves in t
   \label{fig:tests:networkPartitionTolerance}
 \end{figure}
 
+\section{Analyzing number of requests}
+Assume transaction $t$, which modifies $PC=3$ partitions: $p_{1}, p_{2}, p_{3}$,
+, which might be replicated on one up to three unique replica groups, thus number of nodes affected spans from minimum of $N$ to maximum of $PC*N$. Number of unique replica groups depends whether replica groups are independent, thus contain different nodes, of if they overlap in nodes.
+
+Starting a transaction requires a single request, thus $1$ request to any node in the cluster, which responds with Transaction State.
+Each modification of the partition needs to be written to the private memtables, and acknowledged by the quorum from a replica group, thus writes perform $[N,PC*N]$ requests.
+Nextly transaction is committed, thus the single commit request $1$ is performed.
+The commit procedure performs most of the requests.
+Replicas need to transition to the pre prepare phase, thus leader has to send $[N,PC*N]$ requests and receive responses.
+Pre prepare phase performs data consistency check, thus each node reads from quorum of replicas, resulting in possible requests count: $[N * (\frac{N}{2} + 1),PC * N * (\frac{N}{2} + 1)]$.
+Nextly the leader transitions replicas to prepare phase, which requires $[N,PC*N]$ requests, followed by propose phase and another wave of $[N,PC*N]$ requests, and lastly it runs transition to the commit phase with another batch of $[N,PC*N]$ requests.
+
+The total number of requests, assuming the optimistic path without contention and no failures, 
+is: $[2 + 5 * N + N * (\frac{N}{2} + 1), 2 + 5 * PC*N + PC * N * (\frac{N}{2} + 1)]$,
+which generalises to $2 + 5 * PC*N + PC * N * (\frac{N}{2} + 1)$ where $PC \in [1, N]$.
+
+Number of requests could be limited if at each step only quorums were considered, thus replacing single $N$ in formula by $\frac{N}{2} + 1$, which would result in the formula: 
+$2 + 5 * PC*(\frac{N}{2} + 1) + PC * (\frac{N}{2} + 1) * (\frac{N}{2} + 1)$ where $PC \in [1, N]$.
+The Fig. \ref{fig:tests:requestsCount} depicts concrete numbers of requests in both cases.
+
+
+\begin{figure}[hbt]
+  \centering
+  \setlength{\unitlength}{1.3cm}  
+  \subfloat{
+    \renewcommand{\tabcolsep}{0.1cm}
+    \begin{tabular}{c|c|c|c}
+      \toprule
+      $N$ & $PC$ & requests to all & requets to quorums  \\ \midrule
+      $N=3$ & $PC=1$   & 23  & 16 \\
+      $N=3$ & $PC=2$   & 44  & 30 \\
+      $N=3$ & $PC=3$   & 65  & 44 \\
+      $N=5$ & $PC=1$   & 37  & 16 \\
+      $N=5$ & $PC=2$   & 72  & 30 \\
+      $N=5$ & $PC=3$   & 107 & 44  \\
+      $N=5$ & $PC=4$   & 142 & 58  \\
+      $N=5$ & $PC=5$   & 177 & 72  \\ \bottomrule  
+    \end{tabular}
+  }
+  \caption{Request count given different $N$ and unique partitions count $PC$}
+  \label{fig:tests:requestsCount}
+\end{figure}
+
 \section{Theoretical performance analysis}
 Let us analyze the performance of the \mpt algorithm considering independent increase of the following parameters: 
 \begin{enumerate*}
@@ -123,7 +166,7 @@ When nodes are added to the cluster token ranges are reassigned, thus nodes $n'$
 The former case increases the number of requests during \mpt, as if number of partitions is increased \ref{sec:tests:perf:partitions}.
 
 \subsection{Higher replication factor}
-In this case $N$ is increased to $N'$.
+In this case $N$ is increased to $N'$, thus replica groups contain more replicas. \mpt relies on the quorum of each replica group, thus number of requests increases as well, but only if replica groups remain disjoint. In case they overlap, the number of requests stays the same, even if replication factor increases.
 
 \subsection{Increase in concurrent conflicting transactions}
 Let us consider a partition $p$ and an set of transactions $S_{t}$, in which each transaction modifies $p$, that increases to a larger set $S'_{t}$. 
