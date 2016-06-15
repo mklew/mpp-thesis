@@ -74,23 +74,6 @@ Similarly, none of nodes will do the commit if there exists at least one replica
 
 Given contention with other transactions, it might happen that replica groups need to go back in phase and retry operation in order to stay in synchronized phase with other replica groups, then all of them proceed in same phase.
 
-
-\subsection{Algorithm requirements on cluster}
-Algorithm can make progress as long as quorum in each replica group is satisfied, thus the algorithm is resilient to failures of n nodes:
-
-% TODO tableka, 
-% best case, N, wniosek
-% worst case, N, wniosek
-
-        N-denotes number of nodes that can be down[g]
-* At best case, when replica groups are disjoint, n = (number of replica groups) * (N - (N/2 + 1)), that is, the minority of replicas can be down for each replica group.
-* At worst cas[h]e, when all replica groups intersect, only minority of replicas can be down therefore n= N - (N/2 + 1)
-
-
-
-Therefore resilience scales with size of transaction.
-
-
 \section{Replica phases}
 In this section discussion points to details of each phase.
 

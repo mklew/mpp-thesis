@@ -79,6 +79,25 @@ Rationale behind test is that when \emph{Next Two Counter Executor} fails to com
 
 All previously described tests were also run with cluster during partial failure. Node was shutdown and tests were run. Since \mpt tolerates partial failures, as long as quorum is alive and responds to requests, tests yield same results.
 
+\section{Theoretical network partition tolerance}
+The algorithm makes progress, as long as quorum in each replica group moves in the expected phase, thus the algorithm is resilient to failures of $k$ nodes. The best case and the worst case is shown in the Fig. \ref{fig:tests:networkPartitionTolerance}. $RGs$ denotes number of replica groups. The key conclusion is that resilience scales with the size of a transaction, since it relies only on quorums in each replica group.
+
+\begin{figure}[hbt]
+  %\centering
+  \setlength{\unitlength}{1.3cm}  
+  \subfloat{
+    \renewcommand{\tabcolsep}{0.1cm}
+    \resizebox{\textwidth}{!}{\begin{tabular}{c|c|c}
+      \toprule
+      case & k & conclusion \\ \midrule
+      best case & $RGs * (N - (\frac{N}{2} + 1)$ & occurs, when replica groups are disjoint  \\
+      worst case & $N - (\frac{N}{2} + 1)$  & occurs, when all replica groups intersect  \\  \bottomrule      
+    \end{tabular}}
+  }
+  \caption{The best and the worst case of the network partition tolerance}
+  \label{fig:tests:networkPartitionTolerance}
+\end{figure}
+
 \section{Theoretical performance analysis}
 
 \subsection{Theoretical number of requests during algorithm}
@@ -112,6 +131,9 @@ TR ((RGC-1) / 2) + 4*TR
 
 For a five nodes cluster with replication factor N=3 it has
 10 different replica sets.
+
+
+
 
 % TODO opis teoretyczny od czego zależy wydajność
 % liczba partycji
