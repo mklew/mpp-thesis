@@ -99,6 +99,41 @@ The algorithm makes progress, as long as quorum in each replica group moves in t
 \end{figure}
 
 \section{Theoretical performance analysis}
+Let us analyze the performance of the \mpt algorithm considering independent increase of the following parameters: 
+\begin{enumerate*}
+\item $p$ - modified partitions,
+\item $n$ - number of nodes in a cluster,
+\item $N$ - replication factor,
+\item concurrent conflicting transactions,
+\item concurrent independent transactions.
+\end{enumerate*}
+
+\subsection{Increasing number of partitions}
+\label{sec:tests:perf:partitions}
+When \mpt affects more partitions, it is more likely that these partitions are replicated on different replicas, thus the number of replica groups increases as well. Replica groups are bound in size by the total number of nodes in the cluster. If replica groups cover all nodes, then increase in modified partitions will not further affect number of requests performed. Therefore number of requests increases linearly with the replica groups, but is has a limit, after which it remains constant.
+
+\subsection{Increasing number of nodes}
+Let us consider a cluster of $n$ nodes and a transaction that modifides set of partitions $S_{p}$, which are replicated in the subset of nodes $S_{n}$.
+When nodes are added to the cluster token ranges are reassigned, thus nodes $n'$ are responsible for smaller token ranges, which causes two possible outcomes:
+\begin{enumerate*}
+\item $S_{n}$ increases to $S'_{n}$, since after reassignment $S_{p}$ is replicated by more nodes,
+\item $S_{n}$ remains the same, if the token ranges of $S_{p}$ were not affected by the reassignment.
+\end{enumerate*}
+
+The former case increases the number of requests during \mpt, as if number of partitions is increased \ref{sec:tests:perf:partitions}.
+
+\subsection{Higher replication factor}
+In this case $N$ is increased to $N'$.
+
+\subsection{Increase in concurrent conflicting transactions}
+Let us consider a partition $p$ and an set of transactions $S_{t}$, in which each transaction modifies $p$, that increases to a larger set $S'_{t}$. 
+Transactions participate in same \paxos round, due to the fact that all of them modify same partition $p$, and any conflict function \label{sec:theory:conflictFunctions} will detect it.
+Concurrent transactions could cause contention and leadership changes of the \paxos round, but only if transactions are committed at the same time. Contention is detected by rejecting proposed ballot, in which case the coordinator of a transaction waits until a timeout occurs and tries again with a higher ballot. The timeout provides the time window, in which the current leader proposes its transaction. Even if leadership changes, the proposed and accepted transaction is committed and other conflicting transactions are rolledback, thus if contention is resolved, then the algorithm finishes the one transaction from the set $S'_{t}$. Initial contention might have negative effect on the overall performance of the algorithm.
+
+Moreover, transactions $S'_{t}$ will store its modifications of $p$ on the same replica group $RG$, and register in an index, which increases memory footprint on the nodes in $RG$.
+
+\subsection{Increase in concurrent independent transactions}
+Independent transactions, which do not modify same partitions, do not cause contention on each other, thus the algorithm scales and its performance is not affected by the increase. Likewise the memory footprint is divided among the cluster, thus there are no single nodes, which would have to handle more data than other nodes.
 
 % TODO opis teoretyczny od czego zależy wydajność
 % liczba partycji
