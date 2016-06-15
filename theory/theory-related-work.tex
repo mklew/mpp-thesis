@@ -49,7 +49,12 @@ FoundationDB was acquired by Apple \cite{foundationDbAcquired} and since then no
 Since FoundationDB disappeared the advantage of the proposed algorithm is that it is and will remain Open Source and accessible for studies.
 
 \subsection{Datomic}
-TODO opis Datomic i referencja
+Datomic \cite{datomic} is a database with a completely different approach, since it moves the database inside the applications, which in terms of Datomic are called \emph{peers}, by embedding the peer compontent library, which provides data access, caching, query capabilities, communication to \emph{transactors} and to \emph{storage services}. A \emph{transactor} is the second part of the database, which accepts transactions, processes them serially, commits the results to the \emph{storage service}, transmits changes to the peers and indexes the changed data. The third part are \emph{storage services}, which provide reliable, redundant storage, such as Cassandra \ref{sec:theory:cassandra}, or AWS DynamoDB.
+
+Datomic supports ACID transactions, and provides the query language -- Datalog, which is a declarative logic programming language. Transactions are provided by the single active \emph{transactor}. The key difference between NoSql databases and Datomic is a tradeoff betweed scalability of writes and transactions. In Datomic, each write is a transaction, which needs to be processed by the transactor, thus it sacrifices writes scalability in order to provide ACID transactions.
+
+The proposed algorithm provides weaker guarantees than ACID transactions in Datomic, but it does not limit the writes scalability. 
+
 
 \subsection{Oracle RAC}
 Oracle Real Application Clusters (RAC) is a relational database with fully ACID compliant transactions available in the distributed cluster, which overcomes the limitations of traditional shared-nothing and
