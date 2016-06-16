@@ -32,8 +32,30 @@ Reaching a consensus is a general problem, for which algorithms exist, and this 
 Solving the problem of consensus is the backbone of the distributed transactions. 
 
 \subsubsection{2 phase commit}
+2PC \cite{2phaseC}  operates in two distinct phases:
+\begin{enumerate}
+\item Contact every node, propose a value and gather responses
+\item If all nodes agree, contact every node again to let it know about agreement. Otherwise, contact every node to abort the consensus.
+\end{enumerate}
 
-TODO opis \cite{2phaseC} http://the-paper-trail.org/blog/consensus-protocols-two-phase-commit/
+The node which proposes a value is called the \emph{coordinator}, and does not have to be elected to be the coordinator, thus any node can act as the coordinator and initiate another round of 2PC. Fig. \ref{fig:2phaseCommit} depicts the algorithm during fault-free execution. Note that, in 2PC nodes cannot suggest other value than proposed one, they can only accept it, or decline, thus it is a binary variable: commit or abort. Another proposal can be done only through another round.
+
+The 2PC solves the consensus problem in the absense of failures. If a failure occurs, even to a single node, then the coordinator will not proceed to phase 2, thus consensus will not be reached.
+
+\begin{figure}[h]
+	\centering
+	\subfloat[Phase 1]
+	{
+	\includegraphics[height=50mm]{images/tpc-fault-free-phase-1.png}\hspace{10mm}
+	}
+	\subfloat[Phase 2]
+	{
+	\includegraphics[height=50mm]{images/tpc-fault-free-phase-2.png}\hspace{10mm}
+	}
+	%\label{fig:replicationRing}
+	\caption{2 phase commit}
+	\label{fig:2phaseCommit}
+\end{figure}
 
 
 \subsection{Distributed transactions}

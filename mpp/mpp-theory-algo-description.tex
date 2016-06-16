@@ -81,21 +81,21 @@ In this section discussion points to details of each phase.
 No phase is a technical representation of starting phase.
 
 \subsection{Pre prepare phase}
-Pre prepare phase provides a foundation for further phases and makes guarantees that if a replica is in pre prepare phase, then it is eligible to participate in paxos round, and its private data is eligible for commit. Whether commit occurs or not depends on results of the next phases. Two main components in the phase are: \begin{enumerate*}
-\item transaction registers in transaction index, in order to participate in a paxos round,
-\item transaction performs data consistency check, in order to have local data ready for commit.
+Pre prepare phase provides a foundation for further phases and provides guarantees that if a replica is in the phase, then it is eligible to participate in a paxos round, and its private data is eligible for commit. Whether commit occurs or not depends on the results of the next phases. Two main components in the phase are: \begin{enumerate*}
+\item transaction registers in a transaction index, in order to participate in a paxos round,
+\item transaction performs data consistency check, in order to have the local data ready for commit.
 \end{enumerate*}
 
 
-\subsubsection{Registering in transaction index}
+\subsubsection{Registration in transaction index}
 When transaction registers in the transaction index \ref{sec:mpp:txIndex}, from that moment on transaction participates in a paxos round.
 It might participate alone or with other concurrent transactions that are known to be conflicting. 
 Transaction is vulnerable to rollback by other transaction, as soon as it has registered itself in the index.
-Since Transaction Index is accessed by many concurrent transactions, it has to be exclusively acquired by transaction before any operation that changes it state takes place. 
+Since Transaction Index is accessed by many concurrent transactions, it has to be exclusively acquired by transaction before any operation that changes its state takes place. 
 Locking, or other concurrency control mechanism can be used to guarantee that state of Transaction Index stays consistent.
 
 
-\emph{Paxos round id}, used to find Paxos State data at each node locally, is synthetic id and is different at each replica during \mpt round. 
+\emph{Paxos round id}, used to find Paxos State data at each node locally, is a synthetic id and is different at each replica during \mpt round. 
 I put forward the claim that difference in id between replicas does not have negative effect, as long as conflicting transactions are put into same round. 
 Providing same paxos round id would require another consensus algorithm of its own which would inherently increase cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
         
