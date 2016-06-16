@@ -67,7 +67,29 @@ This section presents more algorithms: \emph{3PC}, \paxos, and \emph{Raft} to so
 
 
 \subsubsection{3 phase commit}\label{sec:theory:transactions:3pc}
-TODO opis \cite{3phaseC}
+3PC \cite{3phaseC}, depicted on fig. \ref{fig:3phaseCommit}, divides phase 2 of 2PC into two sub-phases: prepare to commit phase, and commit phase, thus it has three phases in total. Upon the prepare to commit message nodes enter the state, in which they are able to commit the value, but also to abort and undo any changes made. The key principle behind this phase is to eliminate the possibility that any node actually commits the value before other nodes are aware of the decision to commit.
+
+In case of the coordinator failure, a recovery node takes over the protocol and queries the state of the remaining nodes. If a node that has committed the transaction failed along with the coordinator, then it is known that all nodes received prepare to commit message therefore the recovery node is able to finish the protocol by committing the value. If a node replies that it hasn't seen a prepare to commit message, then it means that none of the nodes received commit yet, thus the recovery node can re-run the protocol. 
+
+\begin{figure}[h]
+	\centering
+	\subfloat[Phase 1 propose]
+	{
+		TODO
+	%\includegraphics[height=50mm]{images/tpc-fault-free-phase-1.png}\hspace{10mm}
+	}
+	\subfloat[Phase 2 prepare to commit]
+	{
+		TODO
+	%\includegraphics[height=50mm]{images/tpc-fault-free-phase-2.png}\hspace{10mm}
+	}
+	\subfloat[Phase 3 commit]{
+		TODO 
+	}
+	%\label{fig:replicationRing}
+	\caption{3 phase commit}
+	\label{fig:3phaseCommit}
+\end{figure}
 
 \subsubsection{Paxos}
 Paxos is another algorithm to solve distributed consensus problem, originally presented in \cite{Lamport1998partTimeParliment}, caused confusion among researchers, due to its complicated explaination and mathematical proofs, and had to be explained in simpler terms in \cite{lamport2001paxosMadeSimple}. 
