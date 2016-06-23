@@ -68,13 +68,20 @@ Keyspace and table name are always required. Type of a token is just \emph{long}
 \section{Extending CQL}
 %Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. 
 %I’ve used Cassandra Java Driver which is most standard implementation of C* driver.
-Cassandra Query Language has been extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. I wanted to reuse as much of functionality as possible, but I had to modify syntax of: insert, update and delete statements. Fortunately all modification statements share same \emph{USING} clause, as in examples \ref{lst:insertUsing}, \ref{lst:updateUsing} which can be used to represent modification in a transaction.
+Cassandra Query Language has been extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. I wanted to reuse as much of functionality as possible, but I had to modify syntax of: insert, update and delete statements. Fortunately all modification statements share same \emph{USING} clause, as in Listings \ref{lst:insertUsing},  \ref{lst:updateUsing} which can be used to represent modification in a transaction.
+
+%\begin{example}
+%\label{ex:insertUsing}
 
 \begin{lstlisting}[style=outcode,label={lst:insertUsing},caption={Insert statement with using clause}]
 INSERT INTO ks.users VALUES(...) 
 WHERE ... 
 USING TIMESTAMP = <timestamp>;
 \end{lstlisting}
+%\end{example}
+
+%\begin{example}
+%\label{ex:updateUsing}
 
 \begin{lstlisting}[style=outcode,label={lst:updateUsing},caption={Update statement with using clause}]
 UPDATE ks.users 
@@ -82,9 +89,10 @@ USING TIMESTAMP = <timestamp>
 SET ...
 WHERE ...;
 \end{lstlisting}
+%\end{example}
 
 
-Therefore it is possible to only extend \code{using} clause to add new functionality to all statements. Extended \code{using} clause supports \code{transaction} keyword and accept transaction id, as in example \ref{lst:insertUsingTx}. An example of transaction id is \code{32e4d520-15aa-11e6-b55d-bd89c88d765a}.
+Therefore it is possible to only extend \code{using} clause to add new functionality to all statements. Extended \code{using} clause supports \code{transaction} keyword and accept transaction id, as in Listing \ref{lst:insertUsingTx}. An example of transaction id is \code{32e4d520-15aa-11e6-b55d-bd89c88d765a}.
 
 
 \begin{lstlisting}[style=outcode,label={lst:insertUsingTx},caption={Insert statement with using transactional clause}]
@@ -216,7 +224,7 @@ Committed transactions are added to the table with flag \code{commited = true}.
 
 
 \section{Paxos State}
-Paxos state is implemented as a table in \emph{system} keyspace, which is local to each node and is not replicated, and stores information about paxos round's state, as in the listing \ref{lst:paxosStateImpl}.
+Paxos state is implemented as a table in \emph{system} keyspace, which is local to each node and is not replicated, and stores information about paxos round's state, as in Listing \ref{lst:paxosStateImpl}.
 
 \begin{lstlisting}[style=outcode,label={lst:paxosStateImpl},caption={Table definition for multi partition transactions paxos state}]
 CREATE TABLE mpt_paxos (

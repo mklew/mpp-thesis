@@ -38,7 +38,7 @@ Solving the problem of consensus is the backbone of the distributed transactions
 \item If all nodes agree, contact every node again to let it know about agreement. Otherwise, contact every node to abort the consensus.
 \end{enumerate}
 
-The node which proposes a value is called the \emph{coordinator}, and does not have to be elected to be the coordinator, thus any node can act as the coordinator and initiate another round of 2PC. Fig. \ref{fig:2phaseCommit} depicts the algorithm during fault-free execution. Note that, in 2PC nodes cannot suggest other value than proposed one, they can only accept it, or decline, thus it is a binary variable: commit or abort. Another proposal can be done only through another round.
+The node which proposes a value is called the \emph{coordinator}, and does not have to be elected to be the coordinator, thus any node can act as the coordinator and initiate another round of 2PC. Figure \ref{fig:2phaseCommit} depicts the algorithm during fault-free execution. Note that, in 2PC nodes cannot suggest other value than proposed one, they can only accept it, or decline, thus it is a binary variable: commit or abort. Another proposal can be done only through another round.
 
 The 2PC solves the consensus problem in the absense of failures. If a failure occurs, even to a single node, then the coordinator will not proceed to phase 2, thus consensus will not be reached.
 
@@ -67,7 +67,7 @@ This section presents more algorithms: \emph{3PC}, \paxos, and \emph{Raft} to so
 
 
 \subsubsection{3 phase commit}\label{sec:theory:transactions:3pc}
-3PC \cite{3phaseC}, depicted on fig. \ref{fig:3phaseCommit}, divides phase 2 of 2PC into two sub-phases: prepare to commit phase, and commit phase, thus it has three phases in total. Upon the prepare to commit message nodes enter the state, in which they are able to commit the value, but also to abort and undo any changes made. The key principle behind this phase is to eliminate the possibility that any node actually commits the value before other nodes are aware of the decision to commit.
+3PC \cite{3phaseC}, depicted on Figure \ref{fig:3phaseCommit}, divides phase 2 of 2PC into two sub-phases: prepare to commit phase, and commit phase, thus it has three phases in total. Upon the prepare to commit message nodes enter the state, in which they are able to commit the value, but also to abort and undo any changes made. The key principle behind this phase is to eliminate the possibility that any node actually commits the value before other nodes are aware of the decision to commit.
 
 In case of the coordinator failure, a recovery node takes over the protocol and queries the state of the remaining nodes. If a node that has committed the transaction failed along with the coordinator, then it is known that all nodes received prepare to commit message therefore the recovery node is able to finish the protocol by committing the value. If a node replies that it hasn't seen a prepare to commit message, then it means that none of the nodes received commit yet, thus the recovery node can re-run the protocol. 
 
@@ -145,16 +145,22 @@ The main idea behind the algorithm is decomposition of the consensus problem int
 %Safety property is that: if any server
 %has applied a particular log entry to its state machine,
 %then no other server may apply a different command for the same log index.
- A server supporting \emph{Raft} is in one of three states: \begin{enumerate*} \item leader, \item follower, \item candidate \end{enumerate*}. The leader can be only one and it handles all client requests. When a follower receives a request, it has to redirect request to the leader. The candidate state is used during leader election. 
+ 
+ A server supporting \emph{Raft} is in one of three states: \begin{enumerate*} \item leader, \item follower, \item candidate \end{enumerate*}. The leader can be only one and it handles all client requests.
+  When a follower, which is a node listening to the leader, does not receive an heartbeat message within specific time it becomes the candidate and requests election votes from other nodes. If it receives the majority of votes it becomes the leader for the next \emph{term}. Client's request is handled by the leader, which saves the value in uncommitted state in its log and communicates the value to the followers, which acknowledge it. Upon majority of acknowledges the value is committed at the leader node, and the followers are notified about the commit on the next heartbeat message. The leader responds to the client, as soon as the value is committed just at the leader node. When a follower, receives a request from a client, it has to redirect request to the leader.
+
+  \emph{Raft} is resilient to network partitions, since the candidate has to acquire majority of the votes. If there is a split vote, which means that two nodes are candidates which received same number of votes, the election begins again in the next term after a timeout, thus there is only one leader.
+  \emph{Raft} algorithm is visualized in \cite{raftVisual}.
+
 % TODO reszta opisu
 
  %The difference to \paxos  is that \emph{Raft} has been decomposed into independent subproblems which clearly address problems. 
 
 % TODO %
 % Napisać jak ten RAFT działa
-\emph{Raft} uses \emph{Leader election}. Leader is elected for specific term. \emph{Raft} uses \emph{Log Replication} to arrive at consensus. Leader proposes new value to \emph{followers} which append value to uncommitted log. Once leader has majority of acknowledges it sends commit message. Followers receive commit message and commit value in the log. 
+%\emph{Raft} uses \emph{Leader election}. Leader is elected for specific term. \emph{Raft} uses \emph{Log Replication} to arrive at consensus. Leader proposes new value to \emph{followers} which append value to uncommitted log. Once leader has majority of acknowledges it sends commit message. Followers receive commit message and commit value in the log. 
 
-\emph{Raft} algorithm is visualized in \cite{raftVisual}.
+
 
 \subsubsection{RAMP}\label{sec:theory:transactions:ramp}
 \emph{Read Atomic Multi Partition} transactions \cite{Bailis:2014} is the newest algorithm among the algorithms discussed in this chapter. 

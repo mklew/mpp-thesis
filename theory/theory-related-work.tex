@@ -8,7 +8,7 @@ in which different rows are accessible by arbitrary keys.
 The data in Cassandra is accessible through Cassandra Query Language (CQL) \ref{sec:theory:cassandra:cql}, which is similar to SQL, but provides limited functionality. Cassandra supports \lwt transactions \ref{sec:theory:transactions:lwt}.
 
 \lwt is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt providing multi partition transactions.
-Comparison of the proposed algorithm to \lwt is shown at fig. \ref{fig:mppVsLwt}.
+Figure \ref{fig:mppVsLwt} presents comparsion of the proposed algorithm to \lwt.
 
 \begin{figure}[hbt]
   %\centering
