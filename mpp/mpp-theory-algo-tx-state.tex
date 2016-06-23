@@ -8,9 +8,9 @@ Each modification refers to a single partition. Key belongs to a partition, thus
 % Napisać, że Token to najmniejsza jednostka replikacji. Token należy do token range, 
 % TODO zostało to pokazane na rysunku gdzieś tam
 
-Each key has a token, which is a number computed by a hash function, which belongs to the token ring. \mpt is not dependent on concrete hash function. In case of \emph{JVM} tokens are of type \emph{long} which occupies 8 bytes of memory. Keys are not restricted by any type, thus for example a key can be a 100 character long string which requires around $232$ bytes\footnote{concrete size depends on \emph{JVM} options used}. Size of the key is then 29 times size of a token. Complex keys can have even bigger size. Token is deterministic in size and in most cases occupies less memory than key itself.
+Each key has a token, which is a number computed by a hash function, which belongs to the token ring. \mpt is not dependent on particular hash function. In case of \emph{JVM} tokens are of type \emph{long} which occupies 8 bytes of memory. Keys are not restricted by any type, thus for example a key can be a 100 character long string which requires around $232$ bytes\footnote{exact size depends on \emph{JVM} options used}. Size of the key is then 29 times size of a token. Complex keys can have even bigger size. Token is deterministic in size and in most cases occupies less memory than key itself.
 
-Ranges of token ring are divided among nodes in cluster. Division and assignment of ranges to nodes is a topology. Given topology replicas of particular key can be identified. Concretely, token is computed from key and then topology tells us which nodes are assigned to a token range that includes the token. As a consequence, any node in the cluster can point to replicas of particular key or its token.
+Ranges of token ring are divided among nodes in cluster. Division and assignment of ranges to nodes is a topology. Given topology replicas of particular key can be identified by computing token from a key and then using topology it is known which nodes are assigned to a token range that includes the token. As a consequence, any node in the cluster can point to replicas of particular key or its token.
 
 %Given token and topology of cluster it is known which nodes are replicas responsible for that token. This is how such databases operate. Each node knows that tokens in range (1, 100) are in nodes 1,2,3 and tokens in range (101, 200) in nodes 4,5,6 and so on. Note that this is trivial example.
 %Therefore node knows which nodes to ask for data with certain key because of token computed from that key and topology of cluster.
@@ -45,11 +45,10 @@ class TransactionItem
 % TODO nie mozna uzywac 'something', 'so', 'thing'
 %Transaction state is unique id plus something that allows us to find all modifications. That something is called transaction item, which has token and table name. 
 
-Transaction items point to concrete replicas. Existance of a transaction item means that replicas identified by the \emph{token} store modification of the key done in transaction. Keys are unknown to the transaction state, but keys are known to the replicas. Each replica has full information about the key and operations performed on its value. 
+Transaction items point to replicas. Existance of a transaction item means that replicas identified by the \emph{token} store modification of the key done in transaction. Keys are unknown to the transaction state, but keys are known to the replicas. Each replica has full information about the key and operations performed on its value. 
 
 Transaction item has table name, because two tables can have same keys which would result in same tokens and it is necessary to differentiate between those two keys, hence table name is added. This can be extended to any other name spacing. Note that, token ring is unaware of database schema, therefore token alone only directs us to nodes with modified data, but to know what has been modified, we also need names of tables.
 
-%* Tokens in each transaction item point to concrete replicas which store modification done in transaction
  
 % Transaction State is just a container for all of these transaction items.
 

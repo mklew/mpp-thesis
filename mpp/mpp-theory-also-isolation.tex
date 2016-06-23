@@ -30,7 +30,7 @@ Private transaction storage satisfies requirement of performing many operations 
 Each modification within transaction should be written to at least quorum of nodes responsible for the modified key in order to depend on majority during the commit process. If quorum is not available, then whole transaction needs to be rolled back. 
 
 \subsection{Isolated operations}
-Algorithm \ref{alg:transactionalInsert} shows how transactional operations, concretely transactional inserts, are performed. All transactional operations are executed in the same way. 
+Algorithm \ref{alg:transactionalInsert} shows how transactional inserts are performed. Note that all other transactional operations are executed in the same way. 
 % TODO napisac algorytm
 %\subsection{Algorithm for adding operations to private transaction storage}
 

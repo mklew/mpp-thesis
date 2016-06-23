@@ -125,7 +125,7 @@ Node 2 -> { K1, K2 }
 Node 3 -> { K2 }
 
 
-Only single node has two modifications which illustrates that we don’t have quorum of replica nodes in consistent state. However paxos phases depend on quorum semantics, concretely that quorum of nodes within replica group such as this one is able to proceed and whole algorithm can make progress. 
+Only single node has two modifications which illustrates that we don’t have quorum of replica nodes in consistent state. However paxos phases depend on quorum semantics, which means that quorum of nodes within replica group, such as this one is able to proceed and whole algorithm makes progress. 
 
 
 On these grounds, we can argue that making data consistent at each replica is a mandatory step.

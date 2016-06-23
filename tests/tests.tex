@@ -20,7 +20,7 @@ Clusters were run locally using \emph{Cassandra Cluster Manager} which is a tool
 \subsection{Testing method}
 
 \subsubsection{Counters}
-Tests are performed using testing schema with counter tables. Counter table is shown on Fig. \ref{fig:counterTable}. It has $5$ columns with \emph{int} counter values: $c1,c2,c3,c4,c5$
+Tests are performed using testing schema with counter tables. Figure \ref{fig:counterTable} shows counter table, which consists of $5$ columns with \emph{int} counter values: $c1,c2,c3,c4,c5$
 Testing schema consists of $2$ keyspaces with number of counter tables in each. Counter tables in each keyspace differ in name, but structure is the same.
 
 \begin{figure}[h]
@@ -80,7 +80,7 @@ Rationale behind test is that when \emph{Next Two Counter Executor} fails to com
 All previously described tests were also run with cluster during partial failure. Node was shutdown and tests were run. Since \mpt tolerates partial failures, as long as quorum is alive and responds to requests, tests yield same results.
 
 \section{Theoretical network partition tolerance}
-The algorithm makes progress, as long as quorum in each replica group moves in the expected phase, thus the algorithm is resilient to failures of $k$ nodes. The best case and the worst case is shown in the Fig. \ref{fig:tests:networkPartitionTolerance}. $RGs$ denotes number of replica groups. The key conclusion is that resilience scales with the size of a transaction, since it relies only on quorums in each replica group.
+The algorithm makes progress, as long as quorum in each replica group moves in the expected phase, thus the algorithm is resilient to failures of $k$ nodes. The best case and the worst case is shown in Figure \ref{fig:tests:networkPartitionTolerance}. $RGs$ denotes number of replica groups. The key conclusion is that resilience scales with the size of a transaction, since it relies only on quorums in each replica group.
 
 \begin{figure}[hbt]
   %\centering
@@ -116,7 +116,7 @@ which generalises to $2 + 5 * PC*N + PC * N * (\frac{N}{2} + 1)$ where $PC \in [
 
 Number of requests could be limited if at each step only quorums were considered, thus replacing single $N$ in formula by $\frac{N}{2} + 1$, which would result in the formula: 
 $2 + 5 * PC*(\frac{N}{2} + 1) + PC * (\frac{N}{2} + 1) * (\frac{N}{2} + 1)$ where $PC \in [1, N]$.
-The Fig. \ref{fig:tests:requestsCount} depicts concrete numbers of requests in both cases.
+Figure \ref{fig:tests:requestsCount} depicts numbers of requests in both cases.
 
 
 \begin{figure}[hbt]

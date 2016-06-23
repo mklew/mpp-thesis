@@ -1,7 +1,6 @@
 %!TEX root = ../thesis.tex
 
 \chapter{Implementation of the algorithm in Cassandra}\label{sec:mpp:impl}
-% Implementation in Cassandra (concrete part, implementation in Cassandra)
 In this section the discussion will point to implementation details of the algorithm and its components in Cassandra. 
 
 
@@ -61,13 +60,9 @@ class TransactionItem
 \end{lstlisting}
 
 Keyspace and table name are always required. Type of a token is just \emph{long} type. Type of transaction id is \emph{UUID with encoded timestamp} \cite{CassandraUUID}.
-% Just because table name is not enough to find it. Keyspace name is always required. Here we can also see concrete type of token which is just a plain long number.
-% Transaction has unique id. I’ve used 
 
 
 \section{Extending CQL}
-%Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. 
-%I’ve used Cassandra Java Driver which is most standard implementation of C* driver.
 Cassandra Query Language has been extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. I wanted to reuse as much of functionality as possible, but I had to modify syntax of: insert, update and delete statements. Fortunately all modification statements share same \emph{USING} clause, as in Listings \ref{lst:insertUsing},  \ref{lst:updateUsing} which can be used to represent modification in a transaction.
 
 %\begin{example}
@@ -173,7 +168,7 @@ When new modification is done in trasaction, then new mutation is added to trans
 
 \subsection{Applying changes locally}
 When transaction is committed at node, its data is applied to targeted tables.
-Since Cassandra uses timestamps to detect most recent writes all partition updates -- stored in mutations -- have to be written with timestamp that comes from paxos ballot. Since mutations were added at arbitrary time during execution of transaction, their timestamps have to be modified. Concretely binary trees with data stored in \code{PartitionUpdates} have to be transformed into new binary trees with all timestamps updated to ballot's timestamp. Fortunately, Cassandra provides a method to rewrite binary trees with updated timestamps.
+Since Cassandra uses timestamps to detect most recent writes all partition updates -- stored in mutations -- have to be written with timestamp that comes from paxos ballot. Since mutations were added at arbitrary time during execution of transaction, their timestamps have to be modified, thus binary trees with data stored in \code{PartitionUpdates} have to be transformed into new binary trees with all timestamps updated to ballot's timestamp. Fortunately, Cassandra provides a method to rewrite binary trees with updated timestamps.
 
 
 \subsection{In memory data}
