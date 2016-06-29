@@ -12,7 +12,7 @@ Cassandra \cite{CassandraApacheDocs} \cite{CassandraDataStaxDocs} \cite{lakshman
 
 \subsection{Key features}
 Its key features are:
-\begin{enumerate*}
+\begin{enumerate*}[label=(\alph*)]
 \item masterless architecture,
 \item linear scale performance \ref{sec:theory:cassandra:linear},
 \item continuous availability,
@@ -23,8 +23,8 @@ Its key features are:
 \end{enumerate*}
 
 \subsection{Architecture}
-Cassandra has a masterless \emph{ring} architecture, presented on Figure \ref{fig:archCluster}, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication, which is keeping copies of the data on multiple nodes, to also avoid SPOF during reads and writes. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime.
-Cassandra supports \emph{gossip} protocol, which is a scalable, distributed protocol used for inter-node communication.
+Cassandra has a masterless \emph{ring} architecture, presented on Figure \ref{fig:archCluster}, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication and provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime.
+Inter-node communication depends on \emph{gossip} protocol, which is a scalable, distributed protocol.
 
 \begin{figure}[h]
 	\centering
@@ -37,9 +37,7 @@ Cassandra supports \emph{gossip} protocol, which is a scalable, distributed prot
 \end{figure}
 
 \subsection{Replication}
-Cassandra supports configurable replication via \emph{replication factor N}, which is the total number of nodes on which the data is stored, defined per \emph{keyspace} \ref{sec:theory:cassandra:datamodel}. A replication factor of $3$ means that three copies of the data exist across the cluster on $3$ different nodes.
-
-Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
+Cassandra supports configurable \emph{replication factor} \ref{def:replicationFactor} defined per \emph{keyspace} \ref{sec:theory:cassandra:datamodel}. Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
 Each node is the \emph{primary replica} for the token range placed counter clock-wise to it, thus node $1$ is the primary replica for range $75-0$, node $2$ for $1-25$, node $3$ for $26-50$, and node $4$ for $51-75$. 
 Token value $91$ belongs to the node $1$, and since $N=3$, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $2$ and node $3$, which are \emph{secondary replicas} of the token. 
 
@@ -96,7 +94,7 @@ Correct data modeling is also an important aspect of the linear scalability, sin
   % TODO źródło?
   % Źródło http://docs.datastax.com/en/cassandra/2.1/cassandra/images/intro_cassandra.png
   \includegraphics[width=\textwidth]{images/cassandra-linear-scalability.png}\hspace{10mm}  
-  \caption{The linear scalability from 100k to 200k requests per second}
+  \caption{The linear scalability from 100k to 400k requests per second}
   \label{fig:archLinearScale}
 \end{figure}
 
@@ -106,7 +104,7 @@ Correct data modeling is also an important aspect of the linear scalability, sin
 
 \subsection{Cassandra Query Language}
 \label{sec:theory:cassandra:cql}
-Cassandra Query Language (CQL) is the query language, similar in syntax to SQL, but provides only limited functionality compared to SQL, as there are no joins, inner queries, nor aggregations. CQL provides select, insert, update and delete statements. Select statement's \emph{where} clause supports equality condition on the partition key columns and restrictions such as: IN, =, >, >=, <= and < on the clustering columns. Columns, which are not part of the primary key cannot be restricted in the \emph{where} clause. Listing \ref{lst:cqlSelect} shows two examples of select statements, first with equality restriction on the partition key column \emph{user_id}, second with equality restrictions on the partition key columns: \emph{cluster}, \emph{date}, \emph{datacenter}, and range restrictions on the clustering key columns: \emph{hour} and \emph{minute}.
+Cassandra Query Language (CQL) is the query language, similar in syntax to SQL, but provides only limited functionality compared to SQL, as there are no joins and inner queries. CQL provides select, insert, update and delete statements. Select statement's \emph{where} clause supports equality condition on the partition key columns and restrictions such as: IN, =, >, >=, <= and < on the clustering columns. Columns, which are not part of the primary key cannot be restricted in the \emph{where} clause. Listing \ref{lst:cqlSelect} shows two examples of select statements, first with equality restriction on the partition key column \emph{user_id}, second with equality restrictions on the partition key columns: \emph{cluster}, \emph{date}, \emph{datacenter}, and range restrictions on the clustering key columns: \emph{hour} and \emph{minute}.
 %Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. 
 
 \begin{lstlisting}[style=outcode,label={lst:cqlSelect},caption={Examples of CQL select statements}]
@@ -133,10 +131,12 @@ Cassandra is a general purpose non-relational database, however there are areas 
 \end{enumerate*} 
 
 \subsection{Transactions}
-Cassandra does not provide ACID compliant transactions, but it offers Light Weight Transactions, which offer a degree of transactionality limited to the scope of single partition, therefore to the single primary key\footnote{to the partitioning part of the key in terms of the complex key}. Section \ref{sec:theory:transactions:lwt} provides more on this subject in comparison to other distributed transactions. 
+Cassandra provides \lwt, which are transactions limited to the single partition.
+Section \ref{sec:theory:transactions:lwt} provides more on this subject in comparison to other distributed transactions. 
 
 \subsubsection{Compared to RDBMS}
-\begin{figure}[hbt]
+Figure \ref{fig:cassandraToRdbms} presents comparison of Cassandra and RDBMS.
+\begin{figure}[H]
   %\centering
   \setlength{\unitlength}{1.3cm}  
   \subfloat{
@@ -149,7 +149,7 @@ Cassandra does not provide ACID compliant transactions, but it offers Light Weig
       SQL & CQL \\
       scales vertically & scales horizontally \\
       master-slave architecture & masterless, share nothing architecture \\
-      denormalization is the bad practice & denormalization is the best practice \\
+      %denormalization is the bad practice & denormalization is the best practice \\
       single points of failure with failover & no single points of failure \\  \bottomrule      
     \end{tabular}}
   }
@@ -160,4 +160,4 @@ Cassandra does not provide ACID compliant transactions, but it offers Light Weig
 \subsection{Eventual consistency}\label{sec:theory:eventualConsistency}
 In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is the \emph{AP} database with eventual consistency, which means that over time the data becomes consistent on all nodes, but there are no guarantees about the time it takes. Cassandra uses techniques such as: \begin{enumerate*} 
 \item \emph{hinted handoff} - stores a message for the currently unavailable replica about the modification and sends it to the replica when it comes back up \cite{CassandraHintedHandoff},  
-\item \emph{read repairs} - detects inconsistency in the data during read and repairs it by sending a message with the data \cite{CassandraReadRepair},  \end{enumerate*} to pro-actively reduce incosistency in the data during normal operations.
+\item \emph{read repairs} - detects inconsistency in the data during read and repairs it by sending a message, which includes consistent data \cite{CassandraReadRepair},  \end{enumerate*} to pro-actively reduce incosistency in the data during normal operations.

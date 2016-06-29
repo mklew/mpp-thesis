@@ -1,9 +1,12 @@
 %!TEX root = ../thesis.tex
 \section{Transactions}\label{sec:theory:transactions}
-Transactions in RDBMS are fully ACID compliant, whereas transactions in non-relational databases, support, if any, only a subset of the traditional transactions, or approach the subject differently and provide a scheme for performing consistent operations.
+Transactions in RDBMS are fully ACID compliant, whereas non-relational databases lack transaction support in most cases. 
+In case where transactions are supported, NoSql databases provide only a subset of functionality provided by ACID compliant transactions. 
+Some of NoSql databases introduce new concepts, which represent transactions, but are specific to the database and its schema.
+
 
 \subsection{Regular transactions}
-Regular transactions, as in RDBMS, are ACID compliant. ACID is an acronym that stands for \emph{Atomicity} -- many operations, such as updates, are performed all together or none is, \emph{Consistency} -- operations move the data in the database from one consistent state to the other consistent state, which satisfies all data integrity constraints, \emph{Isolation} -- transactions do not interfere with each other during execution, \emph{Durability} -- changes made by a committed transaction are preserved even after the database failure.
+Regular transactions, known from RDBMS, are ACID compliant. ACID is an acronym that stands for \emph{Atomicity} -- many operations, such as inserts, updates and removals, are performed either all together or none at all, \emph{Consistency} -- operations move the data in the database from one consistent state to the other consistent state, which satisfies all data integrity constraints, \emph{Isolation} -- transactions do not interfere with each other during execution, \emph{Durability} -- changes made by a committed transaction are preserved even after the database failure.
 
 \subsubsection{A transactional system}
 A transactional system should provide following operations to run transactions:
@@ -67,25 +70,26 @@ This section presents more algorithms: \emph{3PC}, \paxos, and \emph{Raft} to so
 
 
 \subsubsection{3 phase commit}\label{sec:theory:transactions:3pc}
-3PC \cite{3phaseC}, depicted on Figure \ref{fig:3phaseCommit}, divides phase 2 of 2PC into two sub-phases: prepare to commit phase, and commit phase, thus it has three phases in total. Upon the prepare to commit message nodes enter the state, in which they are able to commit the value, but also to abort and undo any changes made. The key principle behind this phase is to eliminate the possibility that any node actually commits the value before other nodes are aware of the decision to commit.
+3PC \cite{3phaseC}, depicted on Figure \ref{fig:3phaseCommit}, divides phase 2 of 2PC into two sub-phases: prepare to commit phase and commit phase, thus it has three phases in total. Upon the prepare to commit message nodes enter the state, in which they are able to commit the value, but also to abort and undo any changes made. The key principle behind this phase is to eliminate the possibility that any node actually commits the value before other nodes are aware of the decision to commit.
 
 In case of the coordinator failure, a recovery node takes over the protocol and queries the state of the remaining nodes. If a node that has committed the transaction failed along with the coordinator, then it is known that all nodes received prepare to commit message therefore the recovery node is able to finish the protocol by committing the value. If a node replies that it hasn't seen a prepare to commit message, then it means that none of the nodes received commit yet, thus the recovery node can re-run the protocol. 
 
 \begin{figure}[h]
 	\centering
+	\begin{tabular}{c}
 	\subfloat[Phase 1 propose]
 	{
-		TODO
-	%\includegraphics[height=50mm]{images/tpc-fault-free-phase-1.png}\hspace{10mm}
-	}
+	\includegraphics[height=50mm]{images/3pc-phase1.png}\hspace{10mm}
+	} \\
 	\subfloat[Phase 2 prepare to commit]
 	{
-		TODO
-	%\includegraphics[height=50mm]{images/tpc-fault-free-phase-2.png}\hspace{10mm}
-	}
+	\includegraphics[height=50mm]{images/3pc-phase2.png}\hspace{10mm}
+	} \\
 	\subfloat[Phase 3 commit]{
-		TODO 
+		\includegraphics[height=50mm]{images/3pc-phase3.png}\hspace{10mm}
 	}
+	\end{tabular}
+	
 	%\label{fig:replicationRing}
 	\caption{3 phase commit}
 	\label{fig:3phaseCommit}
@@ -94,7 +98,7 @@ In case of the coordinator failure, a recovery node takes over the protocol and 
 \subsubsection{Paxos}
 Paxos is another algorithm to solve distributed consensus problem, originally presented in \cite{Lamport1998partTimeParliment}, caused confusion among researchers, due to its complicated explaination and mathematical proofs, and had to be explained in simpler terms in \cite{lamport2001paxosMadeSimple}. 
 
-Paxos has been employed, as the solution to the distributed consensus problem, as part of the larger systems in \cite{chandra2007PaxosMadeLive}, \cite{lampson1996build}, and more recently in the Google's Chubby service \cite{burrows2006chubby}, which is a lock service intended to provide coarse-grained locking, as well as reliable storage.
+Paxos was used, as the solution to the distributed consensus problem, as part of the larger systems in \cite{chandra2007PaxosMadeLive}, \cite{lampson1996build}, and more recently in the Google's Chubby service \cite{burrows2006chubby}, which is a lock service intended to provide coarse-grained locking, as well as reliable storage.
 
 Paxos has advantage over \emph{3PC}, since provides network partition tolerance.
 
@@ -168,13 +172,13 @@ The main idea behind the algorithm is decomposition of the consensus problem int
 enforcement, and materialized view maintenance.
 \emph{RAMP} identifies new transaction isolation level \emph{Read Atomic}, which 
 assures consistent visibility of changes made by the transaction: either all or none of each transaction's updates are seen by other transactions.
-\emph{RAMP} is resilient to partial failures -- failures of part of the nodes in the cluster -- for the reason that RAMP's transaction does not contact nodes that are not affected by the transaction. 
+\emph{RAMP} is resilient to failures of part of the nodes in the cluster -- for the reason that RAMP's transaction does not contact nodes that are not affected by the transaction. 
 \emph{RAMP} also guarantees \emph{synchronization independence}, which means that transactions do not stall or fail other transactions, due to the fact that reads and writes do not block each other. 
 
 %The transaction is able to detect non-atomic partial read and repair it with additional rounds of communication with nodes. 
 The key principle behind \emph{RAMP} is its ability to detect non-atomic partial read, and to repair it with additional rounds of communication with the nodes by the means of \emph{the metadata} attached to each write and \emph{multi-versioning}, which means that the data is accessible in different versions and each modification to the data creates a new version. Versions are either committed or not yet committed, in which case the data can be discarded by aborting the transaction \cite[p. 6]{Bailis:2014}. 
-There are three variants of \emph{RAMP} algorithm and the difference between them is the type of the metadata. \emph{RAMP-small} uses a 64 bit timestamp as the metadata and requires additional two rounds of communication when non-atomic read is detected. Other variants of \emph{RAMP} are described in \cite[p. 5]{Bailis:2014}.
-\emph{RAMP} was proven to be linearly scalable with the number of nodes during trials spanning up to 100 servers \cite[p. 10]{Bailis:2014}.
+There are three variants of \emph{RAMP} algorithm which differ in type of the metadata. \emph{RAMP-small} uses a 64 bit timestamp as the metadata and requires additional two rounds of communication when non-atomic read is detected. Other variants of \emph{RAMP} are described in \cite[p. 5]{Bailis:2014}.
+\emph{RAMP} is linearly scalable, which was tested during trials with the number of nodes spanning up to 100 servers \cite[p. 10]{Bailis:2014}.
 
 %  TODO Może to gdzieś się opłaca dodać:
 % \emph{RAMP} transactions \ref{sec:theory:transactions:ramp} have support for multi-partition operations. 
@@ -183,7 +187,7 @@ There are three variants of \emph{RAMP} algorithm and the difference between the
 
 \subsubsection{LWT}\label{sec:theory:transactions:lwt}
 % TODO źródło w (more on this)
-As mentioned earlier, Light Weight Transactions is the name of compare-and-swap functionality implemented in Cassandra. Internally, LWT uses the Paxos algorithm with some modifications which were aimed to prevent potential single point of failure, thus improving high availability. SPOFs may surface in case the leader fails when it is about to propose a new value (more on this…). The problem was addressed by sacrificing the standard leader election in favour of allowing any node to act as a leader, so that it can propose a value at any time. On the downside, such approach increases the risk of contention. 
+As mentioned earlier, Light Weight Transactions is the name of compare-and-swap functionality implemented in Cassandra. Internally, LWT uses the Paxos algorithm with some modifications which were aimed to prevent potential single point of failure, thus improving high availability. SPOFs may surface in case the leader fails when it is about to propose a new value. The problem was addressed by sacrificing the standard leader election in favour of allowing any node to act as a leader, so that it can propose a value at any time. On the downside, such approach increases the risk of contention. 
 
 One of the key requirements of Paxos protocol is storage of PaxosState - a data structure composed of the proposed value, proposed ballot, promised ballot and most recent commit. In case of LWT, the value represents the update itself along with the token of the partition key where that update should be applied. That token uniquely identifies PaxosState so that several proposals for the same partition can be associated with the same Paxos instance. 
 
@@ -197,15 +201,17 @@ LWT includes the following phases: \begin{enumerate*}
 \item acceptance,
 \item broadcast commit,
 \item wait for acknowledgements.
-\end{enumerate*} Let us analyze each of them in the environment with 5 nodes, replication factor 3 and request to insert user named \emph{John} to \emph{users} table, but only if \emph{John} does not exist. For simplicity, \emph{users} table has only two columns: \begin{enumerate*} 
-\item name -- text column and primary key, \item email -- text column. \end{enumerate*} LWT begins with a node 5 receiving request. Node 5 is then called coordinator node. The coordinator has to become the leader of paxos round identified by the token computed from partition key of \emph{users} table, thus from string value \emph{John}. To become the leader, the coordinator has to create the new ballot and send it along with the token and table name to replica nodes: node 1, node 2, node 3. Each replica has to check whether the ballot is the highest ballot it has seen, and if it is, then replica saves it in the PaxosState and responds with a promise. The leader has to wait for majority of promises before it proceeds. When majority promises, the coordinator may proceed to read the row and check the condition. The condition is that \emph{John} cannot exist, thus read has to not find any rows querying users by user name \emph{John}. Let us assume that indeed user \emph{John} did not exist, thus condition is met which allows the coordinator to propose an insert of \emph{John} with email \emph{john.doe@gmail.com} to \emph{users} table. The coordinator sends proposal message, with an insert and same ballot, to replicas and waits for acceptances. A replica saves proposed insert to PaxosState and replies with acceptance message.
+\end{enumerate*} 
+
+Let us analyze each of them in the environment with \N{5}, \RF{3} and request to insert user named \emph{John} to \emph{users} table, but only if \emph{John} does not exist. For simplicity, \emph{users} table has only two columns: \begin{enumerate*} 
+\item name -- text column and primary key, \item email -- text column. \end{enumerate*} \lwt begins with a node 5 receiving request. Node 5 is then called coordinator node. The coordinator has to become the leader of paxos round identified by the token computed from partition key of \emph{users} table, thus from string value \emph{John}. To become the leader, the coordinator has to create the new ballot and send it along with the token and table name to replica nodes: node 1, node 2, node 3. Each replica has to check whether the ballot is the highest ballot it has seen, and if it is, then replica saves it in the PaxosState and responds with a promise. The leader has to wait for majority of promises before it proceeds. When majority promises, the coordinator may proceed to read the row and check the condition. The condition is that \emph{John} cannot exist, thus read has to not find any rows querying users by user name \emph{John}. Let us assume that indeed user \emph{John} did not exist, thus condition is met which allows the coordinator to propose an insert of \emph{John} with email \emph{john.doe@gmail.com} to \emph{users} table. The coordinator sends proposal message, with an insert and same ballot, to replicas and waits for acceptances. A replica saves proposed insert to PaxosState and replies with acceptance message.
 When the coordinator receives majority of acceptances it broadcasts the commit message and waits for majority of acknowledgements. Upon receiving commit message a replica applies an update stored in PaxosState, thus it performs the insert of \emph{John} to \emph{users} table and acknowledges commit with a reply.
 
 At any time during whole procedure the minority of replicas might stop responding and LWT can continue. In case of the example, one node can fail without aborting \emph{LWT}. If more than one node fails, then LWT is aborted. 
 
-Secondly, at any time the leader might lose leadership if a other node does prepare with a higher ballot. In that case the coordinator has to wait, giving the other leader time to complete its \lwt, and try again with new ballot.
+Secondly, at any time the leader might lose leadership if other node does prepare with a higher ballot. In that case the coordinator has to wait, giving the other leader time to complete its \lwt, and try again with new ballot.
 
-Note that \lwt affects only limited number of nodes -- replicas of the key, thus majority is considered only at the level of replicas, not at the level of the cluster.
+Note that \lwt affects only limited number of nodes -- replicas of \emph{John}, thus majority is considered only at the level of replicas, not at the level of the cluster.
 
 \lwt is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt.
 The proposed algorithm supports multi-partition operations, and provides read-committed isolation level, whereas \lwt provides serializable isolation.

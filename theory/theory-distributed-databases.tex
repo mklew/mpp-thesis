@@ -3,13 +3,13 @@
 \section{Distributed databases}\label{sec:theory:distDbs}
 In order to discuss distributed databases, we need to introduce concepts and techniques commonly used in the non-relational distributed databases, such as: data partitioning and replication.
 
-Distributed programming is the way of solving the same problem that can be solved on a single computer using multiple computers - usually, because the problem no longer fits on a single computer. \cite{DistributeSystemsForFunAndProfit} To paraphrase, distributed databases exist, because the data no longer fits in the single database. To solve this problem, and to handle amounts of data, different techniques are used.
+Distributed programming is the way of solving similar problems that can be solved on a single machine using multiple machines - usually, because the problem no longer fits on a single machine \cite{DistributeSystemsForFunAndProfit}.  To paraphrase, distributed databases exist, because the data no longer fits in the relational database. To solve this problem, and to handle amounts of data, different techniques are used.
 
 %, and also we need to be aware of the pitfalls of the distributed systems, which can be grouped into \begin{enumerate*} \item overcoming problems with distance, \item independent failures of the systems \end{enumerate*}.
 %Key features of the distributed databases are replication
 
 \subsection{Scalability}
-Relational databases scale \ref{def:scalability} vertically, or up, which means that a single machine is upgraded to be more powerful, whereas the distributed databases scale horizontally, which means that another machine is added to the system in order to handle more requests. Distributed databases usually run on a commoditiy machines, as opposed to specialized, high end hardware.
+Relational databases scale, as in Definition \ref{def:scalability}, vertically, or up, which means that a single machine is upgraded to be more powerful, whereas the distributed databases scale horizontally, which means that another machine is added to the system in order to handle more requests. Distributed databases usually run on a commoditiy hardware, as opposed to dedicated servers.
 
 \begin{definition}
   \label{def:scalability}
@@ -17,12 +17,12 @@ Relational databases scale \ref{def:scalability} vertically, or up, which means 
 \end{definition}
 
 
-\subsection{Availability, fault tolerance and CAP}
+\subsection{Availability, fault tolerance and CAP theorem}
 Availability \ref{def:availability} and fault tolerance \ref{def:fault-tolerance} are two crucial characteristics of any distributed database. The \emph{CAP} theorem \cite{brewer2000towards} \cite{Brewer:2012ba} says that during a network partition, which is a network failure, a database can be either \emph{C} -- consistent, or \emph{A} -- available. 
 
-Distributed databases must handle network partition -- \emph{P} in \emph{CAP} -- otherwise the whole system goes down with a failure of a single node. Therefore the distinction between databases is whether they are \emph{AP}, thus sacrafice consistency, or \emph{CP}, which preserves consistency, but sacrafices availability.
+Distributed databases must handle network partition -- \emph{P} in \emph{CAP} -- otherwise the whole system goes down with a failure of a single node. Therefore the distinction between databases is whether they are \emph{AP}, thus drop consistency, or \emph{CP}, which preserves consistency, but sacrifices availability.
 
-If the database remains consistent, then it cannot accept writes, which would break the consistency of the data. An available database accepts writes during network partition, thus sacrafices consistency of the data.
+If the database remains consistent, then it cannot accept writes, which would break the consistency of the data. Available database accepts writes during network partition, thus sacrifices consistency of data.
 
 \begin{definition}
 	\label{def:availability}
@@ -36,12 +36,21 @@ If the database remains consistent, then it cannot accept writes, which would br
 \end{definition}
 
 \subsection{Partitioning}
-The partitioning is the technique, which distributes the data between the servers. 
-It divides the whole dataset into an independent subsets and assigns these subsets to the nodes. The partitioning provides the division of the data, but also the look up of the data. In order to perform any computation of the data, a partition needs to be located first. 
+Partitioning is a technique of distributing data between servers. 
+It divides the whole dataset into an independent subsets and assigns these subsets to the nodes. 
+Moreover, partitioning provides efficient look up of the data, since it is knows the assignment. In order to perform any computation of the data, a partition needs to be located first. 
 
 Partitioning increases data processing capabilities of the database, since different nodes are responsible for different parts of the data. 
 
 \subsection{Replication}
-Replication is another technique, commonly used with partitioning to additionally copy the data into more than a single node in order to increase fault tolerance. If the data is available only on the single node, then SPOF exists, but if the data is available on two nodes or more, then the data is accessible even if a node fails.
+Replication is another technique, commonly used with partitioning to additionally copy the data into more than a single node in order to increase fault tolerance. If the data is available only on the single node, then SPOF exists, but if the data is available on two nodes or more, then the data is accessible even if a node fails. Definition \ref{def:replicationFactor} presents \emph{replication factor}, which a parameter of any system that provides replication.
 
-Replication provides means of achiving scalability, performance, and fault tolerance, but it also is the root of the problems with the consistency, since data is present at different nodes, then any consistent modification requires communication with different nodes, and that communication, as well as the nodes, might be unreliable, and might fail.
+Replication provides means of achieving scalability, performance, and fault tolerance, but it also is the root of the problems with the consistency, since data is present at different nodes, then any consistent modification requires communication with different nodes, and that communication, as well as the nodes, might be unreliable, and might fail. 
+
+\begin{definition}
+  \label{def:replicationFactor}
+  \emph{Replication factor} \emph{RF} is the number of data copies stored in the cluster. Data is stored on different nodes, thus if \RF{3}, then a value is stored on $3$ nodes.
+\end{definition}
+
+%A replication factor of $3$ means that three copies of the data exist across the cluster on $3$ different nodes.
+
