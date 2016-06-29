@@ -10,7 +10,7 @@ This chapter is focused on explaining theory behind testing of \mpt algorithm an
 Components such as \emph{Transaction Index}, \emph{Transaction Log}, \emph{Private Transaction Storage} were  tested for their expected behaviour. Tests also covered parts of \mpt which were not cluster dependent such as \emph{phase} transitions. Unit tests are not enough to check for correctness especially when testing distributed algorithms which are  exposed to network latencies, concurrency issues like deadlocks and other problems in the distributed environment. 
 
 \section{Cluster tests}
-Tests on real cluster of nodes were major part of all tests performed to validate \mpt correctness. I have conducted multiple experiments which covered all aspects of \mpt algorithm. 
+Tests on real cluster of nodes were major part of all tests performed to validate \mpt correctness. We conducted multiple experiments which covered all aspects of \mpt algorithm. 
 
 \subsection{Testing environment}
 Cluster tests were performed independently on two clusters with $3$ and $5$ nodes per cluster. Tests run on $5$ nodes yielded important results, because with $5$ nodes and $N=3$ there are at most $10$ replica groups. 

@@ -96,11 +96,11 @@ Locking, or other concurrency control mechanism can be used to guarantee that st
 
 
 \emph{Paxos round id}, used to find Paxos State data at each node locally, is a synthetic id and is different at each replica during \mpt round. 
-I put forward the claim that difference in id between replicas does not have negative effect, as long as conflicting transactions are put into same round. 
+We put forward the claim that difference in id between replicas does not have negative effect, as long as conflicting transactions are put into same round. 
 Providing same paxos round id would require another consensus algorithm of its own which would inherently increase cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
         
 \subsubsection{Making data consistent}
-Transaction’s data is kept in Private Transaction Storage \ref{sec:mpp:privateTxStorage}. Private writes by transaction use quorum semantics. I would like to present an example which argues why consistency checking is inevitable.
+Transaction’s data is kept in Private Transaction Storage \ref{sec:mpp:privateTxStorage}. Private writes by transaction use quorum semantics. We would like to present an example which argues why consistency checking is inevitable.
 
 
 Example of inconsistent private data
@@ -167,7 +167,7 @@ Each case is valid as long as others do not happen. If we allow 1) and later on 
 Without such restriction, replica would think it[k] has consistent data, but in reality is has missing second update.
 % TODO Replika nie mysli, unikac 
 
- I argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization could remain opt-in and configurable even per transaction, which could yield best performance for specific cases without restricting other kinds of transactions.
+ We argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization could remain opt-in and configurable even per transaction, which could yield best performance for specific cases without restricting other kinds of transactions.
        
 
 \subsection{Rollback phase}

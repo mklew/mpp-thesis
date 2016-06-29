@@ -1,10 +1,11 @@
 %!TEX root = thesis.tex
 \newpage
 \paragraph{Abstract} 
-Transactions in non-relational databases, are a rare feature, but a useful and desirable one if present, such as Light Weight Transactions (\lwt) in the Cassandra.
+Transactions in non-relational databases, are a rare feature, but a useful and desirable one if present, such as Light Weight Transactions (\lwt) in Cassandra.
 The problem with \lwt is lack of a multi partition operations, which limits the practical applications, and puts the burden of maintaining the data consistency in other ways on the users.
-The proposed multi-partition transactions algorithm removes the burden, supports transactions spanning many rows with read-committed isolation, and has a scalable design without a single point of failure.
-We have achieved this by using \paxos algorithm for the distributed consensus, private memtables for isolation, and other techniques, which reduce memory footprint, and increase scalability.
+The proposed multi-partition transactions algorithm supports transactions spanning many rows with read-committed isolation, and has a scalable design without a single point of failure.
+We achieved this by using \paxos algorithm for the distributed consensus, private memtables for isolation, and other techniques, which reduce memory footprint, and increase scalability.
+We implemented proof of concept in Cassandra, tested it in a cluster, and confirmed correctness of the algorithm.
 
 % Multiple-inheritance hierarchies are data structures of a high importance in the area of
 % the artificial intelligence. 

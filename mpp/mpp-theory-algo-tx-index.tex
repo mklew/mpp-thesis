@@ -10,7 +10,7 @@ Transaction Index has to guarantee that:
 \item transaction can register in index only if there is single paxos id which can be assigned to this transaction.
 \end{enumerate*}
 
-In this work, I put forward the claim that \emph{paxos round id} does not have to be globally assigned to same id, but only locally at each node. Therefore, at each node transaction can participate in paxos round with different id. However, at any node, transaction always participates in the same round as conflicting transactions.
+In this work, We put forward the claim that \emph{paxos round id} does not have to be globally assigned to same id, but only locally at each node. Therefore, at each node transaction can participate in paxos round with different id. However, at any node, transaction always participates in the same round as conflicting transactions.
 
 Transaction cannot be registered in index when locally it can obtain more than one paxos round id. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
 

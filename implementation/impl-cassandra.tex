@@ -5,7 +5,7 @@ In this section the discussion will point to implementation details of the algor
 
 
 \section{Proof of concept}
-Since formal proof of \emph{Mutli Partition Transactions} algorithm is out of scope for this work, the implementation of algorithm in the Cassandra database is done instead, as the proof of concept. 
+Since formal proof of \emph{Mutli Partition Transactions} algorithm is out of scope for this work, the implementation of algorithm in Cassandra database is done instead, as the proof of concept. 
 
 \section{Key assumptions}
 There are few assumptions as to implementation.
@@ -63,7 +63,7 @@ Keyspace and table name are always required. Type of a token is just \emph{long}
 
 
 \section{Extending CQL}
-Cassandra Query Language has been extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. I wanted to reuse as much of functionality as possible, but I had to modify syntax of: insert, update and delete statements. Fortunately all modification statements share same \emph{USING} clause, as in Listings \ref{lst:insertUsing},  \ref{lst:updateUsing} which can be used to represent modification in a transaction.
+Cassandra Query Language has been extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. We wanted to reuse as much of functionality as possible, thefore we modified syntax of: insert, update and delete statements. Fortunately all modification statements share same \emph{USING} clause, as in Listings \ref{lst:insertUsing},  \ref{lst:updateUsing} which can be extended to represent modification in a transaction.
 
 %\begin{example}
 %\label{ex:insertUsing}
@@ -139,7 +139,7 @@ Transactional read guarantees that it will read consistent data and finish any i
 Principles of implementation are similar to LWT, but details differ.
 
 
-Since we want to reuse MPP code we need to create a read-only transaction with single transaction item representing key which we want to select. For read transactions, MPP can start assuming all transactions are already in pre prepare phase. Since read transaction is represented by same Transaction State data structure, we need to convey information that it is indeed read-only transaction. Simple implementation could add another flag which would be worthless for all other use cases. I’ve decided to convey read-only information in the timestamp of transaction by creating a UUID from timestamp far in the future. This way, there is no need for modifications to Transaction State data structure. This special read-only transaction state is only used between cluster nodes so internal details are not visible to the client.
+Since we want to reuse MPP code we need to create a read-only transaction with single transaction item representing key which we want to select. For read transactions, MPP can start assuming all transactions are already in pre prepare phase. Since read transaction is represented by same Transaction State data structure, we need to convey information that it is indeed read-only transaction. Simple implementation could add another flag which would be worthless for all other use cases. We decided to convey read-only information in the timestamp of transaction by creating a UUID from timestamp far in the future. This way, there is no need for modifications to Transaction State data structure. This special read-only transaction state is only used between cluster nodes so internal details are not visible to the client.
 
 
 Transaction Index seeing read-only transaction will return paxos round id with first conflicting transaction it can find. There is no need to register read-only transaction anywhere, because it has to be invisible to other transactions.
@@ -215,7 +215,7 @@ Conflict functions \ref{sec:theory:conflictFunctions} are available with followi
 \section{Transaction Log}
 Transaction log is implemented using cassandra table local to each node. 
 Committed transactions are added to the table with flag \code{commited = true}. 
-% Since transaction log needs to preserve information about transaction after transaction is done it is better to keep it off memory. I’ve implemented it using cassandra table local to each node. 
+% Since transaction log needs to preserve information about transaction after transaction is done it is better to keep it off memory. We implemented it using cassandra table local to each node. 
 
 
 \section{Paxos State}
