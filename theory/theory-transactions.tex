@@ -101,6 +101,62 @@ Paxos is another algorithm to solve distributed consensus problem, originally pr
 Paxos was used, as the solution to the distributed consensus problem, as part of the larger systems in \cite{chandra2007PaxosMadeLive}, \cite{lampson1996build}, and more recently in the Google's Chubby service \cite{burrows2006chubby}, which is a lock service intended to provide coarse-grained locking, as well as reliable storage.
 
 Paxos has advantage over \emph{3PC}, since provides network partition tolerance.
+Figure \ref{fig:paxosBasic} shows complete paxos round and exchanged messages between coordinator and nodes.
+
+\begin{figure}
+  \centering
+
+  \begin{sequencediagram} 
+  	\newthread[blue]{c}{:Coordinator node} 
+  	\newinst{n1}{:Node 1}
+  	\newinst{n2}{:Node 2}
+  	\newinst{n3}{:Node 3}
+
+	\mess[1]{c}{prepare}{n1}
+	\prelevel
+	\mess[2]{c}{prepare}{n2}
+	\prelevel
+	\prelevel	
+	\mess[2]{c}{prepare}{n3}
+	
+	\mess[1]{n1}{promise}{c}
+	\prelevel
+	\mess[1]{n2}{promise}{c}
+	\prelevel
+	\mess[1]{n3}{promise}{c}
+
+
+	\mess[1]{c}{propose}{n1}
+	\prelevel
+	\mess[2]{c}{propose}{n2}
+	\prelevel
+	\prelevel
+	\mess[2]{c}{propose}{n3}
+
+	\mess[1]{n1}{accept}{c}
+	\prelevel
+	\mess[1]{n2}{accept}{c}
+	\prelevel
+	\mess[1]{n3}{accept}{c}
+
+	\mess[1]{c}{commit}{n1}
+	\prelevel
+	\mess[2]{c}{commit}{n2}
+	\prelevel
+	\prelevel
+	\mess[2]{c}{commit}{n3}
+	
+	\mess[1]{n1}{ack}{c}
+	\prelevel
+	\mess[1]{n2}{ack}{c}
+	\prelevel
+	\mess[1]{n3}{ack}{c}
+\end{sequencediagram}
+
+	
+  \caption{Paxos failure-free round}
+  \label{fig:paxosBasic}
+\end{figure}
 
 \paragraph{Paxos requirements}
 Paxos defines requirements and constraints that the protocol must operate within \cite{lamport2001paxosMadeSimple}. Some of them are: \begin{enumerate}
