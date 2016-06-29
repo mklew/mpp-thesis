@@ -7,41 +7,20 @@ The proposed multi-partition transactions algorithm supports transactions spanni
 We achieved this by using \paxos algorithm for the distributed consensus, private memtables for isolation, and other techniques, which reduce memory footprint, and increase scalability.
 We implemented proof of concept in Cassandra, tested it in a cluster, and confirmed correctness of the algorithm.
 
-% Multiple-inheritance hierarchies are data structures of a high importance in the area of
-% the artificial intelligence. 
-% The problem with them is lack of comprehensive and efficient methods of indexing, which
-% limits the practical applications.
-% The proposed hybrid indexing method can adapt to the particular topology of the data
-% structure being processed. 
-% We have achieved this by tuning the proportion between the member encoding methods to gain
-% compactness of the index and fast responses of the search requests.
-% Moreover, we have found that combining a few methods
-% together preserves and even improves the ability to encode the changes incrementally.
-
-% We have devised two member encoding methods: the first that bases on inheritance of some features and the second that
-% bases on numbering schemes. The correctness of the developed solutions has been proved and their performance has been
-% evaluated in the testing environment. The results show the characteristics of the hybrid index and prove its
-% efficiency.
-
-\paragraph{Keywords:} indexing transitive relations, multiple-inheritance hierarchy, reachability testing
+\paragraph{Keywords:} paxos, distributed transactions, cassandra, multi-partition transactions
 
 \begin{center}
-\vspace*{\baselineskip}
-    \fontseries{b}\fontsize{15pt}{18pt}\selectfont
+%\vspace*{\baselineskip}
+    \fontseries{b}\fontsize{12pt}{14pt}\selectfont
       Transakcje dla wielu partycji w Cassandrze  \\
 \end{center}
-\paragraph{Streszczenie} Hierarchie dziedziczenia wielokrotnego są strukturami danych o szczególnym znaczeniu w
-obszarze zastosowań sztucznej inteligencji. Problemem, który ogranicza ich wykorzystanie w praktyce jest brak
-uniwersalnej i efektywnej metody ich indeksowania. Zaproponowana hybrydowa metoda indeksowania dostosowuje się do
-topologii przetwarzanej struktury danych. Osiągnięto to po przez dostrajanie proporcji pomiędzy składowymi metodami
-kodowania, tak aby indeks był kompaktowy i oferował szybki dostęp do danych. Ponadto, połączenie komplementarnych metod
-kodowania nie powoduje utraty zdolności do kodowania inkrementalnego, a nawet ją wspomaga.
+\paragraph{Streszczenie} 
+Transakcje w nie relacyjnych bazach danych występują rzadko, ale są przydatne i porządne przykładem czego są \emph{Lekkie transakcje} (\lwt) w Cassandrze.
+Problem w \lwt to brak wsparcia operacji dla wielu partycji, który ograniczna praktyczne zastosowania i przenosi odpowiedzialność za dbanie o spójność danych na końcowych użytkowników.
+Proponowany algorytm wspiera operacje dla wielu partycji zapewniając izolację na poziomie \emph{read-committed} jak również skalowalność systemu oraz brak pojedynczego punktu awarii.
+Osiągneliśmy te właściwości używając algorytmu Paxos do rozproszonego konsensusu, prywatnych tabel dla izolacji i innych metod, które obniżają zużycie pamięci i zwiększają skalowalność.
+Zaimplementowaliśmy algorytm w Cassandrze, przetestowaliśmy go w klastrze i potwierdziliśmy jego poprawność.
 
-% W ramach pracy stworzone zostały dwie składowe metody kodowania: jedna bazująca na dziedziczeniu cech, druga bazująca na
-% schematach numerowania. Poprawność opracowanych rozwiązań została udowodniona, a wydajność sprawdzona w środowisku
-% testowym. Wyniki obrazują charakterystykę hybrydowej metody indeksowania i dowodzą jej efektywności.
-
-\paragraph{Słowa kluczowe:} indeksowanie relacji przechodnich, hierarchia dziedziczenia wielokrotnego, sprawdzanie
-istnienia ścieżki w grafie
+\paragraph{Słowa kluczowe:} paxos, rozproszone transakcje, cassandra, transakcje dla wielu partycji
 
 \pagenumbering{gobble}
