@@ -1,17 +1,17 @@
 %!TEX root = ../thesis.tex
 
 \section{Multiple partitions}\label{sec:mpp:requirements}
-TODO Note: tytul zmieniony z The requirements na Multiple partitions
+%TODO Note: tytul zmieniony z The requirements na Multiple partitions
 % TODO rozwinąć wymagania na algorytm, wykrywanie instacji. Z tego przejść do wymagań Paxosa. Następnien pisać na jakich wymaganiach trzeba się skupić, bo one nie będą proste do spełnienia.
 
 
 % TODO wspomnieć o tym, że LWT używa wielu instacji paxosa które ze sobą nie kolidują bo dotyczą różnych partycji, a u mnie jest inaczej ponieważ transakcja może dotyczyć wiele partycji i dodatkowo mogą się pokrywać.
 % TODO w LWT żeby poznać instacje paxosa  wystarczy klucz partycji.
 % TODO MPP jest to problem bo jest wiele partycji
-\lwt supports many instances of paxos protocol at any given time, which do not collide with each other, unless same partition keys are considered, but \lwt for different keys does not overlap nor stall other \lwt transaction.
-\mpt supports many instances as well, but an instance of \mpt might overlap with different instance of \mpt, in which case such instances are considered conflicting. 
+\lwt supports many instances of paxos protocol at any given time, which do not interfere with each other, unless same partition keys are considered. \lwt instances for different keys do not overlap nor stall each other.
+\mpt supports many instances as well, but a single instance of \mpt might overlap with different instance of \mpt, in which case such instances are considered conflicting. 
 
-\lwt identifies \emph{paxos round} by a partition key. The key difference to \lwt is that \mpt instance relates to many keys, thus instance of \mpt cannot be identified by the partition key, as is the case in \lwt. Identification of the paxos round in \mpt becomes troublesome, since it is not obvious how to relate many different keys to single paxos round id. \label{sec:mpp:requirements:identifyRound}
+\lwt identifies \emph{paxos round} by a partition key. The key difference to \lwt is that \mpt instance relates to many keys, thus instance of \mpt cannot be identified by the partition key. Identification of the paxos round in \mpt becomes troublesome, since it is not obvious how to relate many different keys to single paxos round id. \label{sec:mpp:requirements:identifyRound}
 
  %\mpt has to run many instances of paxos protocol as well. Thus \mpt needs to have ability to identify \emph{paxos round} at node given proposed \emph{value}.  \mpt is a multi-partition protocol, therefore identification of \emph{paxos round} poses a problem and a requirement. 
 
@@ -27,8 +27,8 @@ TODO Note: tytul zmieniony z The requirements na Multiple partitions
 % TODO tak samo napisac skad te wymagania sie wziely
 
 
-\subsubsection{Compared to LWT}
-TODO 09/06/2016 mysle, ze to mozna nazwac The data isolation i przeniesc lub zlaczyc z section o isolation \\
+%\subsubsection{Compared to LWT}
+%TODO 09/06/2016 mysle, ze to mozna nazwac The data isolation i przeniesc lub zlaczyc z section o isolation \\
 \lwt is for single partition, therefore it is a single operation. As such, operation itself is a \emph{transaction} that begins, performs and possibly commits. Data for \lwt transaction is passed within operation itself, therefore data does not have to be stored anywhere for the duration of the transaction. It exists in memory as the \lwt executes.
 \mpt supports many operations within transaction. Therefore operations with data have to be stored for the duration of transaction. Storage has to be private for the transaction, because of isolation requirement.
 
@@ -37,7 +37,7 @@ TODO 09/06/2016 mysle, ze to mozna nazwac The data isolation i przeniesc lub zla
 %Transactions should have following functionality:
 
 %TODO napisac czym sie roznica od LWT - dodatki do prywatne dane - to juz opisalem w The advantage \\
-TODO napisac czym sa memtable - tylko pytanie gdzie to napisac, to moze byc opisane w innej sekcji \\
+%TODO napisac czym sa memtable - tylko pytanie gdzie to napisac, to moze byc opisane w innej sekcji \\
 
 
 %1. Run in isolation from other transactions - transactions - their state and data - should be isolated from each other. One transaction cannot see other’s data.
@@ -55,7 +55,3 @@ TODO napisac czym sa memtable - tylko pytanie gdzie to napisac, to moze byc opis
 %All of requirements above were addressed in algorithm. There is an solution to each requirement in next sections followed by summary of whole algorithm.
 
 
-TODO jakiś diagram który pokazuje o co chodzi, po co to jest np. Diagram z nodes i transakcjami.
-
-\subsubsection{Compared to transactions supported in RDBMS}
-TODO 09/06/2016 mysle ze to jest do wywalenia

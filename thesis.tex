@@ -96,7 +96,32 @@ framerule=0.1pt,
 \newcommand{\mpt}{\emph{MPT}\xspace}
 \newcommand{\lwt}{\emph{LWT}\xspace}
 \newcommand{\RF}[1]{\emph{RF=$#1$}\xspace}
+
+\newcommand{\ballot}{$\beta$\xspace}
+\newcommand{\coordinator}{$C$\xspace}
+\newcommand{\paxosValue}{$v$\xspace}
+
+\newcommand{\client}{$c$\xspace}
+
+\newcommand{\transaction}{$t$\xspace}
+\newcommand{\tx}[1]{$t_{#1}$\xspace}
+
+\newcommand{\node}[1]{$n_{#1}$\xspace}
+\newcommand{\nodes}{$N$\xspace}
 \newcommand{\N}[1]{$N=#1$\xspace}
+\newcommand{\mptrequest}[2]{$r_{#1\mapsto#2}$\xspace}
+
+\newcommand{\clientReq}[1]{$r_{c\mapsto n_{#1}}$\xspace}
+\newcommand{\nodeReqResponse}[1]{$rp_{n_{#1}\mapsto c}$\xspace}
+\newcommand{\nodeMessage}[2]{$m_{n_{#1} \mapsto n_{#2}}$\xspace}
+
+\newcommand{\key}{$k$}
+\newcommand{\keyi}[1]{$k_{#1}$\xspace}
+\newcommand{\kvalue}{$v$\xspace}
+\newcommand{\kvaluei}[1]{$v_{#1}$\xspace}
+\newcommand{\kv}{$(k, v)$\xspace}
+\newcommand{\kvi}[2]{$(k_{#1}, v_{#2})$\xspace}
+\newcommand{\mutation}[2]{$\Delta(#1, #2)$\xspace}
 
 \newcounter{ExampleCount}
 \setcounter{ExampleCount}{0}
@@ -165,7 +190,7 @@ framerule=0.1pt,
 
 \input{theory/theory.tex}
 
-%\input{mpp/mpp.tex}
+\input{mpp/mpp.tex}
 
 %\input{implementation/impl-cassandra.tex}
 

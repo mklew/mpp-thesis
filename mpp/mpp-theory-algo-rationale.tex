@@ -2,20 +2,9 @@
 
 \section{The rationale}
 The \mpt algorithm is designed for distributed databases with token ring architecture,
-which uses \emph{keys} to lookup replicated data in the cluster. However, there are no strict restrictions, thus the algorithm potentially supports any distributed database, its key features are: \begin{enumerate*}
+which uses \emph{keys} to lookup replicated data in the cluster. Its key features are: \begin{enumerate*}
 \item supports multi-partition operations,
 \item supports transactions with read-committed isolation level,
 \item supports transactions that are atomic and durable,
 \item is resilient to network partitions. In terms of \emph{CAP} \cite{Brewer:2012ba} it uses \emph{AP}.
 \end{enumerate*}
-% Nie piszę o eventuall consistency, bo to Cassandra jest eventual consistent, a sam algorytm nie ma do tego środków oprócz tego, że bazuje na Quorums więc jest na pewno AP.
-%\item is eventually consistent \ref{sec:theory:eventualConsistency}, since sacrafices .
-
-
-%MPPaxos provides serializable transactions that span multiple tokens on token ring. Provides transactions which are isolated from each other. Transactions that are atomic and durable.
-%Consistency is eventual for all nodes, but reads are always consistent as long as quorum of nodes is considered. This is the same as in LWT.
-
-% Algorithm’s rationale (theoretical part) - TODO, wstępny akapit przenieść do motywacji
-
-
-

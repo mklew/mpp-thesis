@@ -1,0 +1,46 @@
+%!TEX root = ../thesis.tex
+
+\section{The outline}
+Client, denoted as $c$ is an actor, which communicates to a cluster of nodes; \nodes expresses number of nodes and \node{i} refers to a node, where $i \in [1,N]$. \client begins a transaction \transaction by sending a request to any node in a cluster \clientReq{i} and receives response \nodeReqResponse{i}, which includes 
+initial \emph{transaction state}, which reflects all changes done in \transaction and is defined as \emph{transaction id} and set of \emph{transaction items}. Transaction id identifies the transaction and is attached to all subsequent requests. 
+
+%Transaction id identifies the transaction and is attached to all subsequent requests. Transaction item is a reference to operations done in \transaction.
+
+Client \client performs two types of operations during \transaction: \emph{mutations}, as in Definition \ref{def:mutation} and select statements of \kv. All \mutation{k}{v}  performed by \client are isolated from other clients and are private to \transaction until \transaction is committed. Mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}, for the duration of the transaction, whereas read operations query against current state of the database, thus transactions provide read-committed isolation level.
+
+After each \clientReq{i} with a \mutation{k}{v} \client receives a response \nodeReqResponse{i}, which includes a transaction item referencing the \mutation{k}{v}. Client is responsible for tracing changes performed in \transaction, thus \client has to append all received transaction items to the initial transaction state.
+
+When \client finishes its planned operations \transaction can be either committed or rolled back. To perform rollback \client performs \clientReq{i} including transaction state, and then \node{i} sends out rollback messages to other nodes \nodeMessage{i}{j,k,l,...}, identified using transaction items, which remove private data from their private transaction storage and mark \transaction as rolled back in \emph{transaction log}, which is a local data structure.
+
+In order to commit \transaction \client performs \clientReq{i} with transaction state attached, and subsequently \node{i} becomes the coordinator of the transaction and is responsible for orchestrating distributed consensus among nodes affected by \transaction referenced by transaction items. When consensus is reached each node moves private data of \transaction from private transaction storage to the main storage and marks \transaction, as committed in transaction log. Client receives response \nodeReqResponse{i} about successfully committed transaction.
+
+There are many concurrent transactions and some of them mutate same keys, thus concurrency control is required which gurantees that interfering transactions are not committed at the same time. Commit procedure solves this problem by grouping such transactions and performing distributed consensus round, which selects single transaction that is committed, whereas the rest is rolled back.
+Commit procedure uses another local data structure \emph{transaction index}, which is responsible for identifing interfering transactions and grouping them into same consenus rounds.
+
+\begin{definition}
+  \label{def:mutation}
+  \emph{Mutation} denoted as \mutation{k}{v} is an operation, such as insert, update or removal of one or more key value pairs \kv.
+\end{definition}
+
+
+\subsection{Brudnopis z oznaczeniami}
+
+Client request \clientReq{2}
+
+Node response \nodeReqResponse{2}
+
+Node message \nodeMessage{1}{2}
+
+Node response message \nodeMessage{2}{1}
+
+Key \key
+
+Key i \keyi{2}
+
+value \kvalue
+
+value i \kvaluei{3}
+
+key value \kv
+
+Mutation \mutation{k}{v}
