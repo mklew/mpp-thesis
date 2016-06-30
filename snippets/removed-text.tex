@@ -1,0 +1,17 @@
+% Porównanie wielkości tokenów na JVM.
+In case of \emph{JVM} tokens are of type \emph{long} which occupies 8 bytes of memory. Keys are not restricted by any type, thus for example a key can be a 100 character long string which requires around $232$ bytes\footnote{exact size depends on \emph{JVM} options used}. Size of the key is then 29 times size of a token. Complex keys can have even bigger size.
+
+% listing z transaction state
+\begin{lstlisting}[language=Java,style=outcode,label={lst:txState},caption={Transaction State data structure}]
+class TransactionState
+{
+    UUID id
+    Collection<TransactionItem> transactionItems    
+}
+
+class TransactionItem
+{
+    String tableName
+    Token token
+}
+\end{lstlisting}

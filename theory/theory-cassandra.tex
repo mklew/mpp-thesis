@@ -36,10 +36,39 @@ Inter-node communication depends on \emph{gossip} protocol, which is a scalable,
 	\label{fig:archCluster}
 \end{figure}
 
+\subsubsection{Token ring}
+Cassandra's cluster consists of nodes placed on the token ring. Figure \ref{fig:replicationRing} presents cluster with \N{4}, where each node is associated with \emph{token range}, which is part of the token ring. 
+
+Partitioning in Cassandra is implemented by assigning tokens, denoted as $tk$, which are numbers computed by a some  function (usually hash function), to keys and storing the data in node for which token is in its token range. 
+
 \subsection{Replication}
 Cassandra supports configurable \emph{replication factor} \ref{def:replicationFactor} defined per \emph{keyspace} \ref{sec:theory:cassandra:datamodel}. Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
 Each node is the \emph{primary replica} for the token range placed counter clock-wise to it, thus node $1$ is the primary replica for range $75-0$, node $2$ for $1-25$, node $3$ for $26-50$, and node $4$ for $51-75$. 
-Token value $91$ belongs to the node $1$, and since $N=3$, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $2$ and node $3$, which are \emph{secondary replicas} of the token. 
+Token value $91$ belongs to the node $1$, and since \RF{3}, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $2$ and node $3$, which are \emph{secondary replicas} of the token. Tokens define the units of replication -- the smallest segments of the data that can be replicated. 
+
+We analyzed replication of a token $91$ using topology of the cluster, which is defined in Definition \ref{def:topology}. If we used topology function (Definition \ref{def:topologyFunction}) and assumed that $H(k) \mapsto 91$, then \topology{\node{1}, \node{2}, \node{3}}.
+
+\begin{definition}
+  \label{def:topology}
+  \emph{Topology} denoted as $T$ 
+  is the information about assignment of token ranges to nodes, as well as which nodes replicate particular token range. Given $T$ and a token, replicas of a token can be identified.
+  $T$ is known by any node in the cluster.  
+\end{definition}
+
+\begin{definition}
+  \label{def:topologyFunction}
+  \emph{Topology function} $\tau(T, H, k) \mapsto \{ \text{\node{i}, ..., \node{j} } \}$  takes three parameters: $T$ -- topology, $H$ mapping function from keys to tokens, key \key and produces set of nodes which are replicas of \key.   
+
+  An alternative notation to topology function skips token mapping function $H$ and uses tokens instead
+  \topologyTk{\node{i}, ..., \node{j}} 
+  
+  % \topology{\node{i}, ..., \node{j}}
+\end{definition}
+
+%Tokens define the units of replication, since \kv associated with a token is replicated on other nodes, which are responsible for parts of token range.
+
+%Given topology replicas of particular key can be identified by computing token from a key and then using topology it is known which nodes are assigned to a token range that includes the token. As a consequence, any node in the cluster can point to replicas of particular key or its token.
+
 
 % źródło https://pandaforme.gitbooks.io/introduction-to-cassandra/content/understand_replication.html
 % prawdziwe źródło to prawdopodobnie kurs z DataStax, ale nie mogę tego znaleźć.

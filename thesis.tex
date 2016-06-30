@@ -95,7 +95,7 @@ framerule=0.1pt,
 \newcommand{\paxos}{\emph{Paxos}\xspace}
 \newcommand{\mpt}{\emph{MPT}\xspace}
 \newcommand{\lwt}{\emph{LWT}\xspace}
-\newcommand{\RF}[1]{\emph{RF=$#1$}\xspace}
+\newcommand{\RF}[1]{\emph{$RF=#1$}\xspace}
 
 \newcommand{\ballot}{$\beta$\xspace}
 \newcommand{\coordinator}{$C$\xspace}
@@ -115,13 +115,21 @@ framerule=0.1pt,
 \newcommand{\nodeReqResponse}[1]{$rp_{n_{#1}\mapsto c}$\xspace}
 \newcommand{\nodeMessage}[2]{$m_{n_{#1} \mapsto n_{#2}}$\xspace}
 
-\newcommand{\key}{$k$}
+\newcommand{\key}{$k$\xspace}
 \newcommand{\keyi}[1]{$k_{#1}$\xspace}
 \newcommand{\kvalue}{$v$\xspace}
 \newcommand{\kvaluei}[1]{$v_{#1}$\xspace}
 \newcommand{\kv}{$(k, v)$\xspace}
 \newcommand{\kvi}[2]{$(k_{#1}, v_{#2})$\xspace}
-\newcommand{\mutation}[2]{$\Delta(#1, #2)$\xspace}
+\newcommand{\mutation}[2]{$\delta(#1, #2)$\xspace}
+\newcommand{\mutations}{$\Delta(t)$\xspace}
+\newcommand{\mutationsi}[1]{$\Delta(t_{#1})$\xspace}
+\newcommand{\txItem}{$ti$\xspace}
+\newcommand{\txItemi}[1]{$ti_{#1}$\xspace}
+
+\newcommand{\topology}[1]{$\tau(T, H, k) \mapsto \{ \text{#1} \}$}
+\newcommand{\topologyTk}[1]{$\tau(T, tk) \mapsto \{\text{ #1 }\}$}
+
 
 \newcounter{ExampleCount}
 \setcounter{ExampleCount}{0}

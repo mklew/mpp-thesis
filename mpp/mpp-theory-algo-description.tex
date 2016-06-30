@@ -44,7 +44,7 @@ One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transi
 \label{sec:mpp:replicaGroups}
 \mpt is designed for operations on many partitions, therefore there are many replica groups. \lwt supports single key, thus it communicates with single replica group, whereas \mpt supports many keys, therefore it communicates with many replica groups, which can overlap, due to the fact that a node is a replica for many different keys. 
 
-Let us consider an example of transaction affecting different replica groups. Let us assume $N=3$ and transaction for keys: $k1$, $k2$, $k3$, $k4$.
+Let us consider an example of transaction affecting different replica groups. Let us assume \RF{3} and transaction for keys: $k1$, $k2$, $k3$, $k4$.
 Key $k1$ belongs to replica group $n1$, $n2$, $n3$.
 Key $k2$ belongs to replica group $n2$, $n3$, $n4$.
 Key $k3$ belongs to replica group $n1$, $n5$, $n7$.
@@ -104,7 +104,7 @@ Transaction’s data is kept in Private Transaction Storage \ref{sec:mpp:private
 
 
 Example of inconsistent private data
-For sake of argument, assume N=3 and two modifications of different keys which point to same replica set.
+For sake of argument, assume \RF{3} and two modifications of different keys which point to same replica set.
 
 
 1. Modification of K1 is sent to replicas.
