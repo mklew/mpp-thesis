@@ -1,7 +1,20 @@
 %!TEX root = ../thesis.tex
 
+\section{The algebra}
+Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$. Node is defined, as $n_{i}\in\mathit{N}$ where $\mathit{N}$. Client of a cluster is an actor, which communicates to a cluster, denoted by $c_{i}\in\mathit{C}$. Changes to data are represented by \emph{mutations}, where mutation is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$.
+A set of mutations is a transaction denoted, as $\Theta(\delta_{1}, \delta_{2}, ...)$. Topology is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N^{RF}}$ which given $k$ returns set of replica nodes. 
+
+\emph{Transaction state} is defined by $\Lambda(\lambda_{i}, \lambda_{j}, ...)$ where $\lambda_{i}$ is \emph{transaction item}, which is equivalent\footnote{transaction item is redefined in Chapter 4} of a key $k$.
+
 \section{The outline}
-Client, denoted as $c$ is an actor, which communicates to a cluster of nodes; \nodes expresses number of nodes and \node{i} refers to a node, where $i \in [1,N]$. \client begins a transaction \transaction by sending a request to any node in a cluster \clientReq{i} and receives response \nodeReqResponse{i}, which includes 
+Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$ in which a node is defined, as $n_{i}\in\mathit{N}$.
+Changes to data are represented by \emph{mutations}, where mutation is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$. Transaction is set of mutations denoted, as $\Delta(\delta_{1}, \delta_{2}, ...)$.
+
+Client denoted, as $c_{i}\in\mathit{C}$ is an actor, which performs transactions $\Delta_{1}, \Delta_{2}, ...$ and communicates to \nodes via messages $\mathit{M}$ (Definition \ref{def:message}).
+
+%\nodes expresses number of nodes and \node{i} refers to a node, where $i \in [1,N]$.
+
+ \client begins a transaction \transaction by sending a request to any node in a cluster \clientReq{i} and receives response \nodeReqResponse{i}, which includes 
 initial \emph{transaction state}, which reflects all changes done in \transaction and is defined as \emph{transaction id} and set of \emph{transaction items}. Transaction id identifies the transaction and is attached to all subsequent requests. 
 
 %Transaction id identifies the transaction and is attached to all subsequent requests. Transaction item is a reference to operations done in \transaction.
@@ -22,6 +35,28 @@ Commit procedure uses another local data structure \emph{transaction index}, whi
   \emph{Mutation} denoted as \mutation{k}{v} is an operation, such as insert, update or removal of one or more key value pairs \kv.
 \end{definition}
 
+\begin{definition}
+	\label{def:message}
+	\emph{Message} is defined by $\mathit{M}(n_{i}, n_{j}, \psi)$ where $n_{i}\in\mathit{N}\cup\mathit{C}, n_{j}\in\mathit{N}\cup\mathit{C},\{n_{i}, n_{j}\}\cap\mathit{N}\neq\emptyset$.
+	$n_{i}$ is sender of a message, $n_{j}$ is recipient of a message, $\psi$ is a payload, which is one of following: \\	
+	$\mathit{begin\_transaction}()$ -- begins transaction \transaction \\
+	$\mathit{initial\_transaction\_state(\sigma)}$ -- message in response to $\mathit{begin\_transaction}$ message where $\sigma$ is initial \emph{transaction state} (Definition \ref{def:transactionState}) \\
+	$\mathit{select(k)}$ -- is a selection of the value corresponding to $k$ \\
+	$\mathit{data(k,v)}$ -- is a message in response to $\mathit(select(k)$, where $v\in\mathit{V}$ \\
+	$\mathit{insert(k,v)}$ -- is an insert of key-value pair \\
+	$\mathit{update(k,v)}$ -- is an update of key-value pair \\
+	$\mathit{delete{k}}$ -- is a delete of value associated with key \\
+	$\mathit{transaction\_commit(\Lambda)}$ -- is a commit of a \transaction, where $\Lambda$ is final transaction state \\
+	$\mathit{setup(\Lambda)}$ -- inititates \emph{setup phase} of \mpt algorithm \\
+	$\mathit{prepare(\Lambda, \beta)}$ -- initates \emph{prepare phase} of \mpt algorithm; $\Lambda$ is final transaction state, $\beta$ is \paxos ballot \\
+	$\mathit{promise(promised, log, inProgress_{\Lambda})}$ -- is a response to $\mathit{prepare}$ message, where $\mathit{promised}$ is a boolean, $\mathit{log}$ is state of \emph{transaction log} \ref{sec:mpp:transactionLog}, $\mathit{inProgress_{\Lambda}}$ is accepted but not yet committed transaction state \\
+	$\mathit{propose(\Lambda, \beta)}$ -- initates \emph{propose phase} of \mpt algorithm
+	$\mathit{propose\_response(accepted, log)}$ -- is a response to $\mathit{propose}$, where $\mathit{accepted}$ is boolean, $\mathit{log}$ is state of transaction log \\
+	$\mathit{commit(\Lambda)}$ -- initates \emph{commit phase} of \mpt algorithm, where $\Lambda$ is transaction state \\
+	$\mathit{commit_ack()}$ -- is an acknowledge of $\mathit{commit}$ message \\
+	$\mathit{update\_transaction\_state(\lambda)}$ -- is a message in response to $\mathit{insert, update, delete}$ messages where $\lambda$ is transaction item (Definition \ref{def:transactionItem}) 
+\end{definition}
+
 
 \subsection{Brudnopis z oznaczeniami}
 
@@ -30,16 +65,12 @@ Node denoted as $n_i$ where $i \in $
 
 Nowe oznaczenia:
 
-Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$. Node is defined, as $n_{i}\in\mathit{N}$ where $\mathit{N}$. Client of a cluster is denoted by $c_{i}\in\mathit{C}$. Changes to data are represented by \emph{mutations}, where mutation is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$.
-A set of mutations is a transaction denoted, as $\Theta(\delta_{1}, \delta_{2}, ...)$. Topology is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N^{RF}}$ which given $k$ returns set of replica nodes. 
-
-\emph{Transaction state} is defined by $\Lambda(\lambda_{i}, \lambda_{j}, ...)$ where $\lambda_{i}$ is \emph{transaction item}, which is equivalent\footnote{transaction item is redefined in Chapter 4} of a key $k$.
-
+$\sigma$ transaction state
 
 Clients and nodes communicate by messages, where message is defined, as $\mathit{M}(n_{i}, n_{j}, \psi)$ where 
 $n_{i}\in\mathit{N}\cup\mathit{C}, n_{j}\in\mathit{N}\cup\mathit{C},\{n_{i}, n_{j}\}\cap\mathit{N}\neq\emptyset$ and $\psi$ is a payload, which is one of following:
 - $\mathit{begin\_transaction}()$
-- $\mathit{begin\_transaction_response}(\lambda)$
+- $\mathit{begin\_transaction_response}(\sigma)$
 - begin transaction response(ts)
 - insert(k,v)
 - insert response()
