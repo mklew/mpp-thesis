@@ -6,7 +6,7 @@ initial \emph{transaction state}, which reflects all changes done in \transactio
 
 %Transaction id identifies the transaction and is attached to all subsequent requests. Transaction item is a reference to operations done in \transaction.
 
-Client \client performs two types of operations during \transaction: \emph{mutations}, as in Definition \ref{def:mutation} and select statements of \kv. All \mutation{k}{v}  performed by \client are isolated from other clients and are private to \transaction until \transaction is committed. Mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}, for the duration of the transaction, whereas read operations query against current state of the database, thus transactions provide read-committed isolation level.
+Client \client performs two types of operations during \transaction: \emph{mutations} \mutations, as in Definition \ref{def:mutation} and select statements of \kv. All \mutation{k}{v}  performed by \client are isolated from other clients and are private to \transaction until \transaction is committed. Mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}, for the duration of the transaction, whereas read operations query against current state of the database, thus transactions provide read-committed isolation level.
 
 After each \clientReq{i} with a \mutation{k}{v} \client receives a response \nodeReqResponse{i}, which includes a transaction item referencing the \mutation{k}{v}. Client is responsible for tracing changes performed in \transaction, thus \client has to append all received transaction items to the initial transaction state.
 
@@ -24,6 +24,33 @@ Commit procedure uses another local data structure \emph{transaction index}, whi
 
 
 \subsection{Brudnopis z oznaczeniami}
+
+Node denoted as $n_i$ where $i \in $
+
+
+Nowe oznaczenia:
+
+Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$. Node is defined, as $n_{i}\in\mathit{N}$ where $\mathit{N}$. Client of a cluster is denoted by $c_{i}\in\mathit{C}$. Changes to data are represented by \emph{mutations}, where mutation is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$.
+A set of mutations is a transaction denoted, as $\Theta(\delta_{1}, \delta_{2}, ...)$. Topology is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N^{RF}}$ which given $k$ returns set of replica nodes. 
+
+\emph{Transaction state} is defined by $\Lambda(\lambda_{i}, \lambda_{j}, ...)$ where $\lambda_{i}$ is \emph{transaction item}, which is equivalent\footnote{transaction item is redefined in Chapter 4} of a key $k$.
+
+
+Clients and nodes communicate by messages, where message is defined, as $\mathit{M}(n_{i}, n_{j}, \psi)$ where 
+$n_{i}\in\mathit{N}\cup\mathit{C}, n_{j}\in\mathit{N}\cup\mathit{C},\{n_{i}, n_{j}\}\cap\mathit{N}\neq\emptyset$ and $\psi$ is a payload, which is one of following:
+- $\mathit{begin\_transaction}()$
+- $\mathit{begin\_transaction_response}(\lambda)$
+- begin transaction response(ts)
+- insert(k,v)
+- insert response()
+- update(k,v)
+- delete(k)
+- commit(ts)
+- setup(ts)
+- prepare(ts, b)
+- propose(ts, b)
+- commit(ts)
+
 
 Client request \clientReq{2}
 
@@ -44,3 +71,55 @@ value i \kvaluei{3}
 key value \kv
 
 Mutation \mutation{k}{v}
+
+TODO poprawa oznaczen
+Transakcja to zbiór mutacji (male delty)
+
+3 rozdział brak tokenów, brak tabeli
+
+tokeny i tabele dopiero w implementacji.  - rozdzial 4
+
+Rozdzial 3 najbardziej ogólnie, nic o Cassandrze.
+
+Rozdział 4 jak to zostało zaimplementowane dla Cassandry.
+
+Zamiast request response zdefiniować message który dzieli się na typy.
+message ma źródło, cel, payload. Payloady to rozne typy
+
+Funkcja noda to f: M -> M 
+czyli funkcja ktora przeklsztalca message w message. 
+Dzialanie noda jest zdefiniowane przez funkcje jaks tam bo zawsze masz request response.
+f: (S, M) -> (S, M)
+gdzie S to stan noda.
+
+2.3.2 uprościć o CAP
+
+2.2
+Poprzec literaturą stwierdzenia, że RDMBS ma ACID, a NoSql nie ma.
+
+Przedstawiać bazy relacyjne i bazy nierelacyjne
+Bazy rozproszone i bazy nierozproszone.
+
+Nie mówić o bazach relacyjnych i bazach rozproszonych
+
+Paxos
+Coordinator node Propser
+Node 1,2,3 Acceptor
+
+Figure 2.3 Paxos pokazać przypadek z drugim proposerem.
+
+2PC, 3PC, Paxos przedstawiane z różnej perspektywy.
+Porównać w każdym przypadku odporność na awarie.
+
+Wyodrębnić zbiór aspektów który będę porównywał. 
+Akapit per aspekt tak żebym móc porównać jeden z drugim.
+
+Cechy specyficzne w pierwszym akapicie.
+
+1 Co to jest, cechy specyficzne
+2. akaip to ogólny Opis
+3. Aspekt 1
+4. Aspekt 2
+5. Aspekt 3
+
+
