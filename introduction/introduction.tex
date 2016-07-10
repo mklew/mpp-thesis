@@ -3,37 +3,33 @@
 \chapter{Introduction}\label{chapter:introduction}
 
 \section{Preface}\label{sec:introduction:preface}
-The subject of the thesis is multi-partition transactions in Cassandra. 
-The goal of the thesis is to design, implement, test, verify and analyze results of the new algorithm, which supports such transactions. The primary requirement for the algorithm is scalability and lack of single point of failure. This paper presents description of the algorithm, its implementation in Cassandra, and analysis of the results. Moreover, the paper includes concepts used in distributed databases, different algorithms to implement relational and distributed transactions, related work, and detailed description of Cassandra.
-
-\section{Motivation}\label{sec:introduction:motivation}
 \emph{Big Data} is the term used for describing sets of frequently changing and increasing volumes of data, which do not fit in a single machine. There are many sources of Big Data, such as system logs, user website clicks, financial transactions, weather measurements, data from Internet of Things, and many others. 
 
-NoSql databases were created to support Big Data and provide means to analyze it. The databases differ in a ways they represent the data, but the key principle stays the same: ingest the data for future analysis.
+NoSql databases were created to support Big Data and provide means to analyze it. Databases differ in a ways they represent the data, but the key principle stays the same: store the data for future analysis.
 
 NoSql databases span over hundreds, even thousands servers located in different data centers placed around the world connected with internet cable. Number of servers and unreliable network connection presents a problem -- hardware and network failures.
 NoSql databases are designed to work under presence of such failures, but it comes with a cost.
 
+\section{Motivation}\label{sec:introduction:motivation}
+
+
 Properties of relational databases, such as ACID compliant transactions were sacrificed for availability, scalability and fault tolerance. Multi-partition transactions facilitate the work of developers, since they provide clear reasoning about sets of modifications to the data. These transactions do not exist in Cassandra, but also other NoSql databases lack proper transactions support.
-Our motivation is to bring clear reasoning about the data changes back, and in order to achieve this the new algorithm was created.
+Our motivation is to deliver clear reasoning about the data changes, and in order to achieve this the new algorithm was created.
 
 % TODO czemu transakcje są potrzebne
 %Transactions are important for performing operations on different entities and ensuring consistency among them, as well as for other reasons. They simplify making changes to the model, and provide guarantees on top of which applications are built. Without transactions, all guarantees disappear, and suddenly developers have to take care of things which were taken for granted.
 
 \subsection{Current state of transactions in Cassandra}	
-Although distributed nature and availability guarantees in Cassandra make it impossible to implement full ACID transactions, it supports Lightweight Transactions (\lwt).
+Cassandra is a distributed database with availability guarantees, which makes it impossible to implement full ACID transactions, however it supports Lightweight Transactions (\lwt).
 
-Listing \ref{lst:intro:lwtInsert} presents an \lwt, which inserts some user called \emph{John} only if it is not already present in the database. \lwt  guarantees that if another client inserts another user to the same row at the same time, then only one operation will succeed. In other words, \lwt ensures that steps of a single operation\footnote{(1) checking if row exists, (2) applying an update} are not interleaved with steps of another operation against the same row, when both operations are running around the same time. Therefore \emph{John} is inserted only once, by one or the other transaction.
+Listing \ref{lst:intro:lwtInsert} presents \lwt, which inserts some user called \emph{John} only if it is not already present in the database. \lwt  guarantees that if another client inserts another user to the same row at the same time, then only one operation will succeed. In other words, \lwt ensures that steps of a single operation\footnote{(1) checking if row exists, (2) applying an update} are not interleaved with steps of another operation against the same row, when both operations are running around the same time. Therefore \emph{John} is inserted only once, by one or the other transaction.
 
-The difference between a \lwt and an insert is the condition clause, which begins with \code{IF}. \lwt guarantees that any operations performed for the same key obey to the condition, since conditions are evaluated on the consistent state of the data, as if statements were executed one after the other, thus provides serializability of modifications.
+The difference between \lwt and normal modification operation is that \lwt is a compare-and-set (CAS) operation, thus it has additional \emph{compare} step, before it issues any \emph{set} operation.
+The \emph{compare} step of \lwt guarantees that any operations performed for the same key obey to the condition specified in the \code{IF} clause, since conditions are evaluated on the consistent state of the data, as if statements were executed one after the other, thus provides serializability of modifications.
 
-Listing \ref{lst:intro:lwtUpdate} presents an update transaction, which executes only if the \code{balance} column has the expected value. If another transaction changes the balance to value different than expected, the former transaction will not update the balance. The conditions in the \code{IF} clause can only refer to the columns in the row that is being modified.
+Listing \ref{lst:intro:lwtUpdate} presents an update transaction, which executes only if the \code{balance} column has the expected value of $2000$. If another transaction changes the balance to value other than $2000$ then the former transaction will abort execution after compare step. The conditions in the \code{IF} clause can only refer to the columns in the row that is being modified.
 
-\lwt transaction spans only a single partition, which is a clustering of rows in  table, thus modification to two or more partitions are done in independent \lwt.
-
-In terms of ACID, \lwt provides serial isolation level, is atomic and durable.
-%Consistency is preserved in terms of quorum, but not in terms of all nodes involved which is the case in relational world. 
-More detailed description of \lwt can be found in Section \ref{sec:theory:transactions:lwt}.
+\lwt transaction spans only a single partition, which is a clustering of rows in  table, thus modification to two or more partitions are done in independent \lwt. In terms of ACID, \lwt provides serial isolation level, is atomic and durable. 
 
 \begin{example}
 \label{lst:intro:lwtInsert}
@@ -56,20 +52,20 @@ IF balance = 2000;
 
 
 \subsection{Workarounds for no ACID}
-Atomic multi-partition updates are missing in Cassadra, nevertheless workarounds exist for instance, a dedicated \emph{step} column, which represents current progress of a \emph{transaction} and a sequence of \lwt operations. Although there is no transaction enforced by the database, there is a transactional code in the logic of the client, which updates \emph{step} column on each operation, and checks the condition against that column in the subsequent operation if its value matches expected step. That way the next operation succeeds only if previous was committed. 
+Atomic multi-partition updates are missing in Cassadra, nevertheless workarounds are available for instance, a dedicated \emph{step} column, which represents current progress of a \emph{transaction} and a sequence of \lwt operations. Although there is no transaction enforced by the database, there is a transactional code in the logic of the client, which updates \emph{step} column on each operation, and checks the condition against that column in the subsequent operation if its value matches expected step. That way the next operation succeeds only if previous was committed. 
 Such model requires client's logic to be written in a specific manner that handles \emph{step} column. 
 
-Multi partition transactions would remove burden of ensuring consistency using flags and would allow users to perform their operations in more natural way without additional restrictions, and changes in the logic. Moreover, if users relied on relational databases for specific multi-row transactions and used NoSql database for rest of their operations, then all cases would be supported in a single NoSql database instead of mix of the two.
+Multi partition transactions would remove burden of ensuring consistency based on flags and would allow users to perform their operations in more natural way without additional restrictions, and changes in the logic. Moreover, if users relied on relational databases for specific multi-row transactions and used NoSql database for rest of their operations, then all operations would be supported in a single NoSql database instead of mix of the two.
 
 \section{Goals}
-The main goal of the thesis is to design an algorithm that provides multi-partition transactions; moreover it has to be scalable by its design and it cannot have a single point of failure. Additionally, the algorithm should be efficient in terms of memory consumption and network usage. The algorithm should be verified and tested for correctness and to do this we implemented it in Cassandra and tested in the cluster employing variety of experiments. The results, such as scalability and performance should be analyzed.
+The main goal of the thesis is to design an algorithm that provides multi-partition transactions. Moreover it has to be scalable by design and it cannot have a single point of failure. Additionally, the algorithm should be efficient in terms of memory consumption and network usage. The algorithm should be verified and tested for correctness by implementing and testing it in Cassandra. Results, such as scalability and performance should be analyzed.
 
  
 \section{Structure}\label{sec:introduction:structure}
 The organization of the work is as follows: 
-in the next chapter we will introduce concepts of distributed databases followed by ways of implementing relational and distributed transactions including different algorithms, concluding the chapter with descriptions of the databases with main focus on Cassandra. 
-The proposed algorithm will be discussed in Chapter 3 and its experimental implementation in Chapter 4.
+in the next chapter we introduce concepts of distributed databases followed by ways of implementing relational and distributed transactions including different algorithms, concluding the chapter with descriptions of the databases with main focus on Cassandra. 
+The proposed algorithm is discussed in Chapter 3 and its experimental implementation in Chapter 4.
 Chapter 5 presents tests and theoretical analysis of the algorithm.
-We will recapitulate the work in Chapter 6.
+We recapitulate the work in Chapter 6.
 
 \input{introduction/introduction-terms.tex}

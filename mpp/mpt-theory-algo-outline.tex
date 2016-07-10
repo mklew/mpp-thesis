@@ -4,8 +4,6 @@
 %Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$. Node is defined, as $n_{i}\in\mathit{N}$ where $\mathit{N}$. Client of a cluster is an actor, which communicates to a cluster, denoted by $c_{i}\in\mathit{C}$. Changes to data are represented by \emph{mutations}, where mutation is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$.
 %A set of mutations is a transaction denoted, as $\Theta(\delta_{1}, \delta_{2}, ...)$. Topology is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N^{RF}}$ which given $k$ returns set of replica nodes. 
 
-\emph{Transaction state} is defined by $\Lambda(\lambda_{i}, \lambda_{j}, ...)$ where $\lambda_{i}$ is \emph{transaction item}, which is equivalent\footnote{transaction item is redefined in Chapter 4} of a key $k$.
-
 \section{The outline}
 Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$ in which a node is defined, as $n_{i}, n_{i}\in\mathit{N}$.
 Changes to data are represented by \emph{mutations}, where mutation (Definition \ref{def:mutation}) is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$. 
