@@ -49,11 +49,13 @@
 \usepackage[underline=true,rounded corners=false]{pgf-umlsd}
 \usetikzlibrary{arrows,shadows} % for pgf-umlsd
 
+
 \definecolor{ListingBackground}{rgb}{0.95,0.95,0.95}
 
 \lstdefinestyle{outcode}
 {
 basicstyle={\footnotesize},
+language=sql,
 keywordstyle={\bf\footnotesize\color{blue}},
 commentstyle={\em\footnotesize\color{magenta}},
 numbers=left,
@@ -78,7 +80,13 @@ captionpos=b,
 % belowcaptionskip=1pt,
 frame=tb,
 framerule=0.1pt,
+morekeywords={IF}
 }
+\lstset{basicstyle=\ttfamily}
+\lstset{
+ morekeywords={IF}
+}
+
 
 \author{Marek Lewandowski}
 \title{Scalable distributed transactions}
