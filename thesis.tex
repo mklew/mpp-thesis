@@ -94,6 +94,25 @@ framerule=0.1pt,
 \newcommand{\nodes}{$\mathit{N}$\xspace}
 \newcommand{\transaction}{$\Delta$\xspace}
 
+% messages
+\newcommand{\beginTransactionMessage}{$\mathit{M}(c, n_{i}, \mathit{begin\_transaction}())$\xspace}
+\newcommand{\initialTxStateMessage}{$\mathit{M}(n_{i}, c, \mathit{initial\_transaction\_state}(\Lambda))$\xspace}
+\newcommand{\selectMessage}{$\mathit{M}(c,n_{i},select(k))$\xspace}
+\newcommand{\updateTxStateMessage}{$\mathit{M}(c, n_{i}, \mathit{update\_transaction\_state}(\lambda))$\xspace}
+\newcommand{\txRollbackMessage}{$\mathit{M}(c,n_{i},\mathit{transaction\_rollback}(\Lambda))$\xspace}
+\newcommand{\rollbackMessage}{$\mathit{M}(n_{i}, n_{j}, \mathit{rollback}(\Lambda)$\xspace}
+
+\newcommand{\txCommitMessage}{$\mathit{M}(c,n_{i}, \mathit{transaction\_commit}(\Lambda))$\xspace}
+\newcommand{\txCommitResonseMessage}{$\mathit{M}(n_{i},c,\mathit{transaction\_commit\_response}(committed))$\xspace}
+
+\newcommand{\mutation}[2]{$\delta(#1, #2)$\xspace}
+\newcommand{\mutations}{$(\delta_{1}, \delta_{2}, ...)$\xspace}
+\newcommand{\topology}{$\tau$\xspace}
+
+
+\newcommand{\txItem}{$\lambda$\xspace}
+\newcommand{\txItems}{$(\lambda_{1}, \lambda_{2}, ...)$\xspace}
+\newcommand{\txState}{$\Lambda$\xspace}
 % Shortcuts
 \newcommand{\paxos}{\emph{Paxos}\xspace}
 \newcommand{\mpt}{\emph{MPT}\xspace}
@@ -124,13 +143,11 @@ framerule=0.1pt,
 \newcommand{\kvaluei}[1]{$v_{#1}$\xspace}
 \newcommand{\kv}{$(k, v)$\xspace}
 \newcommand{\kvi}[2]{$(k_{#1}, v_{#2})$\xspace}
-\newcommand{\mutation}[2]{$\delta(#1, #2)$\xspace}
-\newcommand{\mutations}{$\Delta(t)$\xspace}
 \newcommand{\mutationsi}[1]{$\Delta(t_{#1})$\xspace}
-\newcommand{\txItem}{$ti$\xspace}
+
 \newcommand{\txItemi}[1]{$ti_{#1}$\xspace}
 
-\newcommand{\topology}[1]{$\tau(T, H, k) \mapsto \{ \text{#1} \}$}
+%\newcommand{\topology}[1]{$\tau(T, H, k) \mapsto \{ \text{#1} \}$}
 \newcommand{\topologyTk}[1]{$\tau(T, tk) \mapsto \{\text{ #1 }\}$}
 
 
