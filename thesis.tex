@@ -100,7 +100,10 @@ morekeywords={IF}
 
 % Nowe oznaczenia w Outline
 \newcommand{\nodes}{$\mathit{N}$\xspace}
+\newcommand{\nodesTx}{$\mathit{N'}$\xspace}
 \newcommand{\transaction}{$\Delta$\xspace}
+\newcommand{\transactionj}{$\Delta_{j}$\xspace}
+\newcommand{\transactions}{$(\Delta_{i}, \Delta_{j}, ...)$\xspace}
 
 % messages
 \newcommand{\beginTransactionMessage}{$\mathit{M}(c, n_{i}, \mathit{begin\_transaction}())$\xspace}
@@ -113,13 +116,22 @@ morekeywords={IF}
 \newcommand{\txCommitMessage}{$\mathit{M}(c,n_{i}, \mathit{transaction\_commit}(\Lambda))$\xspace}
 \newcommand{\txCommitResonseMessage}{$\mathit{M}(n_{i},c,\mathit{transaction\_commit\_response}(committed))$\xspace}
 
+\newcommand{\insertMessage}{$\mathit{M}(c, n_{i}, \mathit{insert(\text{\txState}, k,v)})$\xspace}
+
+\newcommand{\database}{$\Omega$\xspace}
 \newcommand{\mutation}[2]{$\delta(#1, #2)$\xspace}
 \newcommand{\mutations}{$(\delta_{1}, \delta_{2}, ...)$\xspace}
 \newcommand{\topology}{$\tau$\xspace}
+\newcommand{\paxosRoundId}{$\iota$\xspace}
+\newcommand{\mutationsFull}{$(\delta_{1}(k_1, v_1), \delta_{2}(k_2, v_2), ...)$\xspace}
+
+\newcommand{\transactionFull}{$\Delta(\delta_{1}, \delta_{2}, ...)$\xspace}
+
 
 
 \newcommand{\txItem}{$\lambda$\xspace}
 \newcommand{\txItems}{$(\lambda_{1}, \lambda_{2}, ...)$\xspace}
+\newcommand{\txItemi}[1]{$\lambda_{#1}$\xspace}
 \newcommand{\txState}{$\Lambda$\xspace}
 % Shortcuts
 \newcommand{\paxos}{\emph{Paxos}\xspace}
@@ -152,8 +164,6 @@ morekeywords={IF}
 \newcommand{\kv}{$(k, v)$\xspace}
 \newcommand{\kvi}[2]{$(k_{#1}, v_{#2})$\xspace}
 \newcommand{\mutationsi}[1]{$\Delta(t_{#1})$\xspace}
-
-\newcommand{\txItemi}[1]{$ti_{#1}$\xspace}
 
 %\newcommand{\topology}[1]{$\tau(T, H, k) \mapsto \{ \text{#1} \}$}
 \newcommand{\topologyTk}[1]{$\tau(T, tk) \mapsto \{\text{ #1 }\}$}

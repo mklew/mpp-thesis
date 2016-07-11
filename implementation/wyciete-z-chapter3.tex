@@ -12,6 +12,15 @@ Token alone only directs us to nodes with modified data, but to know what has be
 
 Transaction state has deterministic memory footprint, since it stores fixed-length tokens instead of keys with unknown size. 
 
+
+\subsubsection{Alternative structure}
+Transaction state which stores keys instead of tokens provides same functionality, but varies in memory footprint, hence \mpt is applicable to \emph{key-value} databases in general, but its memory usage might not be as low as with tokens if keys have more complex type than number.
+%Same functionality could be achieved storing real keys in transaction items, but then each key could have arbitrary size and same would apply to transaction state.
+
+\subsubsection{Unique id only}
+Transaction items identify nodes that own part of transaction's data. Without them we would know only an id of a transaction.
+Using just an id we would need to ask each node in the cluster if it has data associated with transaction. As a corollary the algorithm would be dependent on all nodes in the cluster, thus resilience to partial failure would be lost.
+
 \begin{definition}
   \label{def:transactionItem}
   \emph{Transaction item}, denoted as $ti$, is a pair of a token and a table name $(tk,table)$.
@@ -21,3 +30,74 @@ Transaction state has deterministic memory footprint, since it stores fixed-leng
   \label{def:transactionState}
   \emph{Transaction state}, denoted as $TS$, is a pair of a unique transaction id and set of transaction items $(id, \{ \text{\txItemi{a}, ..., \txItemi{k}} \})$.
 \end{definition}
+
+
+% Stary algorytm
+
+\begin{algorithm}
+  \caption{Updating transaction state after two mutations}
+  \label{alg:updateTxState}
+  \begin{algorithmic}  	    
+    \State $TS(id, \{ \}) \gets$ \Call{Begin Transaction}{}
+    \State $id \gets$ $TS.id$ unique id generated for transaction
+    \State $ti_{1} \gets $ \Call{Update Operation}{id, $k_{1}$, $v_{1}$} \Comment for some key and value
+    \State $TS(id, \{ ti_{1} \}) \gets$ \Call{Add Item}{$TS$, $ti_{1}$}
+    \State $ti_{2} \gets $ \Call{Insert Operation}{id, $k_{2}$, $v_{2}$}
+    \State $TS(id, \{ ti_{1}, ti_{2} \}) \gets$  \Call{Add Item}{$TS$, $ti_{2}$}
+    \State $result \gets $ \Call{Commit Transaction}{$TS$}    
+  \end{algorithmic}
+\end{algorithm}
+
+% Private Transaction Storage
+
+\begin{lstlisting}[language=Java,style=outcode,label={lst:privateTransactionStorage},caption={API of private transaction storage}]
+PrivateTransactionStorage {
+  TransactionItem addModification(transaction id, modification)
+
+  void removeTransactionsData(transaction id)
+
+  Collection<Modification> getModifications(transaction id)        
+}
+
+\end{lstlisting}
+
+\emph{Modification} returned by \code{getModifications} method is Cassandra's representation of any modification operation, such as: \begin{enumerate*} \item insert, \item update, \item delete. \end{enumerate*}
+
+Private transaction storage satisfies requirement of performing many operations within \transactionj. Each \mutation{k}{v} is stored in the private storage and mapped to a \txItem.
+
+
+% To było zakomentowane już po przepisaniu na formę algorytmu.
+%\subsection{Algorithm for adding operations to private transaction storage}
+
+% \begin{figure}[hbt]
+%   \begin{center}
+%   \setlength{\unitlength}{0.7cm}
+%   \subfloat[Client's request.]{
+%     INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
+%   }\qquad
+%   \subfloat[Coordinator's algorithm.]{
+%     Request is received by some node in cluster that becomes coordinator C for that request
+%   }\qquad
+%   \subfloat[Replica's algorithm.]{
+    
+%   }
+%   \end{center}
+%   \caption{Adding operations to private transaction storage}
+%   \label{fig:addToPrivateMemtable}
+% \end{figure}
+
+% 1. Clients send a request INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
+% 2. Request is received by some node in cluster that becomes coordinator C for that request
+% 3. C identifies replicas responsible
+%    1. C sees that users table has key column user_id. 
+%    2. It received user_id=1
+%    3. C computes token using key value = 1 
+%    4. C checks in topology which replicas are responsible for that token
+%    5. C finds replicas
+% 1. C routes request to replica nodes
+% At each replica:
+%    1. Modification is added to private transaction storage of transaction with id 1001
+%    2. Replica replies with success
+% 1. C waits until quorum responds with success
+% 2. C responds to client with transaction item
+% 3. Client receives transaction item and merges it to its current transaction state

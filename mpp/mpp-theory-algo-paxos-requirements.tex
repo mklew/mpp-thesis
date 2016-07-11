@@ -1,39 +1,34 @@
 %!TEX root = ../thesis.tex
 
-\section{Addressing paxos requirements}
-Paxos requirements have to be met.
- What is simple in case of LWT becomes troublesome in \mpt considering many partitions. 
+\section{Consensus by Paxos}
+We use \paxos to reach consensus among \nodesTx which \transaction out of set of concurrent \emph{conflicting}\footnote{transactions that mutate common keys} \transactions (Definition \ref{def:conflictingTransactionsSet}) should be committed. \paxos provides consensus on single value among many values proposed during the same paxos round, therefore in order to commit single \transaction, all conflicting \transactions must participate in the same paxos round, which is not trivial considering many \mutationsFull, as there is no longer single $k$, which identifies paxos round.
 %In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
 
+\begin{definition}
+\label{def:conflictingTransactionsSet}
+\emph{Conflicting transactions set} - denoted by $\mathcal{C}\text{\transactions}$ is a set where $\exists k \forall \text{\transaction} \text{ has } \delta(k) $ 
+\end{definition}
 
-\subsection{Paxos value}
-Proposed \emph{value} in \mpt is transaction state. Given transaction state, we can identify all modifications in transaction. Given transaction state, any node can try to commit transaction, because it can check which nodes participate in transaction and where is the private data stored. This fact is used to satisfy requirement, as to proposing highest value \ref{sec:mpp:requirements:finishInProgress}.
-Transaction state always is an entry point to algorithm.
+\subsection{Proposed transaction state}
+Our true value is \transactionFull, however \mutations are distributed over $\text{\nodesTx}\in\mathit{N}$, thus it is impossible to propose \transaction itself, but it is possible to propose \txState, which references \mutations, thus proposed \paxos \emph{value} in \mpt is \txState. Any \node{i} can try to commit \transaction, because \node{i} can check which nodes participate in \transaction and where is the private data stored. 
+
+%This fact is used to satisfy requirement, as to proposing highest value \ref{sec:mpp:requirements:finishInProgress}.
+%Transaction state always is an entry point to algorithm.
 %It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. 
 
 
-\subsection{Ability to find paxos state at node given transaction state}
-In order to find a paxos state given a transaction state we need to have two properties:
-%This requirement alone is easy, but if thought about in context of serializability it becomes quite hard. In order to support transactions we need to have property:
-
-\begin{definition}
-  \label{def:samePaxosStateProperty}
-  Conflicting transactions must participate in a same paxos round, thus have same \emph{paxos round id} assigned.  
-\end{definition}
-
-\begin{definition}
-  \label{def:txSerializability}
-  If there are many transactions being committed at same time, and those transactions are in conflict with each other, then only one transaction should get committed and rest of them should be rolled back.   
-\end{definition}
+\subsection{Reaching the same paxos round}
+$\mathcal{C}\text{\transactions}$ must participate in the same paxos round identified by \paxosRoundId.
+If there are many \transactions being committed at same time, and those \transactions are in conflict with each other, then only single \transaction should get committed and rest of them should be rolled back. \nodesTx must agree on which \transaction is committed.
 
 %If there are many transactions being committed at same time, and those transactions are in conflict with each other, then only one transaction should get committed and rest of them should be rolled back. 
 %That’s serializability property which we need. How to guarantee it? Let’s look at it differently.
 
-If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
+%If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
 
-Other concurrent, conflicting transactions can be rolledback, as long as they participate in the same paxos round. In case of \lwt \emph{paxos round id} is determined by partition key \emph{k}. \mpt supports more than one key, therefore we need a function which maps \emph{transaction} $\rightarrow $ \emph{paxos round id} with properties: 
+Rest of transactions $(\mathcal{C}\text{\transactions} - \text{\transaction})$ can be rolledback, as long as they participate in the same paxos round \paxosRoundId. In case of \lwt \paxosRoundId is determined by \emph{k}, however \mpt supports more than one key, therefore we need a function which maps \transaction $\mapsto $ \paxosRoundId with properties: 
 \begin{enumerate*}
 %\item It maps transaction to paxos round id
-\item It maps conflicting transactions to same paxos round id 
-\item It maps non-conflicting transactions to different paxos round id
+\item It maps conflicting transactions to same \paxosRoundId
+\item It maps non-conflicting transactions to different $\iota'$
 \end{enumerate*}
