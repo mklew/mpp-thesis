@@ -1,10 +1,17 @@
 %!TEX root = ../thesis.tex
 
 \subsection{Conflicting transactions}\label{sec:theory:conflictFunctions}
-In distributed setting in order to have absolute certainty whether two transactions are conflicting it requires to compare their private modifications and see whether they modify same keys. That results in as many round trips as there are items being modified by transactions multiplied by number of concurrent transactions. In distributed settings algorithms should do minimum round trips, because it costs resources and hurts performance \cite{rotem2006fallacies}.
+In order for \node{i} to know whether two transactions are conflicting it requires to compare their mutations and check whether they mutate the same keys, however keys are unknown to \txItems, thus
+given \txStateOne and \txStateTwo such check requires network messages to replicas, which compare mutations in private transaction storage of \txStateOne and \txStateTwo. 
+Distributed algorithms should minimize round trips, because they cost resources and decrease performance \cite{rotem2006fallacies}.
 
-Conflict functions, which consider only local data, and do not require round trips, but as a tradeoff have false positives, are as follows:
+Local conflict functions, which use only \txState, as it is without accessing \mutations on \nodesTx do not require network, but as a tradeoff have false positives, are presented in Table \ref{conflictFunctions}. 
+
+TODO tabelka plus definicje
+Przepisać początek (zrobione). Transakcje konflikutją jeśli coś tam coś tam. Dalej rozwinąć kiedy rozwinąć i jakie są opcje i jakie są konsekwencje tych opcji. Mogą być funkcje takie które robią Round tripy i takie które ich nie robią.
+
 \begin{description}
+\label{conflictFunctions}
 \item[Conflict on same transaction items] \hfill \\
 	Transactions are considered conflicting if they share transaction item. 
 	\\

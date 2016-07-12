@@ -1,17 +1,16 @@
 %!TEX root = ../thesis.tex
 
 \section{Consensus by Paxos}
-We use \paxos to reach consensus among \nodesTx which \transaction out of set of concurrent \emph{conflicting}\footnote{transactions that mutate common keys} \transactions (Definition \ref{def:conflictingTransactionsSet}) should be committed. \paxos provides consensus on single value among many values proposed during the same \paxos round, therefore in order to commit single \transaction, all conflicting \transactions must participate in the same \paxos round, which is not trivial considering many \mutationsFull, as there is no longer single $k$, which would identify \paxos round, as it is in \lwt.
+We use \paxos to reach consensus among \nodesTx which \transaction out of set of concurrent \emph{conflicting} \transactions (Definition \ref{def:conflictingTransactionsSet}) should be committed. \paxos provides consensus on single value among many values proposed during the same \paxos round, therefore in order to commit single \transaction, all conflicting \transactions must participate in the same \paxos round, which is not trivial considering many \mutationsFull, as there is no longer single $k$, which would identify \paxos round, as it is in \lwt.
 %In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
 
 \begin{definition}
 \label{def:conflictingTransactionsSet}
-\emph{Conflicting transactions set} - denoted by $\mathcal{C}\text{\transactions}$ is a set where all \transactions include at least single common $\delta(k)$.
+\emph{Conflicting transactions set} - denoted by $\mathcal{C}\text{\transactions}$ is a set where all \transactions include at least single common $\delta(k)$, which mutate the same $k$.
 \end{definition}
 
 \subsection{Proposed transaction state}
-Our true value is \transactionFull, however \mutationsFull are distributed over 
-$(\tau(k_1) \cup \tau(k_2) \cup ... ) =  \text{\nodesTx}\in\mathit{N}$, thus it is impossible to propose \transaction itself, but it is possible to propose \txState, which references \mutations, thus proposed \paxos \emph{value} in \mpt is \txState. Any \node{i} can try to commit \transaction, because \node{i} can check which nodes participate in \transaction and where is the private data stored. 
+Our true value is \transactionFull, however \mutationsFull are distributed over \nodesOfMutations, thus it is impossible to propose \transaction itself, but it is possible to propose \txState, which references \mutations, thus proposed \paxos \emph{value} in \mpt is \txState. Any \node{i} can try to commit \transaction, because \node{i} can check which nodes participate in \transaction and where is the private data stored. 
 
 %This fact is used to satisfy requirement, as to proposing highest value \ref{sec:mpp:requirements:finishInProgress}.
 %Transaction state always is an entry point to algorithm.
@@ -32,3 +31,12 @@ Rest of transactions $(\mathcal{C}\text{\transactions} - \text{\transaction})$ c
 \item it maps conflicting transactions to same \paxosRoundId,
 \item it maps non-conflicting transactions to different $\iota'$.
 \end{enumerate*}
+
+\subsection{Conflict function}
+Conflicting transactions need to be grouped into sets $\mathcal{C}\text{\transactions}$, thus we need a function, which compares \txOne and \txTwo in pairs and detects whether
+\txOne and \txTwo are in conflict. Definition \ref{def:conflictFunction} presents such function.
+
+\begin{definition}
+\label{def:conflictFunction}
+\emph{Conflict function} denoted, as $\zeta (\text{\txOne, \txTwo}) \mapsto ( \mathcal{C}_1, \mathcal{C}_2)$, where $\mathcal{C}_1 = \mathcal{C}(\text{\txOne, \txTwo}) \wedge \mathcal{C}_2 = \emptyset $ or $\mathcal{C}_1 = \mathcal{C}(\text{\txOne}) \wedge \mathcal{C}_2=\mathcal{C}(\text{\txTwo})$, the former case is when transactions are in conflict and contain at least single $\delta$ for the same $k$, the latter otherwise.
+\end{definition}
