@@ -1,7 +1,7 @@
 %!TEX root = ../thesis.tex
 
 \section{Isolation from other transactions}
-Transactions must run in isolation from each other and provide read-committed isolation level, thus transactions cannot see each other, nor anyone else can see effects of transactions before it completes with commit or rollback. Expected read-committed isolation is different than the one known from RDBMS, because in RDBMS such isolation holds write-locks for the duration of transaction, therefore if transaction writes then subsequent reads return written values. We want to avoid distributed locks, which hurt performance and cause deadlocks, therefore read-committed isolation in \mpt algorithm does not hold any locks, thus each \selectMessage receives current $v$, as it is in \database.
+Transactions must run in isolation from each other and provide read-committed isolation level, thus transactions cannot see each other, nor anyone else can see effects of transactions before it completes with commit or rollback. Expected read-committed isolation is different than the one known from RDBMS, because in RDBMS such isolation holds write-locks for the duration of transaction, therefore if transaction writes then subsequent reads return written values. We want to avoid distributed locks, which decrease performance and cause deadlocks, therefore read-committed isolation in \mpt algorithm does not hold any locks, thus each \selectMessage receives current $v$, as it is in \database.
 
 \subsection{Private transaction storage}
 \label{sec:mpp:privateTxStorage}
