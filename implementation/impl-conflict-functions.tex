@@ -1,6 +1,6 @@
 %!TEX root = ../thesis.tex
 
-\subsection{Conflicting transactions}\label{sec:theory:conflictFunctions}
+\subsection{Conflicting transactions}\label{sec:impl:conflictFunctions}
 In order for \node{i} to know whether two transactions are conflicting it requires to compare their mutations and check whether they mutate the same keys, however keys are unknown to \txItems, thus
 given \txStateOne and \txStateTwo such check requires network messages to replicas, which compare mutations in private transaction storage of \txStateOne and \txStateTwo. 
 Distributed algorithms should minimize round trips, because they cost resources and decrease performance \cite{rotem2006fallacies}.
@@ -9,6 +9,8 @@ Local conflict functions, which use only \txState, as it is without accessing \m
 
 TODO tabelka plus definicje
 Przepisać początek (zrobione). Transakcje konflikutją jeśli coś tam coś tam. Dalej rozwinąć kiedy rozwinąć i jakie są opcje i jakie są konsekwencje tych opcji. Mogą być funkcje takie które robią Round tripy i takie które ich nie robią.
+
+TODO wdrozyc poprawki z review i zaznaczonych fragmentow
 
 \begin{description}
 \label{conflictFunctions}
@@ -27,3 +29,28 @@ Przepisać początek (zrobione). Transakcje konflikutją jeśli coś tam coś ta
 \end{description}
 
 Conflict functions allow to eliminate round trips, put bounds on number of concurrent transactions, but with a cost of false positives. \mpt algorithm works with any conflict resolution function. Conflict resolution functions can be defined per table.
+
+
+\subsection{Configurable conflict functions}
+The implementation provides configuration of conflict functions per column family, enabling different choice of conflict functions for different tables depending on intended workload.
+
+Per table configuration is an additional feature to the algorithm implemented using column family metadata, which can be changed dynamically at runtime of the cluster by executing \code{ALTER TABLE} commands. Listing \ref{lst:configureConflictFunctions} shows how the conflict function is set to resolve conflict on same token range slice number, which puts bounds on number of concurrent transactions in table \code{sliced_counters} to $2000$ transactions. 
+
+\begin{lstlisting}[style=outcode,label={lst:configureConflictFunctions},caption={Configuring conflict function on Cassandra table}]
+CREATE TABLE counters.sliced_counters 
+   (id uuid, counter1 int, counter2 int, PRIMARY KEY (id));
+
+
+ALTER TABLE counters.sliced_counters WITH extensions = { 
+   'transaction_conflict_bounds' : 'TOKEN_RANGE_SLICES', 
+   'token_range_slices' : '2000' };
+\end{lstlisting}
+
+%It will divide token range into 2000 even slices. Such configuration allows to have at most 2000 transactions running on single node for that particular table.
+
+Conflict functions  are available with following names:
+\begin{enumerate*}
+\item \code{COMMON_TX_ITEMS} -- conflict on same transaction items, used as the default conflict function,
+\item \code{TOKEN_RANGE_SLICES} -- conflict on same token range slice number. Function has additional configurable parameter \code{int token_range_slices}
+\item \code{ONE_FOR_ALL} -- conflict on same table.
+\end{enumerate*}

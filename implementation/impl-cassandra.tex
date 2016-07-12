@@ -187,30 +187,7 @@ Index is a map from \code{MppIndexKey} to \code{MppParticipants}. Index keys are
 \subsection{Registration in index}
 When transaction wants to register in index, it first has to acquire it. Then \code{MpPaxosParticipant} is created for this transaction. All participants from all index keys are iterated over and checked if there is a single paxos round id. If there are more potential rounds, transaction cannot be registered. Given at most one paxos round id, new participant is added to participants for all computed index keys.
 
-
-\section{Configurable conflict functions}
-The implementation provides configuration of conflict functions per column family, enabling different choice of conflict functions for different tables depending on intended workload.
-
-Per table configuration is an additional feature to the algorithm implemented using column family metadata, which can be changed dynamically at runtime of the cluster by executing \code{ALTER TABLE} commands. Listing \ref{lst:configureConflictFunctions} shows how the conflict function is set to resolve conflict on same token range slice number, which puts bounds on number of concurrent transactions in table \code{sliced_counters} to $2000$ transactions. 
-
-\begin{lstlisting}[style=outcode,label={lst:configureConflictFunctions},caption={Configuring conflict function on Cassandra table}]
-CREATE TABLE counters.sliced_counters 
-   (id uuid, counter1 int, counter2 int, PRIMARY KEY (id));
-
-
-ALTER TABLE counters.sliced_counters WITH extensions = { 
-   'transaction_conflict_bounds' : 'TOKEN_RANGE_SLICES', 
-   'token_range_slices' : '2000' };
-\end{lstlisting}
-
-%It will divide token range into 2000 even slices. Such configuration allows to have at most 2000 transactions running on single node for that particular table.
-
-Conflict functions \ref{sec:theory:conflictFunctions} are available with following names:
-\begin{enumerate*}
-\item \code{COMMON_TX_ITEMS} -- conflict on same transaction items, used as the default conflict function,
-\item \code{TOKEN_RANGE_SLICES} -- conflict on same token range slice number. Function has additional configurable parameter \code{int token_range_slices}
-\item \code{ONE_FOR_ALL} -- conflict on same table.
-\end{enumerate*}
+\input{impl-conflict-functions.tex}
 
 \section{Transaction Log}
 Transaction log is implemented using cassandra table local to each node. 
