@@ -2,12 +2,12 @@
 
 \subsection{Transaction index}
 \label{sec:mpp:txIndex}
-Transaction index denoted, as \txIndex is a service, local to a node, which provides \mbox{\transaction $\mapsto $ \paxosRoundId} function required to reach the same \paxos round for conflicting transactions.
+Transaction index denoted, as \txIndex is a service, local to a node, which provides \mbox{\txState $\mapsto $ \paxosRoundId} function required to reach the same \paxos round for conflicting transactions.
 
-Registration of \transaction in \txIndex on each \node{i} $\in$\nodesTx is precondition to the commit procedure of \mpt. 
-Since \txIndex is local, each \transaction receives different \paxosRoundId on different nodes, but the value of \paxosRoundId is never used outside of a node, thus \paxosRoundId does not have to be globally the same. \paxosRoundId is used only to identify \paxos round for $\mathcal{C}\text{\transactions}$ at each \node{i}. If \transaction participates in the same \paxos round identified by \paxosRoundId as other conflicting transactions, then only single \transaction is committed after \nodesTx agree on the proposed \txState.
+Registration of \txState in \txIndex on each \node{i} $\in$\nodesTx is precondition to the commit procedure of \mpt. 
+Since \txIndex is local, each \transaction receives different \paxosRoundId on different nodes, but the value of \paxosRoundId is never used outside of a node, thus \paxosRoundId does not have to be globally the same. \paxosRoundId is used only to identify \paxos round for \conflictingTxSet at each \node{i}. If \transaction participates in the same \paxos round identified by \paxosRoundId as other conflicting transactions, then only single \transaction is committed after \nodesTx agree on the proposed \txState.
 
-Transaction index stores sets of $\mathcal{C}\text{\transactions}$ and assigns \paxosRoundId to each set. When a new \transactionm is registered, \txIndex tries to find a set $\mathcal{C}\text{\transactions}$ to which \transactionm can be added by applying \conflictFunction to \transactionm and each \transaction in each set. If there is a conflict, sets can be merged together, thus \transactionm joins $\mathcal{C}\text{\transactions}$ and receives the same \paxosRoundId. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
+Transaction index stores sets of \conflictingTxSet and assigns \paxosRoundId to each set. When a new \txStateM is registered, \txIndex tries to find a set \conflictingTxSet to which \txStateM can be added by applying \conflictFunction to \txStateM and each \transaction in each set. If there is a conflict, sets can be merged together, thus \txStateM joins \conflictingTxSet and receives the same \paxosRoundId. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
 
 During the commit procedure of \mpt \transactionFull has to register in each quorum of each replica subset
 $(N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... ) =
@@ -55,70 +55,39 @@ $\in N^{RF}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus
    
 \end{algorithm}
 
-\subsubsection{Example of registration}
-Assume $3$ transactions: $tx_{1}, tx_{2}, tx_{3}$ and $4$ different transaction items: $ti_{1}, ti_{2}, ti_{3}, ti_{4}$. Assume conflict function on same transaction items.
-Assume items in transactions $tx_{1} \rightarrow (ti_{1}, ti_{2}, ti_{3})$, 
- $tx_{2} \rightarrow (ti_{2}, ti_{4})$, $tx_{3} \rightarrow (ti_{4})$
-Assume that registration of transactions happens in arbitrary order. Registration in index is done according to Algorithm \ref{alg:indexRegistration}. Two different orderings yield different outcomes. 
+\subsubsection{Example of registration on single \node{i}}
+Assume we have 
+\txStatei{1}$(\text{\txItemi{1}},\text{\txItemi{2}}, \text{\txItemi{3}})$,
+\txStatei{2}$(\text{\txItemi{2}},\text{\txItemi{4}})$,
+\txStatei{3}$(\text{\txItemi{4}})$.
+Registration in index is done according to Algorithm \ref{alg:indexRegistration}. 
+Two different orderings yield different outcomes. 
+
  \begin{description}
- \item[Order $tx_{1} \rightarrow tx_{2} \rightarrow tx_{3}$] \hfill \\
- 	$tx_{1}$ registers in index and obtains paxos id $id_{1}$ \\
- 	$tx_{2}$ registers in index and obtains paxos id from conflicting transaction $tx_{1}$, $id_{1}$ \\
- 	$tx_{3}$ registers in index and obtains paxos id $id_{1}$ from conflicting transactions: $tx_{1}, tx_{2}$ All transactions participate in the same paxos round. Only one transaction is chosen during paxos round. 
- \item[Order $tx_{1} \rightarrow tx_{3} \rightarrow tx_{2}$] \hfill \\
- 	$tx_{1}$ registers in index and obtains paxos id $id_{1}$ \\
- 	$tx_{3}$ registers in index, there are no conflicts, thus obtains paxos id $id_{3}$\\
- 	$tx_{2}$ registers in index and it has $2$ conflicting transactions participating in different paxos rounds with ids: $id_{1}$, $id_{3}$. It is illegal to register $tx_{2}$, because if $tx_{2}$ is registered in both rounds it can be accepted in round $id_{1}$, but not accepted in round $id_{3}$ in which case it is committed and rolled back at the same time which is illegal behaviour. 
+ \item[Order $\text{\txStatei{1}} \rightarrow \text{\txStatei{2}} \rightarrow \text{\txStatei{3}}$] \hfill \\
+ 	\txStatei{1} registers in \txIndex and obtains \paxosRoundIdi{1} \\
+ 	\txStatei{2} registers in \txIndex and obtains \paxosRoundIdi{1} from conflicting transaction \txStatei{1} \\
+ 	\txStatei{3} registers in \txIndex and obtains \paxosRoundIdi{1} from conflicting transactions: \txStatei{1}, \txStatei{2} All transactions participate in the same \paxos round and only single transaction is committed. 
+ \item[Order $\text{\txStatei{1}} \rightarrow \text{\txStatei{3}} \rightarrow \text{\txStatei{2}}$] \hfill \\
+ 	\txStatei{1} registers in \txIndex and obtains \paxosRoundIdi{1} \\
+ 	\txStatei{3} registers in \txIndex, there are no conflicts, thus obtains \paxosRoundIdi{3}\\
+ 	\txStatei{2} registers in \txIndex and it has $2$ conflicting transactions participating in different paxos rounds with ids: \paxosRoundIdi{1}, \paxosRoundIdi{3}. It is illegal to register \txStatei{2}, because if \txStatei{2} is registered in both rounds it can be committed in round \paxosRoundIdi{1}, but rolledback in round \paxosRoundIdi{3} which is a contradiction.
 
  \end{description}
 
-% Let’s assume that:
-% * There are three transactions represented by transaction states: Tx1, Tx2, Tx3.
-% * Tx1 modifies items Ti1, Ti2, Ti3
-% * Tx2 modifies items Ti2, Ti4
-% * Tx3 modifies items Ti4
-% * conflict resolution is defined as conflict on same transaction items.
-% * All transactions try to execute at same time
+\subsubsection{Example of registration in quorums}
+Assume we have 
+\txStatei{1}$(\text{\txItemi{1}},\text{\txItemi{2}}, \text{\txItemi{3}})$,
+\txStatei{2}$(\text{\txItemi{2}},\text{\txItemi{3}})$, \RF{3} and $N=5$. Note that both transactions have \txItemi{2}, thus mutate same key. Given that \txItem is equivalent of a key (Definition \ref{def:transactionItemChapter3}) we can use \topology to find replicas on which transactions have to register. Assume topology \topologyItem{1}{N'} and \topologyItem{2}{N''} where $N^'=(n_1, n_2, n_3)$ and $N^{''}=(n_3,n_4,n_5)$.
 
+\txStatei{1} has to register in quorum of $N^'$ and quorum of $N^{''}$; \txStatei{2} has to register in quorum of $N^{''}$.
+$quorum(N^{''})$ is equal to one of $((n_3,n_4),(n_3,n_5),(n_4,n_5))$, therefore $\mathit{quorum(N^{''}}) \cap \mathit{quorum(N^{''}}) \neq \emptyset$, thus exists a $n\in N^{''}$ on which boths transactions are registered.
+\txStatei{1} and \txStatei{2} receive the same \paxosRoundId on $n$, thus if one is committed, the other has to be rolled back.
 
-% Order of transactions registering in transaction index can be arbitrary. Let’s analyze two interesting cases
-% 1. Tx1 -> Tx2 -> Tx3
-% 2. Tx1 -> Tx3 -> Tx2
+\subsection{Rolling back concurrent transactions}
+Transaction index knows which \paxosRoundId to assign to which \txState and it knows set \conflictingTxSet to which \txState is assigned. This knowledge is used to rollback conflicting transactions when \paxos round \paxosRoundId is finished at \node{i} and \txStateCommitted is learnt by \node{i}. The node calls $\mathit{clear}(\text{\txState})$ function of private transaction storage for each \mbox{\txState $\in$ $(\text{\conflictingTxSet} - \text{\txStateCommitted})$}.
 
-
-% Case 1)
-% 1. Tx1 registers in index
-%    1. There are no conflicting transactions
-%    2. New paxos round is started with paxos id PaxosId_1
-% 1. Tx2 registers in index
-%    1. Tx1 exists in index and has conflict on item Ti2
-%    2. Tx2 joins paxos round of Tx1 
-%    3. Tx2 receives round id PaxosId_1
-% 1. Tx3 registers in index
-%    1. There are 2 conflicting transactions
-%    2. But both of them belong to same round. 
-%    3. Tx3 joins round with id PaxosId_1
-
-
-% In that case, all transactions go into same paxos round, therefore after paxos round, replicas will agree on single transaction. That’s exactly what we wanted and what will guarantee serializability.
-
-
-% Case 2)
-% 1. Tx1 registers in index and receives PaxosId_1
-% 2. Tx3 registers in index
-%    1. There are no other transactions that modify Ti4
-%    2. New paxos round is started with paxos id PaxosId_2
-% 1. Tx2 registers in index
-%    1. There are 2 conflicting transactions: Tx1 and Tx3
-%    2. Transactions belong to different paxos rounds
-%    3. Tx2 cannot start and has to rollback or try again.
-
-
-% What if Tx2 was somehow registered in both rounds? Then it might be a case where Tx2 is committed at one round, but rolled back at the other which is illegal because it breaks serializability. We need to guarantee that two concurrent conflicting transactions will not get committed at same time. Allowing Tx2 to participate in any of these paxos rounds could potentially break such guarantee.
-
-
-\subsubsection{Rolling back concurrent transactions}
-\emph{Transaction Index} knows which paxos round id to assign to which transaction, but also it knows other transactions that share same paxos round id. This knowledge is used to rollback concurrent transactions when paxos round is finished at this node and transaction is committed.
-
-
-% To summarize, transaction index main responsibility is to assign paxos round id for each transaction in a way that doesn’t break any of requirements. Index itself changes a lot since there are many concurrent transactions that begin, try to commit and at the end are either committed or rolled back. 
+If \client wants to rollback \transaction then \client
+sends a message \txRollbackMessage after which \node{i} identifies \nodesTx and broadcasts \rollbackMessage for each \node{j} $\in$ \nodesTx. When \node{j} receives such message it
+uses $\mathit{clear}(\text{\txState})$ function of private transaction storage. \transaction is rolled back after all 
+\mbox{$n\in \text{\nodesTx}$} clear private data.

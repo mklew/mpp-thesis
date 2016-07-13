@@ -6,11 +6,11 @@ We use \paxos to reach consensus among \nodesTx which \transaction out of set of
 
 \begin{definition}
 \label{def:conflictingTransactionsSet}
-\emph{Conflicting transactions set} - denoted by $\mathcal{C}\text{\transactions}$ is a set where all \transactions include at least single common $\delta(k)$, which mutate the same $k$.
+\emph{Conflicting transactions set} - denoted by \conflictingTxSet is a set where all \transactions include at least single common $\delta(k)$, which mutate the same $k$.
 \end{definition}
 
 \subsection{Proposed transaction state}
-Our true value is \transactionFull, however \mutationsFull are distributed over \nodesOfMutations, thus it is impossible to propose \transaction itself, but it is possible to propose \txState, which references \mutations, thus proposed \paxos \emph{value} in \mpt is \txState. Any \node{i} can try to commit \transaction, because \node{i} can check which nodes participate in \transaction and where is the private data stored. 
+Our true value is \transactionFull, however \mutationsFull are distributed over \nodesOfMutations, thus it is impossible to propose \transaction itself, but it is possible to propose \txState, which references \mutations, thus proposed \paxos \emph{value} in \mpt is \txState. Any \node{i} can try to commit \transaction given \txState, because \node{i} can check which nodes participate in \transaction and where is the private data stored. 
 
 %This fact is used to satisfy requirement, as to proposing highest value \ref{sec:mpp:requirements:finishInProgress}.
 %Transaction state always is an entry point to algorithm.
@@ -18,26 +18,26 @@ Our true value is \transactionFull, however \mutationsFull are distributed over 
 
 
 \subsection{Reaching the same \paxos round}
-$\mathcal{C}\text{\transactions}$ must participate in the same \paxos round identified by \paxosRoundId.
-If there are many \transactions being committed at same time and those \transactions are in conflict with each other, then only single \transaction should get committed and rest of them should be rolled back. \nodesTx must agree on which \transaction is committed.
+\conflictingTxSet must participate in the same \paxos round identified by \paxosRoundId.
+If there are many \transactions being committed at same time and those \transactions are in conflict with each other, then only single \transaction should get committed and rest of them should be rolled back. \nodesTx must agree on \paxos value \txState, thus agree on which \transaction is committed.
 
 %If there are many transactions being committed at same time, and those transactions are in conflict with each other, then only one transaction should get committed and rest of them should be rolled back. 
 %That’s serializability property which we need. How to guarantee it? Let’s look at it differently.
 
 %If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
 
-Rest of transactions $(\mathcal{C}\text{\transactions} - \text{\transaction})$ can be rolledback, as long as they participate in the same \paxos round \paxosRoundId. In case of \lwt \paxosRoundId is determined by \emph{k}, however \mpt supports more than one key, therefore we need a function which maps \transaction $\mapsto $ \paxosRoundId with properties: 
+Rest of transactions $(\mathcal{C}\text{\txStates} - \text{\txState})$ can be rolledback, as long as they participate in the same \paxos round \paxosRoundId. In case of \lwt \paxosRoundId is determined by \emph{k}, however \mpt supports more than one key, therefore we need a function which maps \txState $\mapsto $ \paxosRoundId with properties: 
 \begin{enumerate*}
 \item it maps conflicting transactions to same \paxosRoundId,
 \item it maps non-conflicting transactions to different $\iota'$.
 \end{enumerate*}
 
 \subsection{Conflict function}
-\transaction $\mapsto $ \paxosRoundId can be a composition of two functions: \transaction $\mapsto $ $\mathcal{C}\text{\transactions} \mapsto$ \paxosRoundId, where the former groups transactions into conflicting sets and the latter assigns \paxosRoundId to each set.
-In order to group conflicting transactions we need a function, which compares \txOne and \txTwo in pairs and detects whether
-\txOne and \txTwo are in conflict. Definition \ref{def:conflictFunction} presents such function.
+\txState $\mapsto $ \paxosRoundId can be a composition of two functions: \mbox{\txState $\mapsto $ \conflictingTxSet} and \mbox{\conflictingTxSet $\mapsto$ \paxosRoundId}, where the former groups transactions into conflicting sets and the latter assigns \paxosRoundId to each set.
+In order to group conflicting transactions we need a function, which compares \txStateOne and \txStateTwo in pairs and detects whether
+\txStateOne and \txStateTwo are in conflict. Definition \ref{def:conflictFunction} presents such function.
 
 \begin{definition}
 \label{def:conflictFunction}
-\emph{Conflict function} denoted, as $\zeta (\text{\txOne, \txTwo}) \mapsto ( \mathcal{C}_1, \mathcal{C}_2)$, where $\mathcal{C}_1 = \mathcal{C}(\text{\txOne, \txTwo}) \wedge \mathcal{C}_2 = \emptyset $ or $\mathcal{C}_1 = \mathcal{C}(\text{\txOne}) \wedge \mathcal{C}_2=\mathcal{C}(\text{\txTwo})$, the former case is when transactions are in conflict and contain at least single $\delta$ for the same $k$, the latter otherwise.
+\emph{Conflict function} denoted, as $\zeta (\text{\txStateOne, \txStateTwo}) \mapsto ( \mathcal{C}_1, \mathcal{C}_2)$, where $\mathcal{C}_1 = \mathcal{C}(\text{\txStateOne, \txStateTwo}) \wedge \mathcal{C}_2 = \emptyset $ or $\mathcal{C}_1 = \mathcal{C}(\text{\txStateOne}) \wedge \mathcal{C}_2=\mathcal{C}(\text{\txStateTwo})$, the former case is when transactions are in conflict and contain at least single $\delta$ for the same $k$, the latter otherwise.
 \end{definition}

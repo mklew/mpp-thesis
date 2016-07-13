@@ -1,12 +1,2 @@
 %!TEX root = ../thesis.tex
 
-\subsection{Time of rollback}
-Transaction rollback happens either by:
-\begin{enumerate*}
-\item successfully committed concurrent transaction - which happens at the end of paxos round
-\item request of the client
-\end{enumerate*}
-
-Successfully committed transaction uses \emph{Transaction Index} to find conflicting transactions that participate in its round and use \emph{Private Transaction Storage} to delete their data, thus rollback transaction locally at the node.
-
-Client that wants to rollback transaction has to pass transaction state. Then replicas responsible for items are found and rollback messages are sent. When node receives rollback message it purges all the private data stored in \emph{Private Transaction Storage} associated with transaction id.
