@@ -21,36 +21,28 @@ $\in N^{RF}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus
    [2]{\textbf{for each} \emph{#1} $ \gets $ \emph{#2}}%
    {\textbf{end}}   
 
-  \caption{Registration in transaction index}
+  \caption{Registration of \txState in transaction index}
   \label{alg:indexRegistration}
-  \begin{algorithmic}
-  	\State $TS \gets$ transaction state of transaction to register
-  	\State $rounds \gets $ empty set 
-  	\State $items \gets $ subset of $TS.transactionItems$ owned by this node
-  	\ForEach{ ti }{TS.transactionItems}
-  		\State $conflicting \gets $ \Call{Find Conflicting}{ti} \Comment 
-  		\If {conflicting is not empty } 
-        	\State add paxos round id from conflicting participants to $rounds$
+  \begin{algorithmic}  	
+    \State $\mathit{idx} \gets$ set of pairs $(\text{\conflictingTxSet, \paxosRoundId})$ present in the index
+  	\State $\mathit{cc} \gets \emptyset$  \Comment{set of conflicting sets}  
+  	\ForEach{ $(\mathcal{C}(\text{\txStatei{1}, \txStatei{2}, ...}),\text{\paxosRoundId})$ }{$\mathit{idx}$}
+  		\ForEach{\txStatei{i}}{$\mathcal{C}(\text{\txStatei{1}, \txStatei{2}, ...})$}
+      \State $( \mathcal{C}_1, \mathcal{C}_2) \gets \zeta (\text{\txState, \txStatei{i}})$ \Comment{apply confict function}
+  		\If {$ (\text{\txState, \txStatei{i}}) \subset \mathcal{C}_1 $}  
+        	\State $\mathit{cc} \gets \mathit{cc} \cup (\mathcal{C},\text{\paxosRoundId})$ 
       \EndIf	
-  	\EndForEach    
-  	\State $round \gets$ unassigned round id
-  	\If {rounds size = 0}
-  		\State $round \gets$ generate new round id 
-  		\State \Call{Append Transaction}{TS, items, round} 		
-  	\ElsIf {rounds size = 1}
-  		\State $round \gets$ get round from $rounds$
-  		\State \Call{Append Transaction}{TS, items, round}
+      \EndForEach
+  	\EndForEach      	
+  	\If {$\mathit{cc} \equiv \emptyset$} \Comment{start a new set}
+      \State \paxosRoundId $\gets \mathit{random\_id()}$ 
+      \State $\mathcal{C}_{new} \gets \mathcal{C}(\text{\txState})$ 
+  		\State $\mathit{idx} \gets \mathit{idx} \cup (\mathcal{C}_{new}, \text{\paxosRoundId})$ 
+  	\ElsIf {$\mathit{cc} \equiv ((\mathcal{C},\text{\paxosRoundId}))$}
+  		\State $\mathcal{C} \gets \mathcal{C} \cup \text{\txState}$  \Comment{add to the set}
   	\Else
-  		\State transaction cannot be registered in index
+  		\State \txState cannot be registered in index
   	\EndIf
-
-
-  	\Procedure{Append Transaction}{$TS, items, round$} 
-	  	\ForEach{ ti }{items}
-	  		\State $participants \gets$ get participants from $index$ map by key $ti$ 
-	  		\State append $(TS, round)$ to participants
-	  	\EndForEach       		
-	\EndProcedure  	
   \end{algorithmic}
    
 \end{algorithm}
