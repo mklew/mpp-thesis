@@ -3,56 +3,71 @@
 \section{The algorithm's description}
 \mpt algorithm depends on previously described \paxos concepts and guarantees they provide. 
 This part of whole solution is responsible for committing \transaction. 
-A transaction is committed by performing multi partition transactions \paxos round, 
-in which \txState is accepted by majority in each replica group, 
-which is a set of nodes that replicates the key $k$, for all replica groups \ref{sec:mpp:replicaGroups}. 
+
+\client starts commit procedure by sending \txCommitMessage and then \node{i} becomes the executor of the \transaction and sends a series of messages called \emph{transitions}, which transition $\mathit{N}^'$ between \emph{phases}, which are steps of the algorithm. When all $\mathit{N}^'$ reach \emph{committed phase} or \emph{rolled back phase} \node{i} replies to a client with \txCommitResonseMessage.  \transaction is committed by performing multi partition transactions \paxos round, 
+in which \txState is accepted by majority in each replica group.
+
+\subsection{Replica groups}
+\label{sec:mpp:replicaGroups}
+\lwt supports single $k$, thus it communicates with single replica group $\tau(k) = N^{RF}_{k} \in \mathit{N}$, whereas \mpt is designed for mutations of multiple keys, thus there are multiple replica groups 
+$(\tau(k_1) \cup \tau(k_2) \cup ... \cup \tau(k_i) ) = (N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... \cup N^{RF}_{k_i} ) = \mathit{N^'} \in \mathit{N}$, where $(N^{RF}_{k_1} \cap N^{RF}_{k_2} \cap ... \cap N^{RF}_{k_i})$ can be non empty set, due to the fact that a node is a replica for different keys.
+
+Assume we have $\text{\txState}(\text{\txItemi{1}, \txItemi{2}})$, \RF{3} and $N=5$. Let $\mathit{N^{RF}_{k_1}} = \tau(\text{\txItemi{1}}), \mathit{N^{RF}_{k_2}} = \tau(\text{\txItemi{2}})$, where $\mathit{N^{RF}_{k_1}} = (n_1,n_2,n_3), \mathit{N^{RF}_{k_2}} = (n_2,n_3,n_5)$ thus $\mathit{N}^' = (N^{RF}_{k_1} \cup N^{RF}_{k_2}) = (n_1, n_2, n_3, n_5)$.
+In this example transaction has mutations on $4$ nodes and has
+$2$ replica groups, which have nodes $n_2, n_3$ in common.  
+
 
 \subsection{Phases}
 The algorithm execution occurs in \emph{phases}, which are the following: 
 \begin{enumerate*}
-\item idle phase,
+\item idle phase (start phase),
 \item setup phase,
-\item repair phase,
-\item prepare phase,
-\item propose phase,
-\item commit phase,
-\item rollback phase.
+\item repairng phase (optional),
+\item prepared phase,
+\item proposed phase,
+\item accepted phase,
+\item committed phase (end phase),
+\item rolled back phase (end phase).
 \end{enumerate*}
 
-Three phases: prepare, propose and commit, might be already recognizable, since they are parts of the \paxos algorithm. Similar phases could be identified for \lwt, since it also relies on \paxos.
+Replicas advance in phase after successful \emph{transitions}. The algorithm is done when quorum of each replica group is in end phase or when a timeout occurs, in which case commit procedure is aborted. Figure \ref{fig:phasesBasicPath} presents the transitions from idle phase to committed phase assuming successful transitions of each $n\in \text{\nodesTx}$.
 
-One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after setup phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
+%Three phases: prepare, propose and commit, might be already recognizable, since they are parts of the \paxos algorithm. 
 
-\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=4.5cm,
+%One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after setup phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
+\begin{figure}
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
   thick,main node/.style={circle,fill=blue!20,draw,
-  font=\sffamily\Large\bfseries,minimum size=10mm}]
+  ,minimum size=5mm}]
 
   \node[main node] (I) {Idle};
-  \node[main node] (S) [below of=I] {Setup};
+  \node[main node] (S) [below right of=I] {Setup};
   \node[main node] (PRE) [below of=S] {Prepare};
   \node[main node] (PRO) [below of=PRE] {Propose};
+  \node[main node] (A) [below of=PRO] {Accepted};
   \node[main node] (REP) [right of=PRE] {Repair};
-  \node[main node] (C) [below of=PRO] {Commit};
-  \node[main node] (R) [left of=C] {Rollback};
+  \node[main node] (C) [below right of=A] {Commit};
+  \node[main node] (R) [below left of=A] {Rollback};
 
   \path[every node/.style={font=\sffamily\small,
   		fill=white,inner sep=1pt}]
   	% Right-hand-side arrows rendered from top to bottom to
   	% achieve proper rendering of labels over arrows.
     (I) %edge [loop above] node {PrRd/-, PrWr/-} (I)
-        edge [bend left=0] node[right=1mm] {$\mathit{setup()}$} (S)
+        edge [bend left=0] node[right=1mm] {$\mathit{setup\_transition()}$} (S)
     %     edge [bend left=40] node[right=1mm] {BusRd/Flush} (S)
-    (S) edge [bend left=30] node[right=1mm] {$\mathit{prepare()}$} (PRE)        
+    (S) edge [bend left=30] node[right=1mm] {$\mathit{prepare\_transition()}$} (PRE)        
         edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back()}$} (R)        
     
-    (PRE) edge [loop above=30] node[right=1mm]  {$\mathit{not\_promised()}$} (PRE)
-      	  edge [bend left=30] node[right=1mm]  {$\mathit{propose()}$} (PRO)
-    	  edge [bend left=40] node[right=1mm] {$\mathit{repair()}$} (REP)  
-    	  edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back()}$} (R)
+    (PRE) edge [loop above=30] node[right=1mm]  {$\mathit{prepare\_again\_transition()}$} (PRE)
+      	  edge [bend left=30] node[right=1mm]  {$\mathit{propose\_transition()}$} (PRO)
+    	  edge [bend left=40] node[right=1mm] {$\mathit{repair\_transition()}$} (REP)  
+    	  edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back\_transition()}$} (R)
     %     edge [bend left=40] node[right=1mm] {BusRdX/Flush} (I)
-    (PRO) edge [bend left=30] node[right=1mm]  {$\mathit{commit()}$} (C)    	  
+    (PRO) edge [bend left=30] node[right=1mm]  {$\mathit{propose\_transition()}$} (A)
+    (A) edge [bend left=30] node[right=1mm]  {$\mathit{commit\_transition()}$} (C)    	  
     %     edge [bend left=40] node[right=1mm] {BusRdX/Flush} (I)    
-    (REP) edge [bend left=30] node[right=1mm] {$\mathit{repaired()}$} (PRE)       
+    (REP) edge [bend left=30] node[right=1mm] {$\mathit{to\_prepared\_from\_repaired\_transition()}$} (PRE)       
   	% Left-hand-side arrows rendered from bottom to top to
   	% achieve proper rendering of labels over arrows.
   	(PRO) edge [bend left=30] node[left=1mm]  {$\mathit{rejected()}$} (S);	
@@ -65,6 +80,41 @@ One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transi
     % (S) edge [bend left=40] node[left=1mm] {PrWr/BusRdX} (M)
     % (E) edge [bend left=30] node[left=1mm] {PrWr/-} (M);
 \end{tikzpicture}
+\caption{Basic path assuming successful transitions}
+\label{fig:phasesBasicPath}
+\end{figure}
+
+\subsubsection{Transitions between phases}
+Transitions are:
+\begin{itemize}
+\item transition to setup, which can transition to:
+	\begin{itemize}
+		\item setup phase
+		\item committed phase, when \txState is recorded as committed in \txLog  
+		\item rolled back phase, when \txState is recorded as rolled back in \txLog
+		\item idle phase, when \node{i} does not respond to the transition to setup message
+	\end{itemize}
+\item transition to prepared, which can transition to:
+	\begin{itemize}
+		\item committed phase, when \txState is recorded as committed in \txLog  
+		\item rolled back phase, when \txState is recorded as rolled back in \txLog\item setup phase, when \node{i} can not promise
+		\item repair phase, when \node{i} promises and replies with in-progress \txState
+		\item prepare phase, when \node{i} promises and does not have in-progress \txState 
+	\end{itemize}
+\item transition to prepared from repairing, which can transition to:
+	\begin{itemize}
+		\item repair phase, when repair is not done,
+		\item transition to prepare phase, when repair is done
+		\item transition to setup phase, when repair is done, but \node{i} was forced by quorum to transition into repair phase
+	\end{itemize}
+\item transition to propose, which can transition to:
+	\begin{itemize}
+		\item accepted phase, when proposal is accepted
+		\item rolled back phase, when \node{i} refuses the proposal and notifies that \txState was rolled back
+		\item setup phase, when \node{i} refuses the proposal
+	\end{itemize}
+\item commit transition, a transition from accepted phase to commit phase
+\end{itemize}
 
 %         High level description
 % Algorithm works in phases. Phases are:
@@ -83,20 +133,13 @@ One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transi
 
 
 
-\subsection{Replica groups}
-\label{sec:mpp:replicaGroups}
-\lwt supports single $k$, thus it communicates with single replica group $\tau(k) = N^{RF}_{k} \in \mathit{N}$, whereas \mpt is designed for mutations of multiple keys, thus there are multiple replica groups 
-$(\tau(k_1) \cup \tau(k_2) \cup ... \cup \tau(k_i) ) = (N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... \cup N^{RF}_{k_i} ) = \mathit{N^'} \in \mathit{N}$, where $(N^{RF}_{k_1} \cap N^{RF}_{k_2} \cap ... \cap N^{RF}_{k_i})$ can be non empty set, due to the fact that a node is a replica for different keys.
-
-Assume we have $\text{\txState}(\text{\txItemi{1}, \txItemi{2}})$, \RF{3} and $N=5$. Let $\mathit{N^{RF}_{k_1}} = \tau(\text{\txItemi{1}}), \mathit{N^{RF}_{k_2}} = \tau(\text{\txItemi{2}})$, where $\mathit{N^{RF}_{k_1}} = (n_1,n_2,n_3), \mathit{N^{RF}_{k_2}} = (n_2,n_3,n_5)$ thus $\mathit{N}^' = (N^{RF}_{k_1} \cup N^{RF}_{k_2}) = (n_1, n_2, n_3, n_5)$.
-In this example transaction has mutations on $4$ nodes and has
-$2$ replica groups, which have nodes $n_2, n_3$ in common.  
-Phase transition messages are sent to each $n\in \mathit{N}^'$.
 
 %As a corollary, any operation done in \mpt must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, and $n7$ in order to not repeat operation on same nodes. However the results of these operations must be evaluated in the context of the whole replica group. 
 
 
 \subsection{Moving forward in phases}
+Phase transition messages are sent to each $n\in \mathit{N}^'$.
+
 Replicas start in \emph{idle phase}, which is a starting phase for all replicas, and move to more advanced phases through phase transitions, which are operations that include node to node communication, until they reach an end phase, which is either committed or rolled back phase.
 
 The most basic optimistic phase transition sequence is: \begin{enumerate*} \item idle phase, \item setup phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
