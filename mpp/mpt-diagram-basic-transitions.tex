@@ -1,0 +1,45 @@
+%!TEX root = ../thesis.tex
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node] (I) {Idle};
+  \node[main node] (S) [below right of=I] {Setup};
+  \node[main node] (PRE) [below of=S] {Prepared};
+  \node[main node] (A) [below of=PRE] {Accepted};
+  \node[main node] (REP) [right of=PRE] {Repairing};
+  \node[main node, fill=blue!60] (C) [below right of=A] {Committed};
+  \node[main node, fill=blue!60] (R) [below left of=A] {Rolled back};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (I) edge [bend left=0] node[right=1mm] {\setupTransition} (S)
+    (S) edge [bend left=30] node[right=1mm] {\prepareTransition} (PRE)        
+        %edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back()}$} (R)            
+    (PRE) 
+    	  %edge [loop above=30] node[right=1mm]  {$\mathit{prepare\_again\_transition()}$} (PRE)
+      	  edge [bend left=30] node[right=1mm]  {\proposeTransition} (A)
+    	  %edge [bend left=40] node[right=1mm] {$\mathit{repair\_transition()}$} (REP)  
+    	  %edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back\_transition()}$} (R)
+    (A) edge [bend left=30] node[right=1mm]  {\commitTransition} (C);    	  
+    %(REP) edge [bend left=30] node[right=1mm] {$\mathit{to\_prepared\_from\_repaired\_transition()}$} (PRE)       
+  	% Left-hand-side arrows rendered from bottom to top to
+  	% achieve proper rendering of labels over arrows.
+  	%(PRO) edge [bend left=30] node[left=1mm]  {$\mathit{rejected()}$} (S);	
+    % (I) edge [bend left=65] node[left=1mm] {PrWr/BusRdX} (M)
+    %     edge [bend left=55] node[left=1mm] {PrRd/BusRd Ex} (E)
+    %     edge [bend left=30] node[left=1mm] {PrRd/BusRd} (F)
+    % (F) edge [loop above] node {PrRd/-} (F)
+    %     edge [bend left=50] node[left=1mm] {PrWr/BusRdX} (M)
+    %     edge [bend left=30] node[left=1mm] {BusRd/Flush} (S)
+    % (S) edge [bend left=40] node[left=1mm] {PrWr/BusRdX} (M)
+    % (E) edge [bend left=30] node[left=1mm] {PrWr/-} (M);
+\end{tikzpicture}
+\caption{Basic path with successful transitions}
+\label{fig:phasesBasicPath}
+\end{figure}

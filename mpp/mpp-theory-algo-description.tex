@@ -35,54 +35,45 @@ Replicas advance in phase after successful \emph{transitions}. The algorithm is 
 
 %One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after setup phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
 
-\newcommand{\setupTransition}{$\mathit{setup\_transition()}$}
-\newcommand{\prepareTransition}{$\mathit{prepare\_transition()}$}
-\newcommand{\proposeTransition}{$\mathit{propose\_transition()}$}
-\newcommand{\commitTransition}{$\mathit{commit\_transition()}$}
+\newcommand{\setupTransition}{$\mathit{setup\_transition()}$\xspace}
+\newcommand{\prepareTransition}{$\mathit{prepare\_transition()}$\xspace}
+\newcommand{\proposeTransition}{$\mathit{propose\_transition()}$\xspace}
+\newcommand{\commitTransition}{$\mathit{commit\_transition()}$\xspace}
+\newcommand{\repairingTransition}{$\mathit{reparing\_transition()}$\xspace}
 
-\begin{figure}
-\centering
-\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
-  thick,main node/.style={circle,fill=blue!20,draw,
-  ,minimum size=5mm}]
+\input{mpp/mpt-diagram-basic-transitions.tex}
 
-  \node[main node] (I) {Idle};
-  \node[main node] (S) [below right of=I] {Setup};
-  \node[main node] (PRE) [below of=S] {Prepared};
-  \node[main node] (A) [below of=PRE] {Accepted};
-  \node[main node] (REP) [right of=PRE] {Repairing};
-  \node[main node, fill=blue!60] (C) [below right of=A] {Committed};
-  \node[main node, fill=blue!60] (R) [below left of=A] {Rolled back};
-
-  \path[every node/.style={font=\sffamily\small,
-  		fill=white,inner sep=1pt}]
-  	% Right-hand-side arrows rendered from top to bottom to
-  	% achieve proper rendering of labels over arrows.
-    (I) edge [bend left=0] node[right=1mm] {\setupTransition} (S)
-    (S) edge [bend left=30] node[right=1mm] {\prepareTransition} (PRE)        
-        %edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back()}$} (R)            
-    (PRE) 
-    	  %edge [loop above=30] node[right=1mm]  {$\mathit{prepare\_again\_transition()}$} (PRE)
-      	  edge [bend left=30] node[right=1mm]  {\proposeTransition} (A)
-    	  %edge [bend left=40] node[right=1mm] {$\mathit{repair\_transition()}$} (REP)  
-    	  %edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back\_transition()}$} (R)
-    (A) edge [bend left=30] node[right=1mm]  {\commitTransition} (C);    	  
-    %(REP) edge [bend left=30] node[right=1mm] {$\mathit{to\_prepared\_from\_repaired\_transition()}$} (PRE)       
-  	% Left-hand-side arrows rendered from bottom to top to
-  	% achieve proper rendering of labels over arrows.
-  	%(PRO) edge [bend left=30] node[left=1mm]  {$\mathit{rejected()}$} (S);	
-    % (I) edge [bend left=65] node[left=1mm] {PrWr/BusRdX} (M)
-    %     edge [bend left=55] node[left=1mm] {PrRd/BusRd Ex} (E)
-    %     edge [bend left=30] node[left=1mm] {PrRd/BusRd} (F)
-    % (F) edge [loop above] node {PrRd/-} (F)
-    %     edge [bend left=50] node[left=1mm] {PrWr/BusRdX} (M)
-    %     edge [bend left=30] node[left=1mm] {BusRd/Flush} (S)
-    % (S) edge [bend left=40] node[left=1mm] {PrWr/BusRdX} (M)
-    % (E) edge [bend left=30] node[left=1mm] {PrWr/-} (M);
-\end{tikzpicture}
-\caption{Basic path assuming successful transitions}
-\label{fig:phasesBasicPath}
-\end{figure}
+\subsubsection{Transitions between phases}
+Transitions are:
+\begin{itemize}
+\item \setupTransition presented on Figure \ref{fig:transitionToSetup}, which can transition to:
+	\begin{itemize}
+		\item setup phase, when \node{i} fails
+		\item committed phase, when \txState is recorded as committed in \txLog  
+		\item rolled back phase, when \txState is recorded as rolled back in \txLog
+		\item idle phase, when \node{i} does not respond to the transition to setup message
+	\end{itemize}
+\item \prepareTransition shown on Figure \ref{fig:transitionToPrepare} which can transition to:
+	\begin{itemize}
+		\item committed phase, when \txState is recorded as committed in \txLog  
+		\item rolled back phase, when \txState is recorded as rolled back in \txLog\item setup phase, when \node{i} can not promise
+		\item repair phase, when \node{i} promises and replies with in-progress \txState
+		\item prepare phase, when \node{i} promises and does not have in-progress \txState 
+	\end{itemize}
+\item \repairingTransition presented on Figure \ref{fig:transitionRepairing}, which can transition to:
+	\begin{itemize}
+		\item repairing phase, when repair of in-progress transaction is not done,
+		\item transition to prepared phase, when repair is done
+		\item transition to setup phase, when repair is done, but \node{i} did not receive promise
+	\end{itemize}
+\item \proposeTransition depicted on Figure \ref{fig:transitionToPropose}, which can transition to:
+	\begin{itemize}
+		\item accepted phase, when proposal is accepted by \node{i}
+		\item rolled back phase, when \node{i} refuses the proposal and notifies that \txState was rolled back
+		\item setup phase, when \node{i} refuses the proposal
+	\end{itemize}
+\item \commitTransition presented on Figure \ref{fig:transitionToCommitted}, which transitions to committed phase
+\end{itemize}
 
 \input{mpp/mpt-diagram-setup-transition.tex}
 
@@ -92,37 +83,7 @@ Replicas advance in phase after successful \emph{transitions}. The algorithm is 
 
 \input{mpp/mpt-diagram-commit-transition.tex}
 
-\subsubsection{Transitions between phases}
-Transitions are:
-\begin{itemize}
-\item transition to setup, which can transition to:
-	\begin{itemize}
-		\item setup phase
-		\item committed phase, when \txState is recorded as committed in \txLog  
-		\item rolled back phase, when \txState is recorded as rolled back in \txLog
-		\item idle phase, when \node{i} does not respond to the transition to setup message
-	\end{itemize}
-\item transition to prepared, which can transition to:
-	\begin{itemize}
-		\item committed phase, when \txState is recorded as committed in \txLog  
-		\item rolled back phase, when \txState is recorded as rolled back in \txLog\item setup phase, when \node{i} can not promise
-		\item repair phase, when \node{i} promises and replies with in-progress \txState
-		\item prepare phase, when \node{i} promises and does not have in-progress \txState 
-	\end{itemize}
-\item transition to prepared from repairing, which can transition to:
-	\begin{itemize}
-		\item repair phase, when repair is not done,
-		\item transition to prepare phase, when repair is done
-		\item transition to setup phase, when repair is done, but \node{i} was forced by quorum to transition into repair phase
-	\end{itemize}
-\item transition to propose, which can transition to:
-	\begin{itemize}
-		\item accepted phase, when proposal is accepted
-		\item rolled back phase, when \node{i} refuses the proposal and notifies that \txState was rolled back
-		\item setup phase, when \node{i} refuses the proposal
-	\end{itemize}
-\item commit transition, a transition from accepted phase to commit phase
-\end{itemize}
+\input{mpp/mpt-diagram-repairing-transition.tex}
 
 %         High level description
 % Algorithm works in phases. Phases are:

@@ -1,0 +1,25 @@
+%!TEX root = ../thesis.tex
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node] (REP) {Repairing};
+  \node[main node] (S) [below right of=REP] {Setup};
+  \node[main node] (PRE) [below of=S] {Prepared};
+  
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+  (REP) edge [loop] node[left=1mm] {$\mathit{repair\_not\_done}$} (REP)
+    	edge [bend right=30] node[right=1mm] {$\mathit{repair\_done}$} (PRE)
+    	edge [bend left=60] node[right=1mm] {$\mathit{repair\_done\_but\_not\_promised}$} (S);
+    	
+\end{tikzpicture}
+\caption{Outcomes of \repairingTransition}
+\label{fig:transitionRepairing}
+\end{figure}
