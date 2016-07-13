@@ -7,6 +7,11 @@ Transaction index denoted, as \txIndex is a service, local to a node, which prov
 Registration of \txState in \txIndex on each \node{i} $\in$\nodesTx is precondition to the commit procedure of \mpt. 
 Since \txIndex is local, each \transaction receives different \paxosRoundId on different nodes, but the value of \paxosRoundId is never used outside of a node, thus \paxosRoundId does not have to be globally the same. \paxosRoundId is used only to identify \paxos round for \conflictingTxSet at each \node{i}. If \transaction participates in the same \paxos round identified by \paxosRoundId as other conflicting transactions, then only single \transaction is committed after \nodesTx agree on the proposed \txState.
 
+% TODO może dodać ten paragraf
+%Providing same paxos round id would require another consensus algorithm of its own which would inherently increase cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
+
+%\paxosRoundId, used to find \paxos State data at each node locally, is a synthetic id and is different at each replica during \mpt round. 
+
 Transaction index stores sets of \conflictingTxSet and assigns \paxosRoundId to each set. When a new \txStateM is registered, \txIndex tries to find a set \conflictingTxSet to which \txStateM can be added by applying \conflictFunction to \txStateM and each \transaction in each set. If there is a conflict, sets can be merged together, thus \txStateM joins \conflictingTxSet and receives the same \paxosRoundId. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
 
 During the commit procedure of \mpt \transactionFull has to register in each quorum of each replica subset
