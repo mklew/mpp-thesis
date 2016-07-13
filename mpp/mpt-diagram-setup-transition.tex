@@ -1,0 +1,33 @@
+%!TEX root = ../thesis.tex
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node] (I) {Idle};
+  \node[main node] (S) [right of=I] {Setup};
+  \node[main node, fill=blue!60] (C) [above right of=S] {Committed};
+  \node[main node, fill=blue!60] (R) [below right of=S] {Rolled back};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (I) edge [loop ] node[right=1mm] {$\mathit{node\_failure}$} (I)
+    	edge [bend left=30] node[right=1mm] {$\mathit{success}$} (S)
+    	edge [bend left=60] node[right=1mm] {$\mathit{committed}$} (C)
+    	edge [bend right=90] node[right=1mm] {$\mathit{rolled\_back}$} (R);
+    % (S) edge [bend left=30] node[right=1mm] {\prepareTransition} (PRE)        
+        %edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back()}$} (R)            
+    % (PRE) 
+    	  %edge [loop above=30] node[right=1mm]  {$\mathit{prepare\_again\_transition()}$} (PRE)
+      	  % edge [bend left=30] node[right=1mm]  {\proposeTransition} (A)
+    	  %edge [bend left=40] node[right=1mm] {$\mathit{repair\_transition()}$} (REP)  
+    	  %edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back\_transition()}$} (R)
+    % (A) edge [bend left=30] node[right=1mm]  {\commitTransition} (C);    	  
+\end{tikzpicture}
+\caption{Outcomes of \setupTransition}
+\label{fig:transitionToSetup}
+\end{figure}

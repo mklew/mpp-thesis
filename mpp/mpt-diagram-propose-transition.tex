@@ -1,0 +1,26 @@
+%!TEX root = ../thesis.tex
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node] (S) {Setup};
+  \node[main node] (PRE) [right of=S] {Prepared};
+  \node[main node] (A) [right of=PRE] {Accepted};
+  \node[main node, fill=blue!60] (R) [below right of=A] {Rolled back};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (PRE) edge [bend left=60] node[left=-8mm] {$\mathit{node\_failure}$} (S)
+      edge [bend right=60] node[left=-5mm] {$\mathit{refuse}$} (S)
+    	edge [bend left=60] node[right=-2mm] {$\mathit{accepted}$} (A)
+    	edge [bend right=70] node[right=1mm] {$\mathit{rolled\_back}$} (R);
+
+\end{tikzpicture}
+\caption{Outcomes of \proposeTransition}
+\label{fig:transitionToPrepare}
+\end{figure}

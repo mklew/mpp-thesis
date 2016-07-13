@@ -1,0 +1,21 @@
+%!TEX root = ../thesis.tex
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node] (A) [right of=PRE] {Accepted};
+  \node[main node, fill=blue!60] (C) [right of=A] {Committed};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (A) edge [bend left=60] node[left=-8mm] {$\mathit{commit}$} (C);
+
+\end{tikzpicture}
+\caption{Outcomes of \commitTransition}
+\label{fig:transitionToCommitted}
+\end{figure}

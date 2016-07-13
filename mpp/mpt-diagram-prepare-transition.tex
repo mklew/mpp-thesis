@@ -1,0 +1,28 @@
+%!TEX root = ../thesis.tex
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node] (S) {Setup};
+  \node[main node] (PRE) [right of=S] {Prepared};
+  \node[main node] (REP) [below right  of=PRE] {Repairing};
+  \node[main node, fill=blue!60] (C) [above right of=REP] {Committed};
+  \node[main node, fill=blue!60] (R) [below right of=REP] {Rolled back};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (S) edge [loop ] node[left=1mm] {$\mathit{node\_failure}$} (S)
+    	edge [bend left=30] node[right=1mm] {$\mathit{success}$} (PRE)
+    	edge [bend left=60] node[right=1mm] {$\mathit{committed}$} (C)
+    	edge [bend right=90] node[right=1mm] {$\mathit{rolled\_back}$} (R)
+      edge [bend right=90] node[right=1mm] {$\mathit{in\_progress}$} (REP);
+
+\end{tikzpicture}
+\caption{Outcomes of \prepareTransition}
+\label{fig:transitionToPrepare}
+\end{figure}

@@ -34,7 +34,14 @@ Replicas advance in phase after successful \emph{transitions}. The algorithm is 
 %Three phases: prepare, propose and commit, might be already recognizable, since they are parts of the \paxos algorithm. 
 
 %One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after setup phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
+
+\newcommand{\setupTransition}{$\mathit{setup\_transition()}$}
+\newcommand{\prepareTransition}{$\mathit{prepare\_transition()}$}
+\newcommand{\proposeTransition}{$\mathit{propose\_transition()}$}
+\newcommand{\commitTransition}{$\mathit{commit\_transition()}$}
+
 \begin{figure}
+\centering
 \begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
   thick,main node/.style={circle,fill=blue!20,draw,
   ,minimum size=5mm}]
@@ -51,15 +58,15 @@ Replicas advance in phase after successful \emph{transitions}. The algorithm is 
   		fill=white,inner sep=1pt}]
   	% Right-hand-side arrows rendered from top to bottom to
   	% achieve proper rendering of labels over arrows.
-    (I) edge [bend left=0] node[right=1mm] {$\mathit{setup\_transition()}$} (S)
-    (S) edge [bend left=30] node[right=1mm] {$\mathit{prepare\_transition()}$} (PRE)        
+    (I) edge [bend left=0] node[right=1mm] {\setupTransition} (S)
+    (S) edge [bend left=30] node[right=1mm] {\prepareTransition} (PRE)        
         %edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back()}$} (R)            
     (PRE) 
     	  %edge [loop above=30] node[right=1mm]  {$\mathit{prepare\_again\_transition()}$} (PRE)
-      	  edge [bend left=30] node[right=1mm]  {$\mathit{propose\_transition()}$} (A)
+      	  edge [bend left=30] node[right=1mm]  {\proposeTransition} (A)
     	  %edge [bend left=40] node[right=1mm] {$\mathit{repair\_transition()}$} (REP)  
     	  %edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back\_transition()}$} (R)
-    (A) edge [bend left=30] node[right=1mm]  {$\mathit{commit\_transition()}$} (C);    	  
+    (A) edge [bend left=30] node[right=1mm]  {\commitTransition} (C);    	  
     %(REP) edge [bend left=30] node[right=1mm] {$\mathit{to\_prepared\_from\_repaired\_transition()}$} (PRE)       
   	% Left-hand-side arrows rendered from bottom to top to
   	% achieve proper rendering of labels over arrows.
@@ -76,6 +83,14 @@ Replicas advance in phase after successful \emph{transitions}. The algorithm is 
 \caption{Basic path assuming successful transitions}
 \label{fig:phasesBasicPath}
 \end{figure}
+
+\input{mpp/mpt-diagram-setup-transition.tex}
+
+\input{mpp/mpt-diagram-prepare-transition.tex}
+
+\input{mpp/mpt-diagram-propose-transition.tex}
+
+\input{mpp/mpt-diagram-commit-transition.tex}
 
 \subsubsection{Transitions between phases}
 Transitions are:
