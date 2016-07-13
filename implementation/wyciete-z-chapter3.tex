@@ -101,3 +101,6 @@ Private transaction storage satisfies requirement of performing many operations 
 % 1. C waits until quorum responds with success
 % 2. C responds to client with transaction item
 % 3. Client receives transaction item and merges it to its current transaction state
+
+% Transaction Log
+The log stores information off memory, in dedicated table, in order to preserve information about transaction after it is removed from \emph{Transaction Index}.

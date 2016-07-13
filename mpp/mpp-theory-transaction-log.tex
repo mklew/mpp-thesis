@@ -2,14 +2,13 @@
 
 \section{Transaction Log}
 \label{sec:mpp:transactionLog}
-\emph{Transaction Log} is a similar concept to \emph{Transaction Index}. It also has to be present at each node in the cluster. Its responsibility is to record committed and rolled back transactions. \emph{Transaction Index} changes frequently, because transactions are registered in it and removed on rollback. Since \emph{transaction index} is the only way to find Paxos State and since transactions are removed from index once are finished, we need a log that has information whether transaction is committed or not. It has to support following operations:
+\emph{Transaction Log} denoted, as \txLog is a local data structure present at each \node{i}$\in\text{\nodes}$. Its responsibility is to record committed and rolled back transactions. \txIndex changes frequently, because transactions are registered in it and removed on commit and rollback. Since \txIndex is the only way to find \paxosRoundId and transactions are removed from index once are finished, we need a log that has information whether transaction was committed or not. \txLog has to support the following operations:
 \begin{description}
-\item[\code{addAsCommitted (transaction id)}] -- records committed transaction
-\item[\code{addAsRolledBack (transaction id)}] -- records rolled back transaction
-\item[\code{findTransaction(transaction id)}] -- finds information about transaction. Returns \emph{LogState} which can be one of: \begin{enumerate*} 
-		\item \code{Committed} -- when transaction has been committed
-		\item \code{Rolled_back} -- when transaction has been rolled back
-		\item \code{Unknown} -- when transaction with given id hasn’t been added to a log yet
+\item[\code{addAsCommitted (transaction id)}] -- record a committed transaction
+\item[\code{addAsRolledBack (transaction id)}] -- record a rolled back transaction
+\item[\code{findTransaction(transaction id)}] -- finds information about a transaction. Returns \emph{LogState} which can be one of: \begin{enumerate*} 
+		\item \code{Committed} -- when transaction was committed,
+		\item \code{Rolled_back} -- when transaction was rolled back,
+		\item \code{Unknown} -- when transaction is missing in the log
 		\end{enumerate*} 
 \end{description}
-The log stores information off memory, in dedicated table, in order to preserve information about transaction after it is removed from \emph{Transaction Index}.
