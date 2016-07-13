@@ -47,7 +47,7 @@ When \client finishes its planned operations \transaction can be either committe
 In order to commit \transaction \client sends \txCommitMessage with transaction state attached, and subsequently \node{i} becomes the coordinator of the transaction and is responsible for orchestrating distributed consensus among nodes affected by \transaction referenced by transaction items. When consensus is reached each node moves private data of \transaction from private transaction storage to the main storage and marks \transaction, as committed in transaction log. Client receives message \txCommitResonseMessage about successfully committed transaction.
 
 There are many concurrent transactions and some of them mutate same keys, thus concurrency control is required which gurantees that interfering transactions are not committed at the same time. Commit procedure solves this problem by grouping such transactions and performing distributed consensus round, which selects single transaction that is committed, whereas the rest is rolled back.
-Commit procedure uses another local data structure \emph{transaction index}, which is responsible for identifing interfering transactions and grouping them into same consenus rounds.
+Commit procedure uses another two local data structures \emph{transaction index}, which is responsible for identifing interfering transactions and grouping them into same consenus rounds and \emph{transaction log}, which records committed or rolled back transactions.
 
 \begin{definition}
 	\label{def:message}

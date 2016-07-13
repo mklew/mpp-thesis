@@ -10,8 +10,8 @@ which is a set of nodes that replicates the key $k$, for all replica groups \ref
 \subsection{Phases}
 The algorithm execution occurs in \emph{phases}, which are the following: 
 \begin{enumerate*}
-\item no phase,
-\item pre prepare phase,
+\item idle phase,
+\item setup phase,
 \item repair phase,
 \item prepare phase,
 \item propose phase,
@@ -21,7 +21,50 @@ The algorithm execution occurs in \emph{phases}, which are the following:
 
 Three phases: prepare, propose and commit, might be already recognizable, since they are parts of the \paxos algorithm. Similar phases could be identified for \lwt, since it also relies on \paxos.
 
-One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after pre prepare phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
+One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after setup phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
+
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=4.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  font=\sffamily\Large\bfseries,minimum size=10mm}]
+
+  \node[main node] (I) {Idle};
+  \node[main node] (S) [below of=I] {Setup};
+  \node[main node] (PRE) [below of=S] {Prepare};
+  \node[main node] (PRO) [below of=PRE] {Propose};
+  \node[main node] (REP) [right of=PRE] {Repair};
+  \node[main node] (C) [below of=PRO] {Commit};
+  \node[main node] (R) [left of=C] {Rollback};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (I) %edge [loop above] node {PrRd/-, PrWr/-} (I)
+        edge [bend left=0] node[right=1mm] {$\mathit{setup()}$} (S)
+    %     edge [bend left=40] node[right=1mm] {BusRd/Flush} (S)
+    (S) edge [bend left=30] node[right=1mm] {$\mathit{prepare()}$} (PRE)        
+        edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back()}$} (R)        
+    
+    (PRE) edge [loop above=30] node[right=1mm]  {$\mathit{not\_promised()}$} (PRE)
+      	  edge [bend left=30] node[right=1mm]  {$\mathit{propose()}$} (PRO)
+    	  edge [bend left=40] node[right=1mm] {$\mathit{repair()}$} (REP)  
+    	  edge [bend right=40] node[right=1mm] {$\mathit{rolled\_back()}$} (R)
+    %     edge [bend left=40] node[right=1mm] {BusRdX/Flush} (I)
+    (PRO) edge [bend left=30] node[right=1mm]  {$\mathit{commit()}$} (C)    	  
+    %     edge [bend left=40] node[right=1mm] {BusRdX/Flush} (I)    
+    (REP) edge [bend left=30] node[right=1mm] {$\mathit{repaired()}$} (PRE)       
+  	% Left-hand-side arrows rendered from bottom to top to
+  	% achieve proper rendering of labels over arrows.
+  	(PRO) edge [bend left=30] node[left=1mm]  {$\mathit{rejected()}$} (S);	
+    % (I) edge [bend left=65] node[left=1mm] {PrWr/BusRdX} (M)
+    %     edge [bend left=55] node[left=1mm] {PrRd/BusRd Ex} (E)
+    %     edge [bend left=30] node[left=1mm] {PrRd/BusRd} (F)
+    % (F) edge [loop above] node {PrRd/-} (F)
+    %     edge [bend left=50] node[left=1mm] {PrWr/BusRdX} (M)
+    %     edge [bend left=30] node[left=1mm] {BusRd/Flush} (S)
+    % (S) edge [bend left=40] node[left=1mm] {PrWr/BusRdX} (M)
+    % (E) edge [bend left=30] node[left=1mm] {PrWr/-} (M);
+\end{tikzpicture}
 
 %         High level description
 % Algorithm works in phases. Phases are:
@@ -56,9 +99,9 @@ As a corollary, any operation done in \mpt must be done once per node that is af
 
 
 \subsection{Moving forward in phases}
-Replicas start in \emph{no phase}, which is a starting phase for all replicas, and move to more advanced phases through phase transitions, which are operations that include node to node communication, until they reach an end phase, which is either committed or rolled back phase.
+Replicas start in \emph{idle phase}, which is a starting phase for all replicas, and move to more advanced phases through phase transitions, which are operations that include node to node communication, until they reach an end phase, which is either committed or rolled back phase.
 
-The most basic optimistic phase transition sequence is: \begin{enumerate*} \item no phase, \item pre prepared phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
+The most basic optimistic phase transition sequence is: \begin{enumerate*} \item idle phase, \item setupd phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
 %Its transitions however depend on results of transitions of other replicas and other replica groups.
 
 
@@ -133,7 +176,7 @@ The algorithm to making private transaction data consistent looks as follows:
 
 
 Inputs:
-        TransactionState - state of transaction, it is source of truth of all modifications that happened during transaction. Originally send by client, further forwarded by leader node to this replica node that has to run pre prepare operation.
+        TransactionState - state of transaction, it is source of truth of all modifications that happened during transaction. Originally send by client, further forwarded by leader node to this replica node that has to run setup operation.
 
 
         Make data consistent algorithm:        
@@ -173,7 +216,7 @@ Without such restriction, replica would think it[k] has consistent data, but in 
 \subsection{Rollback phase}
 Replica in a rollback phase, means that transaction was rolled back at the given replica node. 
 This phase is special, because if even one replica group decides to move to rollback phase, then all the other replicas have to move to rollback phase. Secondly, there is no transition out of rollback phase. \mpt algorithm ends and yields result that transaction has been rolled back.
-Any replica affected by transaction can transition to rollback phase just after pre prepare phase, but only from following phases:
+Any replica affected by transaction can transition to rollback phase just after setup phase, but only from following phases:
 
 \begin{enumerate*}
 \item prepare phase,
@@ -189,14 +232,14 @@ If replica has to move to rollback phase upon decision of all replica groups and
 
 
 \subsection{Prepare phase}
-Prepare phase is the expected next phase after pre prepare phase. During prepare each replica receives ballot, which is just a name for a timestamp. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by id which is stored in Transaction Index. To find that id, we need to look up index using Transaction State. That requires that ballot is passed along with transaction state, but this state cannot be treated as paxos value. That’s not how paxos algorithm was designed. Transaction State is used only to find id of Paxos State and to compare ballots.
+Prepare phase is the expected next phase after setup phase. During prepare each replica receives ballot, which is just a name for a timestamp. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by id which is stored in Transaction Index. To find that id, we need to look up index using Transaction State. That requires that ballot is passed along with transaction state, but this state cannot be treated as paxos value. That’s not how paxos algorithm was designed. Transaction State is used only to find id of Paxos State and to compare ballots.
 
 
 In order to find Paxos Id using Transaction State, Transaction Index is exclusively acquired and queried. Assumption is that transaction has successfully registered in index beforehand. Therefore if it is not found in index it can mean one of:
 \begin{enumerate*}
 \item transaction was rolled back by concurrent transaction,
 \item transaction was committed by other leader which repaired in progress transaction - this is the case, when replicas go back in phase but at least one of them has successfully proposed transaction state,
-\item this replica was down during pre prepare phase and did not get the message. It could happen due to network partition or hardware failure.
+\item this replica was down during setup phase and did not get the message. It could happen due to network partition or hardware failure.
 \end{enumerate*}
 
 
@@ -260,11 +303,11 @@ When leader receives acknowledgments from all replica groups, it can safely fini
 It might happen that during prepare leader receives in progress proposal which means that it has interrupted some other leader which was executing his transaction. As required by paxos algorithm, in progress proposal has to be completed before first transaction can continue. When replica group sees that it has in progress proposal, this replica group has to transition to repairing phase. 
 Other replica groups are also affected because they cannot advance in phase until in progress transaction is repaired. Repaired means that \mpt round is run on in progress transaction until it finishes with commit or rollback. Only after repair first transaction might continue. If it turns out that repaired transaction was rolled back, first transaction has a chance to be committed. If however repaired transaction is committed, main transaction will see that it was rolled back and will also stop.
 This means that another \mpt round is nested in main \mpt round. It is slightly different because it can start from more advanced phase.
-If other transaction managed to proposed itself it means that is was in prepared phase hence in pre prepared phase also. Therefore repairing in progress transaction can start with replicas in pre prepare phase. First transition run on replicas is transition to prepare phase skipping registration in index and making transactions data consistent as it was already done by previous leader.
+If other transaction managed to proposed itself it means that is was in prepared phase hence in setupd phase also. Therefore repairing in progress transaction can start with replicas in setup phase. First transition run on replicas is transition to prepare phase skipping registration in index and making transactions data consistent as it was already done by previous leader.
 
 
 \subsubsection{Moving in phases and repair phase}
-Since all replicas have to wait with further transitions until in progress transactions are repaired for all replica groups, repair phase has to be less advanced than prepare phase, but more advanced than pre prepare phase since without being in pre prepare none of replicas would notice any in progress transaction. This is an example where replicas have to move back in phase in order to stay in sync with all replicas executing transaction.
+Since all replicas have to wait with further transitions until in progress transactions are repaired for all replica groups, repair phase has to be less advanced than prepare phase, but more advanced than setup phase since without being in setup none of replicas would notice any in progress transaction. This is an example where replicas have to move back in phase in order to stay in sync with all replicas executing transaction.
 
 
 \subsection{The example of \mpt}
@@ -274,10 +317,10 @@ Let us assume that updates are already existing in the private transaction stora
 
 
 \begin{enumerate}
-\item Nodes start at \emph{no phase}, and first transition has to move them to pre prepared phase.
+\item Nodes start at \emph{idle phase}, and first transition has to move them to setupd phase.
 
-\item Run transition to pre prepared phase. Assume all nodes do the pre prepare operation successfully. \\
- After the transition, quorums in $RG1$, $RG2$ are in \emph{pre prepare phase}. Minimum phase among replica groups is \emph{pre prepare phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a message does:
+\item Run transition to setupd phase. Assume all nodes do the setup operation successfully. \\
+ After the transition, quorums in $RG1$, $RG2$ are in \emph{setup phase}. Minimum phase among replica groups is \emph{setup phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a message does:
  \begin{enumerate}
  	\item registers transaction $t$ in the Transaction Index, since there are no concurrent transactions, a new paxos round is created for transaction,
  	\item execute data consistency procedure, for example $n2$ responsible for $k_{1}$ has to read from other replicas of the key: $n1, n3$ and then merge the data, and save it in the private transaction storage.
@@ -319,22 +362,22 @@ Let us assume that updates are already existing in the private transaction stora
 % 8. Next transition will do proposal in order to move to proposed phase, however in the meantime other transaction did prepare on node3 and node5 and received promise. Now things should get complicated. 
 % 9. Node 1 gets proposal and accepts it. Replica 1 wants to transition to Proposed phase
 % 10. Node 2 gets proposal and accepts it. Replica 2 wants to transition to Proposed phase
-% 11. Node 3 receives proposal, but it promised to accept higher ballot therefore it responds with refusal. Replica 3 has failed to transition, it is no longer prepared, because it sees that proposal was refused. It knows that it is at most in pre prepared phase. 
+% 11. Node 3 receives proposal, but it promised to accept higher ballot therefore it responds with refusal. Replica 3 has failed to transition, it is no longer prepared, because it sees that proposal was refused. It knows that it is at most in setupd phase. 
 % 12. Node 4 gets proposal and accepts it. Replica 4 wants to transition to Proposed phase
 % 13. Node 5 does exactly same as Node 3.
 % 14. Phases of replicas in RG1 were { node 1 -> prepared, node 2 -> prepared, node 3 -> prepared } and in RG2 { node 3 -> prepared, node 4 -> prepared, node 5 -> prepared }
 %         After transition replica groups look as following:
 
 
-% RG1 { node 1 -> proposed, node 2 -> proposed, node 3 -> pre prepared }
-% RG2 { node 3 -> pre prepared, node 4 -> proposed, node 5 -> pre prepared }
+% RG1 { node 1 -> proposed, node 2 -> proposed, node 3 -> setupd }
+% RG2 { node 3 -> setupd, node 4 -> proposed, node 5 -> setupd }
 
 
 % Quorum of replicas in RG1 is in proposed phase.
-% Quorum of replicas in RG2 is in pre prepared phase.
-% Minimum phase among replica groups is pre prepare phase.
-%         Therefore replicas cannot advance further than pre prepared phase. However node 1 for example has already advanced to proposed phase. It will be forced to go back in phase in order to stay in sync with all replica groups. It does not necessarily mean that it has repeat operation. Actual transition performed on replica depends on current phase for all replica groups and current phase of replica. Replica can just do nothing and wait till rest of replicas catch up in phase.
-% 1. Phase of all replica groups is pre prepared phase.
+% Quorum of replicas in RG2 is in setupd phase.
+% Minimum phase among replica groups is setup phase.
+%         Therefore replicas cannot advance further than setupd phase. However node 1 for example has already advanced to proposed phase. It will be forced to go back in phase in order to stay in sync with all replica groups. It does not necessarily mean that it has repeat operation. Actual transition performed on replica depends on current phase for all replica groups and current phase of replica. Replica can just do nothing and wait till rest of replicas catch up in phase.
+% 1. Phase of all replica groups is setupd phase.
 % 2. Next transition has to transition replica from its phase to prepared phase.
 % 3. Node 1, node 2, node 4 can do a no-operation and just wait.
 % 4. Node 3, node 5 have to do actual prepare request with new high ballot
