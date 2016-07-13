@@ -15,7 +15,7 @@
   		fill=white,inner sep=1pt}]
   	% Right-hand-side arrows rendered from top to bottom to
   	% achieve proper rendering of labels over arrows.
-    (I) edge [loop ] node[right=1mm] {$\mathit{node\_failure}$} (I)
+    (I) edge [loop left] node[left=1mm] {$\mathit{node\_failure}$} (I)
     	edge [bend left=30] node[right=1mm] {$\mathit{success}$} (S)
     	edge [bend left=60] node[right=1mm] {$\mathit{committed}$} (C)
     	edge [bend right=90] node[right=1mm] {$\mathit{rolled\_back}$} (R);

@@ -1,0 +1,45 @@
+%!TEX root = ../thesis.tex
+
+\begin{figure}
+% \centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node] (I) {Idle};
+  \node[main node] (S) [below right of=I] {Setup};
+  \node[main node] (PRE) [below of=S] {Prepared};
+  \node[main node] (A) [below of=PRE] {Accepted};
+  \node[main node] (REP) [right of=PRE] {Repairing};
+  \node[main node, fill=blue!60] (C) [right of=REP] {Committed};
+  \node[main node, fill=blue!60] (R) [left of=A] {Rolled back};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (I) (I) edge [loop ] node[right=1mm] {$\mathit{node\_failure}$} (I)
+      edge [bend right=20] node[left=1mm] {$\mathit{success}$} (S)
+      edge [bend left=60] node[right=1mm] {$\mathit{committed}$} (C)
+      edge [bend right=90] node[right=1mm] {$\mathit{rolled\_back}$} (R)
+    (S) 
+      edge [loop ] node[right=1mm] {$\mathit{node\_failure}$} (S)
+      edge [bend left=30] node[right=1mm] {$\mathit{success}$} (PRE)
+      edge [bend left=60] node[right=1mm] {$\mathit{committed}$} (C)
+      edge [bend right=90] node[right=1mm] {$\mathit{rolled\_back}$} (R)
+      edge [bend left=45] node[right=1mm] {$\mathit{in\_progress}$} (REP)
+
+    (PRE) edge [bend left=60] node[above=-2mm] {$\mathit{node\_failure,refuse}$} (S)
+      % edge [bend left=20] node[left=-2mm] {$\mathit{refuse}$} (S)
+      edge [bend left=60] node[right=-2mm] {$\mathit{accepted}$} (A)
+      edge [bend right=70] node[right=1mm] {$\mathit{rolled\_back}$} (R)
+    (REP) edge [loop below] node[below=2mm] {$\mathit{repair\_not\_done}$} (REP)
+      edge [bend right=30] node[above=2mm] {$\mathit{repair\_done}$} (PRE)
+      edge [bend right=70] node[right=1mm] {$\mathit{repair\_done\_but\_not\_promised}$} (S)
+    (A) edge [bend right=60] node[left=-8mm] {$\mathit{commit}$} (C);    	  
+
+(S) ;
+\end{tikzpicture}
+\caption{All transitions}
+\label{fig:allTransitions}
+\end{figure}
