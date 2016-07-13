@@ -2,9 +2,9 @@
 
 \section{The algorithm's description}
 \mpt algorithm depends on previously described \paxos concepts and guarantees they provide. 
-This part of whole solution is responsible for committing transaction. 
-A transaction is committed by performing multi partition transactions paxos round, 
-in which transaction is accepted by majority in each replica group, 
+This part of whole solution is responsible for committing \transaction. 
+A transaction is committed by performing multi partition transactions \paxos round, 
+in which \txState is accepted by majority in each replica group, 
 which is a set of nodes that replicates the key $k$, for all replica groups \ref{sec:mpp:replicaGroups}. 
 
 \subsection{Phases}
@@ -85,17 +85,15 @@ One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transi
 
 \subsection{Replica groups}
 \label{sec:mpp:replicaGroups}
-\mpt is designed for operations on many partitions, therefore there are many replica groups. \lwt supports single key, thus it communicates with single replica group, whereas \mpt supports many keys, therefore it communicates with many replica groups, which can overlap, due to the fact that a node is a replica for many different keys. 
+\lwt supports single $k$, thus it communicates with single replica group $\tau(k) = N^{RF}_{k} \in \mathit{N}$, whereas \mpt is designed for mutations of multiple keys, thus there are multiple replica groups 
+$(\tau(k_1) \cup \tau(k_2) \cup ... \cup \tau(k_i) ) = (N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... \cup N^{RF}_{k_i} ) = \mathit{N^'} \in \mathit{N}$, where $(N^{RF}_{k_1} \cap N^{RF}_{k_2} \cap ... \cap N^{RF}_{k_i})$ can be non empty set, due to the fact that a node is a replica for different keys.
 
-Let us consider an example of transaction affecting different replica groups. Let us assume \RF{3} and transaction for keys: $k1$, $k2$, $k3$, $k4$.
-Key $k1$ belongs to replica group $n1$, $n2$, $n3$.
-Key $k2$ belongs to replica group $n2$, $n3$, $n4$.
-Key $k3$ belongs to replica group $n1$, $n5$, $n7$.
-Key $k4$ belongs to replica group $n1$, $n2$, $n3$.
+Assume we have $\text{\txState}(\text{\txItemi{1}, \txItemi{2}})$, \RF{3} and $N=5$. Let $\mathit{N^{RF}_{k_1}} = \tau(\text{\txItemi{1}}), \mathit{N^{RF}_{k_2}} = \tau(\text{\txItemi{2}})$, where $\mathit{N^{RF}_{k_1}} = (n_1,n_2,n_3), \mathit{N^{RF}_{k_2}} = (n_2,n_3,n_5)$ thus $\mathit{N}^' = (N^{RF}_{k_1} \cup N^{RF}_{k_2}) = (n_1, n_2, n_3, n_5)$.
+In this example transaction has mutations on $4$ nodes and has
+$2$ replica groups, which have nodes $n_2, n_3$ in common.  
+Phase transition messages are sent to each $n\in \mathit{N}^'$.
 
-In this example, $k1$ and $k4$ belong to the same replica group. Keys $k2$, $k3$ however have one node in common with $k1$ and $k4$.
-
-As a corollary, any operation done in \mpt must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, and $n7$ in order to not repeat operation on same nodes. However the results of these operations must be evaluated in the context of the whole replica group. 
+%As a corollary, any operation done in \mpt must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, and $n7$ in order to not repeat operation on same nodes. However the results of these operations must be evaluated in the context of the whole replica group. 
 
 
 \subsection{Moving forward in phases}
