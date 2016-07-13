@@ -33,7 +33,8 @@ Rest of transactions $(\mathcal{C}\text{\transactions} - \text{\transaction})$ c
 \end{enumerate*}
 
 \subsection{Conflict function}
-Conflicting transactions need to be grouped into sets $\mathcal{C}\text{\transactions}$, thus we need a function, which compares \txOne and \txTwo in pairs and detects whether
+\transaction $\mapsto $ \paxosRoundId can be a composition of two functions: \transaction $\mapsto $ $\mathcal{C}\text{\transactions} \mapsto$ \paxosRoundId, where the former groups transactions into conflicting sets and the latter assigns \paxosRoundId to each set.
+In order to group conflicting transactions we need a function, which compares \txOne and \txTwo in pairs and detects whether
 \txOne and \txTwo are in conflict. Definition \ref{def:conflictFunction} presents such function.
 
 \begin{definition}

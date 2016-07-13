@@ -2,17 +2,19 @@
 
 \subsection{Transaction index}
 \label{sec:mpp:txIndex}
-Transaction Index is a service, local to a node, thus independent from other nodes, which accepts registrations of transactions and assigns to them paxos round ids. Registration in the index is part of \mpt.
-%Paxos round id for a transaction is obtained through \emph{Transactions Index}. This is an index in which transactions have to successfully register. Registration in index of part of \mpt algorithm. Transaction Index exists on each node and is local to a node, thus independent from other nodes.
-Transaction Index has to guarantee that: 
-\begin{enumerate*}
-\item transactions that are in conflict must be registered in index and obtain same paxos id,
-\item transaction can register in index only if there is single paxos id which can be assigned to this transaction.
-\end{enumerate*}
+Transaction index denoted, as \txIndex is a service, local to a node, which provides \mbox{\transaction $\mapsto $ \paxosRoundId} function required to reach the same \paxos round for conflicting transactions.
 
-In this work, We put forward the claim that \emph{paxos round id} does not have to be globally assigned to same id, but only locally at each node. Therefore, at each node transaction can participate in paxos round with different id. However, at any node, transaction always participates in the same round as conflicting transactions.
+Registration of \transaction in \txIndex on each \node{i} $\in$\nodesTx is precondition to the commit procedure of \mpt. 
+Since \txIndex is local, each \transaction receives different \paxosRoundId on different nodes, but the value of \paxosRoundId is never used outside of a node, thus \paxosRoundId does not have to be globally the same. \paxosRoundId is used only to identify \paxos round for $\mathcal{C}\text{\transactions}$ at each \node{i}. If \transaction participates in the same \paxos round identified by \paxosRoundId as other conflicting transactions, then only single \transaction is committed after \nodesTx agree on the proposed \txState.
 
-Transaction cannot be registered in index when locally it can obtain more than one paxos round id. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
+Transaction index stores sets of $\mathcal{C}\text{\transactions}$ and assigns \paxosRoundId to each set. When a new \transactionm is registered, \txIndex tries to find a set $\mathcal{C}\text{\transactions}$ to which \transactionm can be added by applying \conflictFunction to \transactionm and each \transaction in each set. If there is a conflict, sets can be merged together, thus \transactionm joins $\mathcal{C}\text{\transactions}$ and receives the same \paxosRoundId. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
+
+During the commit procedure of \mpt \transactionFull has to register in each quorum of each replica subset
+$(N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... ) =
+(\tau(k_1) \cup \tau(k_2) \cup ... ) = 
+ \text{\nodesTx}\in\mathit{N}$.
+Moreover \transaction cannot be registered in \txIndex when it can obtain more than one \paxosRoundId. These two requirements guarantee that if \txOne and \txTwo are conflicting for some $k$, then there exists \node{i}
+$\in N^{RF}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus both transactions are part of the same \paxos round and eventually only one is committed.
 
 \begin{algorithm}
 \algblockdefx[NAME]{ForEach}{EndForEach}%
