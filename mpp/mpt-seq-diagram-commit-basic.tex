@@ -1,0 +1,53 @@
+%!TEX root = ../thesis.tex
+
+
+\begin{figure}[H]
+  \centering
+	\subfloat[The commit procedure]{%
+      \setlength{\unitlength}{0.8cm}
+      \begin{sequencediagram} 
+  	\newthread[green!30	]{c}{\client} 
+  	\newthread{ni}{\node{i}}
+  	\tikzstyle{inststyle}+=[bottom color=blue!30,
+		top color=blue!30, rounded corners=3mm]
+  	\newinst[2]{nj}{\node{j}}
+  	\newinst{nk}{\node{k}}
+  	\newinst{nl}{\node{l}}
+
+	\mess{c}{ tx commit }{ni}
+
+	\begin{sdblock}{The commit procedure}{multiple transition messages}
+		% \mess{ni}{  }{nj}
+		% \mess{ni}{  }{nk}
+		% \mess{ni}{  }{nl}
+
+		% \mess{nj}{  }{ni}
+		% \mess{nk}{  }{ni}
+		% \mess{nl}{  }{ni}
+		\begin{callself}{ni}{next transition}{} 
+		\postlevel
+		\begin{call}{ni}{transition()}{nj}{}
+		\end{call}
+		\begin{call}{ni}{transition()}{nk}{}
+		\end{call}
+		\begin{call}{ni}{transition()}{nl}{}
+		\end{call}
+		\end{callself}
+		
+	\end{sdblock}
+	\mess{ni}{ tx commit response }{c}
+	
+	\end{sequencediagram}
+    } \par
+    \subfloat[Message labels]{      
+      \begin{tabular}{c|c|c}
+        \toprule
+        label & message & description \\ \midrule
+        txCommit & $transaction\_commit(\Lambda))$ & asda  \\
+        a & b & c \\
+        a & b & c \\ \bottomrule
+      \end{tabular}
+    }
+  \caption{Start of the commit procedure}
+  \label{fig:seqCommitBasic}
+\end{figure}

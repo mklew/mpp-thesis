@@ -7,6 +7,8 @@ This part of whole solution is responsible for committing \transaction.
 \client starts commit procedure by sending \txCommitMessage and then \node{i} becomes the executor of the \transaction and sends a series of messages called \emph{transitions}, which transition $\mathit{N}^'$ between \emph{phases}, which are steps of the algorithm. When all $\mathit{N}^'$ reach \emph{committed phase} or \emph{rolled back phase} \node{i} replies to a client with \txCommitResonseMessage.  \transaction is committed by performing multi partition transactions \paxos round, 
 in which \txState is accepted by majority in each replica group.
 
+\input{mpp/mpt-seq-diagram-commit-basic.tex}
+
 \subsection{Replica groups}
 \label{sec:mpp:replicaGroups}
 \lwt supports single $k$, thus it communicates with single replica group $\tau(k) = N^{RF}_{k} \in \mathit{N}$, whereas \mpt is designed for mutations of multiple keys, thus there are multiple replica groups 
