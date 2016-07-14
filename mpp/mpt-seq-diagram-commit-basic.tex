@@ -16,7 +16,7 @@
 
 	\mess{c}{ tx commit }{ni}
 
-	\begin{sdblock}{The commit procedure}{multiple transition messages}
+	\begin{sdblock}{The commit procedure}{loop of transition messages}
 		% \mess{ni}{  }{nj}
 		% \mess{ni}{  }{nk}
 		% \mess{ni}{  }{nl}
@@ -40,12 +40,12 @@
 	\end{sequencediagram}
     } \par
     \subfloat[Message labels]{      
-      \begin{tabular}{c|c|c}
+      \begin{tabular}{|p{3cm}|p{9cm}|}
         \toprule
-        label & message & description \\ \midrule
-        txCommit & $transaction\_commit(\Lambda))$ & asda  \\
-        a & b & c \\
-        a & b & c \\ \bottomrule
+        label & description \\ \midrule
+        tx commit & \client wants to commit \transaction and sends \txCommitMessage \\ 
+        transition() & \node{i} sends transition messages to $n\in \text{\nodesTx}$ \\ 
+        tx commit response & \node{i} responds with commit results in message \txCommitResonseMessage \\ \bottomrule
       \end{tabular}
     }
   \caption{Start of the commit procedure}

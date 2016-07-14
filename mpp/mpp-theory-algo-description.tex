@@ -4,7 +4,7 @@
 \mpt algorithm depends on previously described \paxos concepts and guarantees they provide. 
 This part of whole solution is responsible for committing \transaction. 
 
-\client starts commit procedure by sending \txCommitMessage and then \node{i} becomes the executor of the \transaction and sends a series of messages called \emph{transitions}, which transition $\mathit{N}^'$ between \emph{phases}, which are steps of the algorithm. When all $\mathit{N}^'$ reach \emph{committed phase} or \emph{rolled back phase} \node{i} replies to a client with \txCommitResonseMessage.  \transaction is committed by performing multi partition transactions \paxos round, 
+Figure \ref{fig:seqCommitBasic} shows how \client starts the commit procedure by sending \txCommitMessage and then \node{i} becomes the executor of the \transaction and sends a series of messages called \emph{transitions}, which transition $\mathit{N}^'$ between \emph{phases}, which are steps of the algorithm. When all $\mathit{N}^'$ reach \emph{committed phase} or \emph{rolled back phase} \node{i} replies to a client with \txCommitResonseMessage.  \transaction is committed by performing multi partition transactions \paxos round, 
 in which \txState is accepted by majority in each replica group.
 
 \input{mpp/mpt-seq-diagram-commit-basic.tex}
@@ -121,8 +121,8 @@ For example, \proposeTransition depicted on Figure \ref{fig:transitionToPropose}
 
 
 Replica advances in phase only if conditions are met: \begin{description}
-\item[successful transition] -- its transition operation is successful, and
-\item[same advancement within replica group] -- each replica group to which that node belongs has quorum of nodes with same advancement of phase, and
+\item[successful transition] -- its transition is successful and
+\item[same advancement within replica group] -- each replica group to which that node belongs has quorum of nodes with same advancement of phase and
 \item[in sync with other replica groups] -- minimum phase among quorums in all replica groups must have same advancement, for example all replica groups must promise to the leader, before any proposal is sent to any replica, therefore all replica groups must be in \emph{prepared phase}.
 \end{description}
 
@@ -176,27 +176,31 @@ Assume that \mutation{k_1}{v_1} was sent to $\mathit{quorum}(\text{\nodesTx})=(n
  $\mathit{quorum}(\text{\nodesTx})=(n_1,n_3), \mathit{quorum}(\mathit{N^{''}})=(n_6,n_7)$, 
  but $n_1$ in its \txStorage stores \mutation{k_1}{v_1} and $n_3$ in its \txStorage stores \mutation{k_2}{v_2}. Therefore state of each of their \txStorage is inconsistent, because replicas do not store whole subset of mutations for that replica group: $\text{\mutation{k_1}{v_1}}, \text{\mutation{k_2}{v_2}}$.
 
-We have to achieve data consistency on each node in order to move mutations from \txStorage to \database at each $n$ during the commit procedure. To this end, the following algorithm was employed:
+We have to achieve data consistency on each node in order to move mutations from \txStorage to \database at each $n$ during the commit procedure. Figure \ref{fig:seqSetupTransition} presents \setupTransition and data consistency check procedure.
 
-TODO dodać diagram
+% To this end, the following algorithm was employed:
 
-Inputs:
-        TransactionState - state of transaction, it is source of truth of all modifications that happened during transaction. Originally send by client, further forwarded by leader node to this replica node that has to run setup operation.
+\input{mpp/mpt-seq-diagram-making-data-consistent.tex}
+
+% TODO dodać diagram
+
+% Inputs:
+        % TransactionState - state of transaction, it is source of truth of all modifications that happened during transaction. Originally send by client, further forwarded by leader node to this replica node that has to run setup operation.
 
 
-        Make data consistent algorithm:        
-1. Filter transaction items for which this replica is responsible
-   1. transaction item has a token
-   2. This node knows its token range
-   3. Node can identify which transaction item should have reflection in data being present in private transaction storage
-1. Find other replicas for these items
-   1. Each transaction item has data replicated at other nodes including this one
-   2. Topology of nodes on token ring allows to precisely identify them
-1. Group transaction items by same replica sets -- it can reduce number of round trips
-2. For each replica set, read data from their private transaction storage for transaction items
-3. Quorum of responses is required for each replica set -- we know for a fact that private write had to happen to at least quorum of nodes
-4. Merge received modifications with those at private transaction storage
-5. Freeze transaction’s data so it will not allow any further modifications.
+%         Make data consistent algorithm:        
+% 1. Filter transaction items for which this replica is responsible
+%    1. transaction item has a token
+%    2. This node knows its token range
+%    3. Node can identify which transaction item should have reflection in data being present in private transaction storage
+% 1. Find other replicas for these items
+%    1. Each transaction item has data replicated at other nodes including this one
+%    2. Topology of nodes on token ring allows to precisely identify them
+% 1. Group transaction items by same replica sets -- it can reduce number of round trips
+% 2. For each replica set, read data from their private transaction storage for transaction items
+% 3. Quorum of responses is required for each replica set -- we know for a fact that private write had to happen to at least quorum of nodes
+% 4. Merge received modifications with those at private transaction storage
+% 5. Freeze transaction’s data so it will not allow any further modifications.
 
 
 % \subsubsection{Optimization on number of requests}
@@ -220,102 +224,125 @@ Inputs:
 \subsection{Rollback phase}
 Replica in a rollback phase, means that transaction was rolled back at the given replica node. 
 This phase is special, because even if one replica group decides to move to rollback phase, then all the other replicas have to move to rollback phase. Secondly, there is no transition out of rollback phase. \mpt algorithm ends and yields result that transaction was rolled back.
-Any replica affected by transaction can transition to rollback  from the following phases: \begin{enumerate*}
-\item prepare phase,
-\item propose phase,
-\item repairing phase.
-\end{enumerate*}
+% Any replica affected by transaction can transition to rollback  from the following phases: \begin{enumerate*}
+% \item prepare phase,
+% \item propose phase,
+% \item repairing phase.
+% \end{enumerate*}
 
-Transaction cannot be rolled back once its proposal was accepted by all replica groups. Paxos guarantees that once proposal has been accepted, current or other leader will finish proposal in progress in that round and effectively transaction will be committed. Process of repairing in progress transaction is described in repairing phase.
+\transaction cannot be rolled back once its proposal was accepted by all quorums of all replica groups. \paxos guarantees that once proposal has been accepted, current or other leader will finish proposal in progress in that round and effectively transaction will be committed. Process of repairing in-progress transaction is described in repairing phase.
 
-If replica has to move to rollback phase upon decision of all replica groups and not by its own, then it should notify the node about rollback, which then purges its private data, remove transaction from the index and adds information about rolled back transaction to the transaction log.
+If replica has to move to rollback phase upon decision of all replica groups and not by its own, then it should notify the node about rollback, which then purges its private data from \txStorage, remove \txState from \txIndex and records rolled back \transaction in \txLog.
 
 
 \subsection{Prepare phase}
-During prepare each replica receives a ballot, which is just a name for a timeuuid\footnote{which is universal unique identifier with encoded timestamp}. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by id which is stored in Transaction Index. To find that id, we need to look up index using Transaction State. That requires that ballot is passed along with transaction state, but this state cannot be treated as paxos value. Transaction State is used only to find id of Paxos State and to compare ballots.
+During prepare each replica receives a ballot, which is just a name for a timeuuid\footnote{which is universal unique identifier with encoded timestamp}. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by \paxosRoundId which is stored in \txIndex. To find \paxosRoundId, we need to look up \txIndex using \txState. That requires that ballot is passed along with \txState, which is used only to find \paxosRoundId and to compare ballots.
 
-In order to find \paxosRoundId using \txState, \txIndex is exclusively acquired and queried. Assumption is that transaction has successfully registered in index beforehand. Therefore if it is not found in index it can mean one of:
+In order to find \paxosRoundId using \txState, \txIndex is exclusively acquired and queried. Assumption is that \transaction has successfully registered in \txIndex beforehand. Therefore if it is not found in \txIndex it can mean one of:
 \begin{enumerate*}
-\item transaction was rolled back by concurrent transaction,
-\item transaction was committed by other leader which repaired in progress transaction - this is the case, when replicas go back in phase but at least one of them has successfully proposed transaction state,
+\item \transaction was rolled back by concurrent \transactionj,
+\item \transaction was committed by other leader which repaired in-progress transaction - this is the case, when replicas go back in phase but at least one of them has successfully proposed \txState,
 \item this replica was down during setup phase and did not get the message. It could happen due to network partition or hardware failure.
 \end{enumerate*}
 
 
-In order to check which case it is, Transaction Log can be queried. Transaction Log knows which transactions have committed and which were rolled back. If transaction id exists in transaction log, then it was either committed or rolled back.
+In order to check which case it is \txLog can be queried. If \txState exists in \txLog, then it was either committed or rolled back. In that case replica can answer that it can not promise anything, but it knows that \transaction was committed or rolled back.
 
+In other case, when \txState is neither in \txIndex nor in \txLog we can assume that this replica missed setup phase. In this situation replica cannot promise, because it doesn’t know what Paxos State is. Other replicas can continue without it. Replica might answer without a promise, but also that it doesn’t know what state of transaction is. Response looks exactly the same, as in the case when ballot is not the highest.
+Figure \ref{fig:preparePayload} presents payload of $\mathit{prepare\_response}$.
 
-In that case replica can answer that it can not promise anything, but it knows that transaction was committed or rolled back.
+\begin{figure}
+\centering
+\begin{tabular}{|p{3cm}|p{1.5cm}|p{7cm}|}
+        \toprule
+        name & type & description \\ \midrule
+        $\mathit{promised}$ & boolean & whether this replica promises to listen to leader \\ 
+        $\mathit{present\_in\_index}$ & boolean & if \txState was present in the \txIndex at this node \\ 
+        $\mathit{log\_state}$ & $\mathit{log\_state}$ & value of $\mathit{find(\text{\txState})}$ from \txLog at this node \\ 
+        \txStatei{in-progress} & \txState & if replica has already accepted other transaction state and this transaction interrupted its execution becoming new leader then the in-progress proposal - some other \txStatei{in-progress} - is returned to the leader. In that case leader will have to repair \mpt round. Replica will transition into repairing phase. \\ \bottomrule
+      \end{tabular}     
+     \caption{Payload of $\mathit{prepare\_response}$}
+     \label{fig:preparePayload}
+\end{figure}
 
-
-In other case, when transaction is neither in index nor in transaction log we can assume that this replica missed pre prephase phase. In this situation replica cannot promise value, because it doesn’t know what Paxos State is. Other replicas can continue without it. Replica might answer without a promise, but also that it doesn’t know what state of transaction is. Response looks exactly the same as in the case when ballot is not the highest. That means, that if we want to know what the situation really is, we need to return more information.
-
-
-Answer from prepare request has the following information:
-TODO przerobić na tabele
-\begin{itemize}
-\item Boolean promised -- whether this replica promises to listen to leader
-\item Boolean present in index -- if transaction was present in the index at this node
-\item Committed/Rolled back/Unknown -- enum value representing status of transaction. It is either known from Transaction Log and then it is one of committed or rolled back or it is unknown
-But also it has information as in original paxos
-\item In progress value -- if replica has already accepted other transaction state and this transaction interrupted its execution becoming new leader then the in progress proposal - some other transaction state - is returned to the leader. In that case leader will have to repair \mpt round. Replica will transition into repairing phase.
-\end{itemize}
-
-
-Prepare phase extends original paxos’s prepare phase, since it returns more information, but its purpose stays the same: replica has to compare ballots and promise to listen to a leader with the highest ballot. 
-There might be in progress proposal that has to be completed. Additional information allows to identify whether transaction can continue or not. Responses from all replicas are considered according to moving in phase logic.
+Prepare phase extends original \paxos’s prepare phase, since it returns more information, but its purpose stays the same: replica has to compare ballots and promise to listen to a leader with the highest ballot. 
+There might be in-progress proposal that has to be completed. Additional information allows to identify whether \transaction can continue or not. Responses from all replicas are considered according to moving in phase logic.
 After successful transition of all replicas to prepare phase, next transition can be applied.
 
 
 \subsection{Propose phase}
-Propose phase is the next expected phase after prepare phase, but after repairing phase. Its purpose is to propose transaction state as paxos value to replicas and to get majority of acceptances. 
+The purpose of propose phase is to propose \txState to replicas and to get majority of acceptances. In the propose phase, it is known that \txState existed in the \txIndex, therefore if during proposal the \txIndex does not know about \txState then it has to be recorded in the \txLog, as either committed or rolled back.
 
-In the propose phase, it is known that transaction existed in the Transaction Index, therefore if during proposal,  transaction index does not know about transaction then it has to be recorded in the Transaction Log, as either committed or rolled back transaction.
-
-Proposal with \txState can be accepted if the proposer is still the leader and has the highest ballot. Proposal is saved in the Paxos State and replica can reply with success. Otherwise leader could have lost his leadership and value cannot be accepted which would result in refusal response.
-
-%When transaction cannot be found in index, it has to be present in Transaction Log which also helps the leader to make decision whether algorithm should continue.
+Proposal with \txState can be accepted if the proposer is still the leader and has the highest ballot. Proposal is saved in the Paxos State and replica can reply with $\mathit{M}(n_j,n_i,\mathit{propose\_response}(accepted, log))$ where $\mathit{accepted}=true$. If \node{i} lost his leadership then proposal cannot be accepted, which results in refusal response.
 
 \subsection{Commit phase}
 Commit phase can only happen when \txState was accepted by all quorums in all replica groups. Upon commit message replica performs:
 \begin{enumerate}
-\item flush of transaction’s data locally
+\item commit \mutations
 \begin{enumerate}
-   \item find transaction’s data in the Private Transaction Storage
-   \item apply mutations to \database -- move \mutations from private transaction storage into database
+   \item find transaction’s data in the \txStorage
+   \item apply mutations to \database  -- move \mutations from \txStorage into \database
    \end{enumerate}
-\item record this transaction in \txLog as committed.
-\item rollback other concurrent and conflicting transactions
+\item record this \txState in \txLog as committed.
+\item rollback other concurrent and conflicting transactions \conflictingTxSet
  \begin{enumerate}
-   \item Look up other participants in the Transaction Index
-   \item Rollback each conflicting transaction
-   \item Add conflicting transaction to the Transaction Log marked as rolled back.
+   \item find \conflictingTxSet in the \txIndex
+   \item rollback each conflicting \txStatei{i}
+   \item record each conflicting \txStatei{i} in \txLog, as rolled back.
   \end{enumerate}
-\item remove transaction from \txIndex
-\item respond with acknowledge message
+\item remove \txState from \txIndex
+\item send acknowledge message 
 \end{enumerate}
 
-When the leader receives acknowledgments from all replica groups, it can safely finish \mpt round and respond to the client, that transaction was committed.
+When the leader receives acknowledgments from all replica groups, it can safely finish \mpt round and respond to the \client, that \transaction was committed.
 
 
 \subsection{Repairing phase}
 It might happen that during prepare leader receives in-progress proposal which means that it has interrupted some other leader which was executing his transaction. As required by \paxos algorithm, in-progress proposal has to be completed before proposer proposes his own value. When replica group sees that it has in-progress proposal, this replica group has to transition to repairing phase. 
 Other replica groups are also affected because they cannot advance in phase until in-progress transaction is repaired. Repaired means that \mpt round is run on in-progress transaction until it finishes with commit or rollback. 
-After repair first transaction might continue. If it turns out that repaired transaction was rolled back, first transaction has a chance to be committed. If however repaired transaction is committed, main transaction will see that it was rolled back and will stop.
-This means that another \mpt round is nested in main \mpt round. It is slightly different because it can start from more advanced phase.
-TODO przepisać do końca akapitu
-If other transaction managed to proposed itself it means that is was in prepared phase hence in setupd phase also. Therefore repairing in progress transaction can start with replicas in setup phase. First transition run on replicas is transition to prepare phase skipping registration in index and making transactions data consistent as it was already done by previous leader.
+After repair main transaction might continue. If it turns out that repaired transaction was rolled back, first transaction has a chance to be committed. If however repaired transaction is committed, main transaction will see that it was rolled back and will stop.
+%This means that another \mpt round is nested in main \mpt round.
+%It is slightly different because it can start from more advanced phase.
+%TODO przepisać do końca akapitu
+%If other transaction managed to proposed itself it means that is was in prepared phase hence in setupd phase also. Therefore repairing in progress transaction can start with replicas in setup phase. First transition run on replicas is transition to prepare phase skipping registration in index and making transactions data consistent as it was already done by previous leader.
 
 
-\subsubsection{Moving in phases and repair phase}
-Since all replicas have to wait with further transitions until in-progress transactions are repaired for all replica groups, repair phase has to be less advanced than prepare phase, but more advanced than setup phase since without being in setup none of replicas would notice any in-progress transaction. This is an example where replicas have to move back in phase in order to stay in sync with all replicas executing transaction.
+%\subsubsection{Moving in phases and repair phase}
+%Since all replicas have to wait with further transitions until in-progress transactions are repaired for all replica groups, repair phase has to be less advanced than prepare phase, but more advanced than setup phase since without being in setup none of replicas would notice any in-progress transaction. This is an example where replicas have to move back in phase in order to stay in sync with all replicas executing transaction.
 
 
 \subsection{The example of \mpt}
 TODO dodać rysunki pokazujace co jest gdzie w danym momencie
-TODO zapisać formalnie dane
-Let us consider a cluster of $5$ nodes, and a transaction $t$, which modifies two keys: $k_{1}, k_{2}$ with updates: $u_{1}, u_{2}$. Assume that key $k_{1}$ is replicated by replica group $RG1$, which consists of nodes: $n1$, $n2$ and $n3$, and key $k_{2}$ is replicated by $RG2$, which consists of nodes: $n3, n4, n5$.
-Let us assume that updates are already existing in the private transaction storage at each node, and transaction is ready for the commit process, which we analyze step by step:
+Assume we have 
+\N{5}, \RF{3},
+$\text{\transaction}(\text{\mutation{k_1}{v_1}, \mutation{k_2}{v_2}})$, 
+$\text{\txState}(\text{\txItemi{k_1}}, \text{\txItemi{k_2}})$,
+\topologyItem{k_1}{N^'_1}, 
+\topologyItem{k_2}{N^'_2}, 
+where $N^'_1=(n_1, n_2, n_3)$, 
+$N^'_2=(n_3,n_4,n_5)$. Furthermore let us assume that \mutation{k_1}{v_1} is present in each \txStorage of each $n\in N^'_1$ and \mutation{k_2}{v_2} is present in each \txStorage of each $n\in N^'_2$, thus \transaction is ready for the commit procedure, which we analyze step by step:
+
+Tableka która pokazuje stan tego co jest:
+
+
+
+% Step & State of  & Phase of replica & Next transition & 
+
+% \begin{figure}
+% \centering
+% \begin{tabular}{c|c|c|c}
+% 	\toprule
+%     Node & Phase & State of \txStorage  \\ \midrule
+%     $n_1$
+%     \\ \bottomrule
+%   \end{tabular}     
+%  \caption{Payload of $\mathit{prepare\_response}$}
+%  \label{fig:preparePayload}
+% \end{figure}
+
+
+%Let us consider a cluster of $5$ nodes, and a transaction $t$, which modifies two keys: $k_{1}, k_{2}$ with updates: $u_{1}, u_{2}$. Assume that key $k_{1}$ is replicated by replica group $RG1$, which consists of nodes: $n1$, $n2$ and $n3$, and key $k_{2}$ is replicated by $RG2$, which consists of nodes: $n3, n4, n5$.
+%Let us assume that updates are already existing in the private transaction storage at each node, and transaction is ready for the commit process, which we analyze step by step:
 
 
 

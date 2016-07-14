@@ -3,17 +3,37 @@
 \chapter{Conclusion}\label{chapter:summary}
 
 \section{Summary}
-Objective of this work was achieved. TODO
+Objective of this work was to design an algorithm for multi-partition transactions with read-committed isolation, which is scalable and has no single point of failure. Objective of this work was achieved. We presented \mpt algorithm, which can be applied in any distributed key-value storage that supports replication and we implemented \mpt in Cassandra. Our tests determined that our algorithm and its implementation are correct. We used \paxos algorithm, as part of the solution, which provided us with the distributed consensus, which we used to select single transaction among all conflicting transactions that can be committed. Moreover, we used private tables for storing operations done in transaction, which allowed us to provide isolation from other transactions, as well as from main tables. We introduced conflict functions and transactions index, which group conflicting transactions, thus forcing them to participate in the same \paxos round which guarantees that only one of them is committed.
 
+Hence we developed the new algorithm, which expands state of transactions in NoSql databases and 
+removes the need to manually maintain consistency during multi-partition operations 
+while preserving fault tolerance and scalability. 
 
-> TODO to jest kopia wycieta i do przepisania <
-Summary of algorithm
-\mpt algorithm supports multi partition transactions with read-committed isolation. Transactions has been achieved by means of distributed consensus provided by paxos algorithm and other components required for isolation and conflict resolution. Extended paxos proceeds only when quorum of each replica group agree on phase of algorithm. At its core it is still paxos, but with higher number of constraints which guarantee atomicity and isolation of whole transaction spanning many partitions.
 
 \section{Further research}
-Conditions
-Formal proof
-Reducing number of requests
-Increasing concurrency by more effective conflict resolution functions
+The research described in this work presents the following directions:
+
+\paragraph{Serializable isolation level}
+The goal of the algorithm was to provide multi-partition transactions with read-committed isolation level, however it is possible to achieve more strict, serializable isolation, in which transaction would be rolled back if other conflicting transaction was committed after the former transaction started. 
+%Moreover isolation level could be configurable per each transaction. 
+
+Current implementation assigns transaction id to each transaction, which is unique and encodes a timestamp, thus it is known when transaction was started. All values stored in Cassandra have metadata with timestamp of last modification, thus during the commit procedure we could check whether keys modified by a transaction have timestamps which are after timestamp of the transaction, in which case the transaction would be rolled back.
+
+\paragraph{Reducing exchange of messages}
+The commit procedure of \mpt algorithm requires sending multiple transition messages to each node in each replica group. Exchange of messages could be reduced if we merged setup phase with prepare phase. However that would increase contention among leader nodes, because subset of replicas could setup and promise to the new leader, whereas other subset of replicas could not setup, in which case the leader could not continue with the commit procedure, but some nodes already promised to the leader and would refuse proposal of other leader, thus cause additional round of messages. 
+
+Therefore there is a tradeoff between reduced message exchange and higher risk of causing contention with other proposers. Further work would be required to test and analyze results of such merge and conclude whether it is correct optimization.
+
+% \paragraph{Reducing contention}
+% Further work is required to reduce possible contentions during the commit procedure. We think we could limit the contention if we could abort transaction at the early stage of the commit. 
+
+\paragraph{Conditional commit}
+\lwt allows to specify a condition, which is checked before the commit. Similar condition or even set of conditions could be added to the commit procedure of \mpt algorithm. We think we could check conditions before proposals and save timestamps of values to compare them later. We would know that values with saved timestamps match conditions, therefore if during commit timestamps were different we could abort the transaction.
+
+% \paragraph{The condition} 
+% \lwt executes only when a condition is 
+% \paragraph{Formal proof}
+% We have implemented and tested \mpt algorithm in Cassandra, which shows that the concept of multi-partition transactions with read-committed isolation level works under our tests. 
 
 
+% \paragraph{Effective conflict resolution functions}
