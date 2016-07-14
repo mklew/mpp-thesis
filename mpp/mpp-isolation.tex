@@ -11,7 +11,7 @@ Each mutation message is executed by \node{i}, but instead of operating on curre
 
 \begin{definition}
 \label{def:privateTransactionStorage}
-\emph{Private transaction storage} is a local data structure on each \node{i} which stores \mutations of \transaction in isolation from other \transactions and live data set of \database and provides operations listed below: 
+\emph{Private transaction storage} denoted, as \txStorage is a local data structure on each \node{i} which stores \mutations of \transaction in isolation from other \transactions and live data set of \database and provides operations listed below: 
   \begin{itemize}
     \item $\oplus(\text{\txState}, \text{\mutation{k}{v}}) \mapsto \text{\txItemi{k}}$ -- stores \mutation{k}{v} of \transactionj represented by \txState and returns \txItemi{k}. 
     \item $\mathit{clear}(\text{\txState})$ -- removes all \mutations associated with \transactionj represented by \txState on \node{i}

@@ -109,11 +109,12 @@ Transitions are:
 
 
 \subsection{Moving forward in phases}
-Phase transition messages are sent to each $n\in \mathit{N}^'$.
+Replicas start in \emph{idle phase}, which is a starting phase for all replicas, and move to more advanced phases through phase transitions, until they reach an end phase, which is either committed or rolled back phase. Phase transition messages are sent to each $n\in \mathit{N}^'$.
 
-Replicas start in \emph{idle phase}, which is a starting phase for all replicas, and move to more advanced phases through phase transitions, which are operations that include node to node communication, until they reach an end phase, which is either committed or rolled back phase.
+Each replica is in one of phases and moves between phases, as a result of phase transitions, which can be either successful transitions or not, in which case replica goes back in phase. 
+For example, \proposeTransition depicted on Figure \ref{fig:transitionToPropose}, can fail if replica refuses to accept a proposal, in which case replica goes back to setup phase and then has to transition again into prepare phase. Figure \ref{fig:allTransitions} presents outcomes of all transitions.
 
-The most basic optimistic phase transition sequence is: \begin{enumerate*} \item idle phase, \item setup phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
+% The most basic optimistic phase transition sequence is: \begin{enumerate*} \item idle phase, \item setup phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
 %Its transitions however depend on results of transitions of other replicas and other replica groups.
 
 
@@ -137,48 +138,43 @@ Idle phase is a technical representation of starting phase.
 
 \subsection{Setup phase}
 Setup phase provides a foundation for further phases and provides guarantees that if a replica is in the phase, then it is eligible to participate in a \paxos round and its private data are ready to be committed. Two main steps in this phase are: \begin{enumerate*}
-\item transaction registers in a transaction index, in order to participate in a paxos round,
-\item transaction performs mutations consistency check, in order for \node{i} to have full subset of \mutations.
+\item \transaction registers in \txIndex on each $n\in \text{\nodesTx}$, in order to participate in a paxos round,
+\item \transaction performs mutations consistency check, in order for \node{i} to have full subset of \mutations in its \txStorage.
 \end{enumerate*}
 
 
 \subsubsection{Registration in transaction index}
-When transaction registers in the \txIndex (Subsection \ref{sec:mpp:txIndex}), from that moment on transaction participates in a \paxos round.
+When \transaction registers in the \txIndex (Subsection \ref{sec:mpp:txIndex}), from that moment on \transaction participates in a \paxos round.
 It might participate alone or with other concurrent transactions that are known to be conflicting. 
-Transaction is vulnerable to rollback by other transaction, as soon as it has registered itself in the index.
-Since \txIndex is accessed by multiple concurrent transactions, it has to be exclusively acquired by transaction before any operation that changes its state takes place. 
+\transaction is vulnerable to rollback by other \transactionj, as soon as it has registered itself in the index.
+Since \txIndex is accessed by multiple concurrent \transactions, it has to be exclusively acquired by \transaction before any operation that changes its state takes place. 
 Locking, or other concurrency control mechanism can be used to guarantee that state of \txIndex stays consistent.
 
 
         
 \subsubsection{Making data consistent}
-Transaction’s data is kept in Private Transaction Storage \ref{sec:mpp:privateTxStorage}. Private writes by transaction use quorum semantics. We would like to present an example which argues why consistency checking is inevitable.
+Transaction’s data is kept in \txStorage (Subsection \ref{sec:mpp:privateTxStorage}). 
+Mutations messages are sent and received by quorum of a replica group, thus \mutations exist in \txStorage at least on the quorum of nodes in a replica group. However, between a time \transaction is started and a time it is committed, some nodes $N^{''} \subset \text{\nodesTx}$ could restart and lose \mutations in their \txStorage. Moreover, quorum subsets chosen as target of mutation messages can differ between messages, thus different subsets of replica nodes store different subsets of \mutations, therefore we need the data check procedure, which verifies that all replica groups  $(N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... \cup N^{RF}_{k_i} ) = \mathit{N^'} \in \mathit{N}$ have all required \mutationsFullEnd, thus quorum of $N^{RF}_{k_1}$ has \mutation{k_1}{v_1} in their \txStorage, quorum of $N^{RF}_{k_2}$ has \mutation{k_2}{v_2} in their \txStorage up to quorum of replica group $N^{RF}_{k_i}$, which has \mutation{k_i}{v_i} in its \txStorage.
 
+\subsubsection{Example of inconsistent \txStorage}
+We would like to present an example which argues why consistency checking is inevitable.
+Assume \RF{3}, \N{7}
+$\text{\transaction}(\text{\mutation{k_1}{v_1}}, \text{\mutation{k_2}{v_2}}, \text{\mutation{k_3}{v_3}})$,
+$\text{\txState}(\text{\txItemi{k_1}}, \text{\txItemi{k_2}})$,
+\topologyItem{k_1}{\text{\nodesTx}}, 
+\topologyItem{k_2}{\text{\nodesTx}}, 
+\topologyItem{k_3}{\mathit{N^{''}}}, 
+where $\text{\nodesTx}=(n_1, n_2, n_3)$, 
+$\mathit{N^{''}}=(n_5,n_6,n_7)$,
+thus $k_1, k_2$ have the same replica group \nodesTx.
 
-Example of inconsistent private data
-For sake of argument, assume \RF{3} and two modifications of different keys which point to same replica set.
+Assume that \mutation{k_1}{v_1} was sent to $\mathit{quorum}(\text{\nodesTx})=(n_1, n_2)$, \mutation{k_2}{v_2} was sent to $\mathit{quorum}(\text{\nodesTx})=(n_2, n_3)$ and
+\mutation{k_3}{v_3} was sent to $\mathit{quorum}(\mathit{N^{''}})=(n_6, n_7)$.
+ After mutations were added to \txStorage of each $n$, \client sends \txCommitMessage, but before the commit procedure begins, $n_2$ becomes unavailable, in which case \node{i} can proceed, as there are available quorums of each replica group 
+ $\mathit{quorum}(\text{\nodesTx})=(n_1,n_3), \mathit{quorum}(\mathit{N^{''}})=(n_6,n_7)$, 
+ but $n_1$ in its \txStorage stores \mutation{k_1}{v_1} and $n_3$ in its \txStorage stores \mutation{k_2}{v_2}. Therefore state of each of their \txStorage is inconsistent, because replicas do not store whole subset of mutations for that replica group: $\text{\mutation{k_1}{v_1}}, \text{\mutation{k_2}{v_2}}$.
 
-
-1. Modification of K1 is sent to replicas.
-2. Node 1 has received it
-3. Node 2 has received it[i]
-4. Node 3 has not received it due to network faults
-5. Modification of K1 is successfully written to quorum of replicas.
-6. Modification of K2 is sent to replicas.
-7. Node 1 has not received it due to network faults
-8. Node 2 has received it
-9. Node 3 has received it
-10. Modification of K2 is again successfully written.
-
-
-But what is the state of replica nodes?
-Node 1 -> { K1 }
-Node 2 -> { K1, K2 }
-Node 3 -> { K2 }
-
-
-Only \node{2} has two modifications which means that we don’t have quorum of replica nodes in consistent state. \paxos phases depend on quorum semantics, which means that quorum of nodes within replica group, such as this one is able to proceed and whole algorithm makes progress. 
-We have to achieve data consistency on each node in order to move mutations from private transaction storage to main storage at each node during the commit procedure. To this end, the following algorithm was employed:
+We have to achieve data consistency on each node in order to move mutations from \txStorage to \database at each $n$ during the commit procedure. To this end, the following algorithm was employed:
 
 TODO dodać diagram
 
@@ -201,24 +197,22 @@ Inputs:
 5. Freeze transaction’s data so it will not allow any further modifications.
 
 
-\subsubsection{Optimization on number of requests}
-TODO może wywalić cały podrozdział.
-% TODO 'unikac seems'. Przepisac to jakos
-We could not limit number of requests to only those transaction items which are missing in Private Transaction Storage. Note that, those items include only tokens whereas private data has full information about keys and modifications for these keys. If we check whether we have key in private storage which matches token we can omit further requests to other replicas. 
-Such optimization can work only under the condition that transaction cannot modify same keys twice. 
+% \subsubsection{Optimization on number of requests}
+% We could not limit number of requests to only those transaction items which are missing in Private Transaction Storage. Note that, those items include only tokens whereas private data has full information about keys and modifications for these keys. If we check whether we have key in private storage which matches token we can omit further requests to other replicas. 
+% Such optimization can work only under the condition that transaction cannot modify same keys twice. 
 
 
-For example, given row with key K and columns C1 and C2 we could have updates:
-1. Update C1 for K
-2. Update C2 for K
-3. Update C1 and C2 for K
+% For example, given row with key K and columns C1 and C2 we could have updates:
+% 1. Update C1 for K
+% 2. Update C2 for K
+% 3. Update C1 and C2 for K
 
 
-Each case is valid as long as others do not happen. If we allow 1. and later on 2. we will not have any guarantees to have data for both updates. If one update is lost on the way, replica won’t know whether it has all the updates associated with given key or not. This is because it has only one token and one key. 
-Without such restriction, replica would think it[k] has consistent data, but in reality is has missing second update.
+% Each case is valid as long as others do not happen. If we allow 1. and later on 2. we will not have any guarantees to have data for both updates. If one update is lost on the way, replica won’t know whether it has all the updates associated with given key or not. This is because it has only one token and one key. 
+% Without such restriction, replica would think it[k] has consistent data, but in reality is has missing second update.
 % TODO Replika nie mysli, unikac 
 
- We argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization remain opt-in and configurable even per transaction, which could yield best performance for specific cases without restricting other kinds of transactions.
+ % We argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization remain opt-in and configurable even per transaction, which could yield best performance for specific cases without restricting other kinds of transactions.
        
 
 \subsection{Rollback phase}
