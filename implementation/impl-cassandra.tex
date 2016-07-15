@@ -4,37 +4,14 @@
 In this section the discussion will point to implementation details of the algorithm and its components in Cassandra. 
 
 
-\section{Proof of concept}
-Since formal proof of \emph{Mutli Partition Transactions} algorithm is out of scope for this work, the implementation of algorithm in Cassandra database is done instead, as the proof of concept. 
+\section{Assumptions}
+There are few assumptions, as to implementation.
+Implementation should be an extension to existing features of the database - cannot break nor change specification of existing functionality. Algorithm’s implementation should be part of database, not an application on top of database. User should use transactions according to the specification, any use opposed to the specification is not guaranteed to work as intended. Moreover, transactions should not be forced onto user, user has to use them as opt-in in a way they were designed. Transactions should not block normal updates - implementation won’t block user from doing non transactional updates to tables.
 
-\section{Key assumptions}
-There are few assumptions as to implementation.
-\begin{enumerate*}
-\item  Implementation should be an extension to existing features of database - cannot break nor change specification of existing functionality
-\item Algorithm’s implementation should be part of database, not an application on top of database.
-\item User uses transactions according to specification, any use opposed to specification is not guaranteed to work as intended
-\item Transactions should not be forced onto user, user has to use them as opt-in in a way they were designed
-\item Transactions should not block normal updates - implementation won’t block user from doing non transactional updates to tables.
-\end{enumerate*}
-
-\section{Terms of use}
-Implementation does not prevent user from misusing transactions. Implementation allows to use Cassandra in transactional way, but only if it is done according to specification. In principle transactions are run with other transactions whereas normal updates are completely independent from each other as well as from transactions, which means that an normal update might be perceived, as inconsistent modification of the data.
-
-% \subsubsection{Typical use case}
-% Assume bank transfers and moving money from account $acc_{1}$ to account $acc_{2}$. Each account has a balance which is reflected by transfers to and from an account.
-% Moving money from one account to the other should create 
-% For example, typical use case can be:
-% 1. Client wants to move money to his other account.  Update balances of his accounts and record transfer to transfers table within transaction
-% 2. Save request about attempt to make money transfer outside transaction using normal update
-
-
-% Money transfer will either succeed or fail, but request to do so should be always saved because it runs outside transaction. This is just a simple example showing how different workloads can be mixed if required. 
-
-
-% Illegal scenario from business perspective would be to update balances within transaction, but to register transfer outside transaction because if transaction fails then there is a transfer in the system that does not have reflection in accounts balances. 
+Implementation does not prevent user from misusing transactions. Implementation allows to use Cassandra in transactional way, but only if it is done according to the specification. In principle transactions are run with other transactions, whereas normal updates are independent from each other, as well as from transactions, which means that a normal update might be perceived, as inconsistent modification of data.
 
 \section{Transactional consistency levels}
-Transactions are implemented as opt-in feature of Cassandra. New consistency levels  are introduced that represent transactional workload. Adding new levels follows convention of how new features are added to Cassandra, as was the case with \lwt. 
+Transactions are implemented, as opt-in feature of Cassandra. We introduce new consistency levels that represent transactional workload. Adding new levels follows convention of how new features are added to Cassandra, as was the case with \lwt. 
  
 Cassandra can operate on different consistency levels performing reads and writes. Different consistency levels have different performance, but also different guarantees. Examples of consistency levels are:
 \begin{description}
@@ -46,20 +23,53 @@ Cassandra can operate on different consistency levels performing reads and write
 
 New transactional consistency levels are \code{TRANSACTIONAL, LOCAL_TRANSACTIONAL}. Both use \mpt, but latter is confined to the local data center.
 
-\section{Transaction state}
-Cassandra organizes tables in \emph{keyspaces}, thus transaction items need additional information about keyspace to locate data at a node. Transaction item in Cassandra becomes:
+\section{Redefined Transaction state}
+We redefine structure of \txState (introduced in Definition \ref{def:transactionStateChapter3}), as well as \txItems (presented in Definition \ref{def:transactionItemChapter3}) for implementation purposes, due to structure of $k$ in Cassandra, which is presented in Definition \ref{def:keyCassandra}. Definition \ref{def:transactionStateChapter4} presents new \txState with a unique transaction id. Definition \ref{def:transactionItemChapter4} shows new structure of \txItem, which we previously defined, as equivalent of $k$ and we said that \txItem is a reference to the \mutation{k}{v}. Cassandra allows us to have a reference to the \mutation{k}{v} without the need to know the exact $k$, as long as token value of $k$ is known. \txItem and \topology determine $N^'$, where \txStorage of each $n$ can be checked for private data of \transaction and then information from \txItem allows us to find \mutation{k}{v}.
+% Names of keyspace and table are required
+ % Cassandra organizes tables in \emph{keyspaces}, thus transaction items need additional information about keyspace to locate data at a node. Transaction item in Cassandra becomes:
 
-\begin{lstlisting}[language=Java,style=outcode,label={lst:txState},caption={Transaction item in Cassandra}]
 
-class TransactionItem
-{
-   long token
-   String keyspaceName;
-   String tableName;
-}
-\end{lstlisting}
+\begin{definition}
+\label{def:keyCassandra}
+\emph{Key} -- key in Cassandra $k(k_p,k_c)$ consists of two keys: 
+\begin{enumerate*} 
+\item $k_p$ is a partitioning key, which is used by \topology to determine $\mathit{N}^{RF}_k$,
+\item $k_c$ is a clustering key, which determines column in wide rows.
+\end{enumerate*}
+\end{definition}
 
-Keyspace and table name are always required. Type of a token is just \emph{long} type. Type of transaction id is \emph{UUID with encoded timestamp} \cite{CassandraUUID}.
+\begin{definition}
+\label{def:tokenChapter4}
+\emph{Token} is a value computed by hash function from $k_p$, which is used by \topology to determine replicas $\mathit{N}^{RF}_k$.
+\end{definition}
+
+
+\begin{definition}
+\label{def:transactionStateChapter4}
+\emph{Transaction state} denoted, as $\Lambda(\mathit{id}, (\lambda_{i}, \lambda_{j}, ...))$ a pair of unique id of type \emph{timeuuid}, which is UUID with encoded timestamp \cite{CassandraUUID} and set of transaction items (Definition \ref{def:transactionItemChapter4}). Its meaning and purpose is the same, as in Definition \ref{def:transactionStateChapter3}.
+\end{definition}
+
+\begin{definition}
+\label{def:transactionItemChapter4}
+\emph{Transaction item} denoted, as $\lambda(\mathit{keyspace}, \mathit{table}, \mathit{token})$ is a triple with \begin{enumerate*}
+\item $\mathit{keyspace}$ -- name of keyspace,
+\item $\mathit{table}$ -- name of table,
+\item $\mathit{token}$ -- value of token (Definition \ref{def:tokenChapter4}) computed for a Cassandra key (Definition \ref{def:keyCassandra}).
+\end{enumerate*}
+\end{definition}
+
+
+% \begin{lstlisting}[language=Java,style=outcode,label={lst:txState},caption={Transaction item in Cassandra}]
+
+% class TransactionItem
+% {
+%    long token
+%    String keyspaceName;
+%    String tableName;
+% }
+% \end{lstlisting}
+
+% Keyspace and table name are always required. Type of a token is just \emph{long} type. Type of transaction id is \emph{UUID with encoded timestamp} \cite{CassandraUUID}.
 
 
 \section{Extending CQL}
@@ -187,7 +197,7 @@ Index is a map from \code{MppIndexKey} to \code{MppParticipants}. Index keys are
 \subsection{Registration in index}
 When transaction wants to register in index, it first has to acquire it. Then \code{MpPaxosParticipant} is created for this transaction. All participants from all index keys are iterated over and checked if there is a single paxos round id. If there are more potential rounds, transaction cannot be registered. Given at most one paxos round id, new participant is added to participants for all computed index keys.
 
-\input{impl-conflict-functions.tex}
+\input{implementation/impl-conflict-functions.tex}
 
 \section{Transaction Log}
 Transaction log is implemented using cassandra table local to each node. 
