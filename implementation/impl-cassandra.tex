@@ -73,31 +73,62 @@ We redefine structure of \txState (introduced in Definition \ref{def:transaction
 
 
 \section{Extending CQL}
-Cassandra Query Language has been extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. We wanted to reuse as much of functionality as possible, thefore we modified syntax of: insert, update and delete statements. Fortunately all modification statements share same \emph{USING} clause, as in Listings \ref{lst:insertUsing},  \ref{lst:updateUsing} which can be extended to represent modification in a transaction.
+Cassandra Query Language has been extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. We wanted to reuse, as much of functionality, as possible, therefore we modified syntax of: insert, update and delete statements and extended \emph{USING} clause to represent modification in a transaction. Listing \ref{lst:insertUsingTx} presents insert done in a transaction. Extended \code{using} clause supports \code{transaction} keyword and accepts transaction id. Normal modifications do not have any results in the response. However in case of transactional modification, response has results set with \txItem that must be added to \txState by the \client. Moreover, additional \emph{CQL} syntax is added to: start, commit and rollback \transaction.
+
+\paragraph{Start transaction statement} \code{START TRANSACTION;}
+Statement starts transaction and has response with result set with a single row, which represents initial empty \txState. 
+ Important fact is that transaction id is generated inside cluster, thus timestamp encoded in id is in sync with clock in the cluster, therefore is reliable for compare operations with other transactions.
+
+\paragraph{Commit transaction statement} \code{COMMIT TRANSACTION AS JSON <\txState as json>;}
+Begins the commit procedure of \mpt algorithm. \client has to serialize \txState into json and attach it to the statement.
+%Client has to serialize Transaction State into json and execute commit statement. Only client has transaction state with all transaction items existing in the cluster for that transaction.
+
+
+\paragraph{Rollback transaction statement} \code{ROLLBACK TRANSACTION AS JSON <\txState as json>;}
+Performs the rollback of \transaction. 
+%Transaction State is also required in order to send rollback messages only to nodes which have some data associated with transaction.
+
+
+% \begin{description}
+% \item[Start transaction statement] \hfill \\  \\
+% Statement uses \code{START} keyword instead of \code{BEGIN} in order to avoid conflict with existing \code{BEGIN BATCH} statement. 
+% \item[Commit transaction statement] \hfill \\ \code{COMMIT TRANSACTION AS JSON <transaction state as json>;} \\ Client has to serialize Transaction State into json and execute commit statement. Only client has transaction state with all transaction items existing in the cluster for that transaction.
+% \item[Rollback transaction statement] \hfill \\ \code{ROLLBACK TRANSACTION AS JSON <transaction state as json>;} \\
+% \end{description}
+
+% \begin{enumerate*}
+% \item ,
+% \item  and
+% \item rollback \transaction.
+% % \item Read contents of private memtable - which is a technical statement that during development and tests
+% % \item Flush private memtable contents locally - another technical statement that moves data of given transaction from private memtable storage to real tables.
+% \end{enumerate*}
+
+
 
 %\begin{example}
 %\label{ex:insertUsing}
 
-\begin{lstlisting}[style=outcode,label={lst:insertUsing},caption={Insert statement with using clause}]
-INSERT INTO ks.users VALUES(...) 
-WHERE ... 
-USING TIMESTAMP = <timestamp>;
-\end{lstlisting}
+% \begin{lstlisting}[style=outcode,label={lst:insertUsing},caption={Insert statement with using clause}]
+% INSERT INTO ks.users VALUES(...) 
+% WHERE ... 
+% USING TIMESTAMP = <timestamp>;
+% \end{lstlisting}
 %\end{example}
 
 %\begin{example}
 %\label{ex:updateUsing}
 
-\begin{lstlisting}[style=outcode,label={lst:updateUsing},caption={Update statement with using clause}]
-UPDATE ks.users 
-USING TIMESTAMP = <timestamp> 
-SET ...
-WHERE ...;
-\end{lstlisting}
+% \begin{lstlisting}[style=outcode,label={lst:updateUsing},caption={Update statement with using clause}]
+% UPDATE ks.users 
+% USING TIMESTAMP = <timestamp> 
+% SET ...
+% WHERE ...;
+% \end{lstlisting}
 %\end{example}
 
 
-Therefore it is possible to only extend \code{using} clause to add new functionality to all statements. Extended \code{using} clause supports \code{transaction} keyword and accept transaction id, as in Listing \ref{lst:insertUsingTx}. An example of transaction id is \code{32e4d520-15aa-11e6-b55d-bd89c88d765a}.
+% Therefore it is possible to only extend \code{using} clause to add new functionality to all statements. Extended \code{using} clause supports \code{transaction} keyword and accept transaction id, as in Listing \ref{lst:insertUsingTx}. An example of transaction id is \code{32e4d520-15aa-11e6-b55d-bd89c88d765a}.
 
 
 \begin{lstlisting}[style=outcode,label={lst:insertUsingTx},caption={Insert statement with using transactional clause}]
@@ -107,26 +138,6 @@ USING TRANSACTION = <transaction id>;
 \end{lstlisting}
 
 % example of tx id 
-
-Normal modifications do not have any results in the response. However in case of transactional modification, response has results set with transaction item that can be merged into transaction state by the client.
-
-Additional \emph{CQL} syntax is added to
-\begin{enumerate*}
-\item Start transaction
-\item Commit transaction
-\item Rollback transaction
-\item Read contents of private memtable - that’s a technical statement that helped in development and tests
-\item Flush private memtable contents locally - another technical statement that moves data of given transaction from private memtable storage to real tables.
-\end{enumerate*}
-
-\begin{description}
-\item[Start transaction statement] \hfill \\ \code{START TRANSACTION;} \\
-Statement uses \code{START} keyword instead of \code{BEGIN} in order to avoid conflict with existing \code{BEGIN BATCH} statement. Response has result set with single row which represents initial empty transaction state. 
- Important fact is that transaction id is generated inside cluster. Since cluster nodes have their system clocks synchronized, then timestamp encoded in \code{UUID} is reliable. Timestamp can be used for different operations, such as tracking how long transaction existed.
-\item[Commit transaction statement] \hfill \\ \code{COMMIT TRANSACTION AS JSON <transaction state as json>;} \\ Client has to serialize Transaction State into json and execute commit statement. Only client has transaction state with all transaction items existing in the cluster for that transaction.
-\item[Rollback transaction statement] \hfill \\ \code{ROLLBACK TRANSACTION AS JSON <transaction state as json>;} \\
-Transaction State is also required in order to send rollback messages only to nodes which have some data associated with transaction.
-\end{description}
 
 
 
