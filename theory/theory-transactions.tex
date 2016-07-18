@@ -227,7 +227,6 @@ The main idea behind the algorithm is decomposition of the consensus problem int
 
 % TODO reszta opisu
 
- %The difference to \paxos  is that \emph{Raft} has been decomposed into independent subproblems which clearly address problems. 
 
 % TODO %
 % Napisać jak ten RAFT działa
@@ -285,21 +284,4 @@ Note that \lwt affects only limited number of nodes -- replicas of \emph{John}, 
 \lwt is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt.
 The proposed algorithm supports multi-partition operations, and provides read-committed isolation level, whereas \lwt provides serializable isolation.
 
-%1. LWT is initiated by client request: insert John if not exists
-%2. Request is routed to some node X that becomes coordinator of LWT
-%3. Coordinator wants to be a leader so it creates a ballot and sends prepare to replicas: node1, node2, node3. This is prepare phase.
-%4. Replicas promise to not accept values from leaders who have lower ballots.
-%5. Coordinator gets 3 of out 3 promises. Quorum promised to listen.
-%6. Coordinator performs read: SELECT * FROM users WHERE user_id = 1
-%7. Coordinator checks condition “IF NOT EXISTS”. If such row did not exist in quorum of replicas it proceeds further
-%8. Coordinator, as a leader, proposes new value which is an insert to users table.
-%9. All three nodes reply with accept. Quorum accepted insert.
-%10. At this point, insert is an in progress proposal that has been accepted by majority of replicas. Even if coordinator crashes, once someone selects user with id=1 or retries to insert it. This proposal will get committed. Let’s assume that coordinator is well and proceeds to commit.
-%11. Coordinator broadcasts commit message
-%12. Replicas apply insert locally and reply with acknowledge message
-%13. Coordinator receives quorum of acknowledges. LWT has been successfully completed.
-%14. Coordinator responds to client: John was inserted.
 
-
-%Sequence above is a happy path. At any point coordinator might lose his leadership if some other node sends prepare with higher ballot. In that case coordinator waits a bit and retries whole process again. 
-%Also any replica might stop responding, which is fine as long as quorum is up and well. If quorum responds to messages, coordinator can proceed. If there is no quorum then paxos conditions are not met and LWT cannot be continue. However during normal operation is it rather rare to see many nodes down so in general LWT can successfully finish with 2 out of 3 replicas running. Note that cluster size might be much bigger, for example hundred nodes, but since replication factor \RF{3}, only three nodes are interesting from perspective of LWT and Paxos.

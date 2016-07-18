@@ -230,7 +230,7 @@ This phase is special, because even if one replica group decides to move to roll
 % \item repairing phase.
 % \end{enumerate*}
 
-\transaction cannot be rolled back once its proposal was accepted by all quorums of all replica groups. \paxos guarantees that once proposal has been accepted, current or other leader will finish proposal in progress in that round and effectively transaction will be committed. Process of repairing in-progress transaction is described in repairing phase.
+\transaction cannot be rolled back once its proposal was accepted by all quorums of all replica groups. \paxos guarantees that once proposal is accepted, current or other leader will finish proposal in-progress in that round and effectively transaction will be committed. Process of repairing in-progress transaction is described in repairing phase.
 
 If replica has to move to rollback phase upon decision of all replica groups and not by its own, then it should notify the node about rollback, which then purges its private data from \txStorage, remove \txState from \txIndex and records rolled back \transaction in \txLog.
 
@@ -312,7 +312,8 @@ After repair main transaction might continue. If it turns out that repaired tran
 
 
 \subsection{The example of \mpt}
-TODO dodać rysunki pokazujace co jest gdzie w danym momencie
+17 lipca 2016, iteracja 1: Aktualnie jest już bardzo dużo poprawione, ale nadal brakuje rysunków tabelek pokazujacych co gdzie jest w danym momencie. Spojrz prosze na to co jest, bo jeszcze nie mam dobrej koncepcji jak to rozrysowac. Sklaniam sie ku duzej ilosci tabelek.
+
 Assume we have 
 \N{5}, \RF{3},
 $\text{\transaction}(\text{\mutation{k_1}{v_1}, \mutation{k_2}{v_2}})$, 
@@ -320,69 +321,79 @@ $\text{\txState}(\text{\txItemi{k_1}}, \text{\txItemi{k_2}})$,
 \topologyItem{k_1}{N^'_1}, 
 \topologyItem{k_2}{N^'_2}, 
 where $N^'_1=(n_1, n_2, n_3)$, 
-$N^'_2=(n_3,n_4,n_5)$. Furthermore let us assume that \mutation{k_1}{v_1} is present in each \txStorage of each $n\in N^'_1$ and \mutation{k_2}{v_2} is present in each \txStorage of each $n\in N^'_2$, thus \transaction is ready for the commit procedure, which we analyze step by step:
+$N^'_2=(n_3,n_4,n_5)$. Figure \ref{fig:mptExampleInitState} presents current state of the algorithm. Furthermore let us assume that \mutation{k_1}{v_1} is present in each \txStorage of each $n\in N^'_1$ and \mutation{k_2}{v_2} is present in each \txStorage of each $n\in N^'_2$ except $n_5$, thus \transaction is ready for the commit procedure, which we analyze step by step:
 
-Tableka która pokazuje stan tego co jest:
-
-
-
-% Step & State of  & Phase of replica & Next transition & 
-
-% \begin{figure}
-% \centering
-% \begin{tabular}{c|c|c|c}
-% 	\toprule
-%     Node & Phase & State of \txStorage  \\ \midrule
-%     $n_1$
-%     \\ \bottomrule
-%   \end{tabular}     
-%  \caption{Payload of $\mathit{prepare\_response}$}
-%  \label{fig:preparePayload}
-% \end{figure}
-
-
-%Let us consider a cluster of $5$ nodes, and a transaction $t$, which modifies two keys: $k_{1}, k_{2}$ with updates: $u_{1}, u_{2}$. Assume that key $k_{1}$ is replicated by replica group $RG1$, which consists of nodes: $n1$, $n2$ and $n3$, and key $k_{2}$ is replicated by $RG2$, which consists of nodes: $n3, n4, n5$.
-%Let us assume that updates are already existing in the private transaction storage at each node, and transaction is ready for the commit process, which we analyze step by step:
-
+\begin{figure}
+\centering
+\begin{tabular}{c||c|c|c|c}
+	\toprule
+    Node  & phase & \txStorage & \txIndex & replica group  \\ \midrule
+    $n_1$ & idle & \mutation{k_1}{v_1} & & $N^'_1$ \\
+    $n_2$ & idle & \mutation{k_1}{v_1} & & $N^'_1$ \\
+    $n_3$ & idle & \mutation{k_1}{v_1}, \mutation{k_2}{v_2} & & $N^'_1$, $N^'_2$ \\
+    $n_4$ & idle & \mutation{k_2}{v_2} & & $N^'_2$ \\
+    $n_5$ & idle &  & & $N^'_2$ \\ \bottomrule
+  \end{tabular}     
+ \caption{Initial state of nodes}
+ \label{fig:mptExampleInitState}
+\end{figure}
 
 
 \begin{enumerate}
-\item Nodes start at \emph{idle phase}, and first transition has to move them to setupd phase.
+\item Nodes start at \emph{idle phase} and first transition has to move them to setup phase.
 
-\item Run transition to setupd phase. Assume all nodes do the setup operation successfully. \\
- After the transition, quorums in $RG1$, $RG2$ are in \emph{setup phase}. Minimum phase among replica groups is \emph{setup phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a message does:
+\item Run transition to setup phase. Assume all nodes do the setup operation successfully. \\
+ After the transition, quorums in $N^'_1$, $N^'_2$ are in \emph{setup phase}. Minimum phase among replica groups is \emph{setup phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a setup message does:
  \begin{enumerate}
- 	\item registers transaction $t$ in the Transaction Index, since there are no concurrent transactions, a new paxos round is created for transaction,
- 	\item execute data consistency procedure, for example $n2$ responsible for $k_{1}$ has to read from other replicas of the key: $n1, n3$ and then merge the data, and save it in the private transaction storage.
+ 	\item execute data consistency check procedure. $n_5$ detects that \txState has \txItemi{2} and reads data from other replicas: $n_3, n_4$ which answer with \mutation{k_2}{v_2}. $n_5$ adds \mutation{k_2}{v_2} to \txStorage
+ 	\item registers \txState in \txIndex, since there are no concurrent transactions, a new \paxosRoundId is created for \transaction on each node. 	
  \end{enumerate}
+ Figure \ref{fig:mptExampleSetupState} presents state of nodes after setup transition.
+
+
+\begin{figure}
+\centering
+\begin{tabular}{c||c|c|c|c}
+	\toprule
+    Node  & phase & \txStorage & \txIndex & replica group  \\ \midrule
+    $n_1$ & setup & \mutation{k_1}{v_1} & \paxosRoundIdi{1} & $N^'_1$ \\
+    $n_2$ & setup & \mutation{k_1}{v_1} & \paxosRoundIdi{2} & $N^'_1$ \\
+    $n_3$ & setup & \mutation{k_1}{v_1}, \mutation{k_2}{v_2} & \paxosRoundIdi{3} & $N^'_1$, $N^'_2$ \\
+    $n_4$ & setup & \mutation{k_2}{v_2} & \paxosRoundIdi{4} & $N^'_2$ \\
+    $n_5$ & setup & \mutation{k_2}{v_2} & \paxosRoundIdi{5} & $N^'_2$ \\ \bottomrule
+  \end{tabular}     
+ \caption{State of nodes after setup transition}
+ \label{fig:mptExampleSetupState}
+\end{figure}
+
 
 \item Run transition to prepare phase. Let us assume successful transition, after which all replica groups are in prepared phase. \\
-  After the transition, quorums in $RG1$, $RG2$ are in \emph{prepare phase}. Minimum phase among replica groups is \emph{prepare phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a message does:
+  After the transition, quorums in $N^'_1$, $N^'_2$ are in \emph{prepare phase}. Minimum phase among replica groups is \emph{prepare phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a message does:
 
   \begin{enumerate}
-  	\item finds paxos state querying transaction index using transaction state from the message and checks whether the ballot is the higher than promised ballot, since it will be the first ballot in this round, all replicas promise successfully and register the ballot in the paxos state.
+  	\item finds Paxos state querying \txIndex using \txState from the message and checks whether the ballot is the higher than promised ballot, since it will be the first ballot in this round, all replicas promise successfully and register the ballot in the Paxos state.
   \end{enumerate}
 
-\item Run transition to \emph{propose phase}, let us assume successful transition. \\
-	Each replica upon receing a propose message performs:
+\item Run transition to \emph{accepted phase}, let us assume successful transition. \\
+	Each replica upon receving a propose message performs:
 
 	\begin{enumerate}
-		\item finds paxos state using transaction state,
+		\item finds Paxos state using \txState,
 		\item checks whether ballot from the message is the promised one,
-		\item records the proposal from the message, which is the transaction state in the paxos state for transaction $t$, and replies with acceptance.
+		\item records the proposal from the message, which is the \txState in the Paxos state for \transaction, and replies with acceptance.
 	\end{enumerate}
 
 \item Run transition to \emph{commit phase}, in which each replica receives a commit message and performs:
 
 	\begin{enumerate}
-		\item finds the transaction's data in private transaction storage. In case of $RG1$ it is $k_{1} -> u_{1}$, and in case of $k_{2} -> u_{2}$,
-		\item applies the modifications locally,
-		\item performs rollback on other concurrent conflicting transactions present in the Transaction Index which are assigned to same paxos round,
-		\item adds transaction $t$ to the Transaction Log as committed,
-		\item replies to the message with acknowledgement.
+		\item finds the transaction's data in \txStorage. In case of $N^'_1$ it is \mutation{k_1}{v_1}, and in case of $N^'_2$,  \mutation{k_2}{v_2},
+		\item apply mutations locally,
+		\item performs rollback on other concurrent conflicting transactions present in \conflictingTxSet which are assigned to the same \paxosRoundIdi{i},
+		\item record \txState in \txLog, as committed,
+		\item reply to the message with acknowledgement.
 	\end{enumerate}
 
-\item The algorithm ends with the committed transaction $t$.
+\item The algorithm ends with the committed \transaction.
 
 \end{enumerate}
 

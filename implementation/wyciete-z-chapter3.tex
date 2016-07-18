@@ -8,7 +8,7 @@ Transaction \transaction is identified using \emph{unique id} (UUID\footnote{uni
 There are many concurrent transactions, therefore transaction state should use least amount of memory possible, therefore tokens are used instead of keys. Existence of a \txItem means that replicas identified by the \emph{token} store modification of the key done in \transaction. Keys are unknown to the transaction state, but keys are known to the replicas. Each replica has full information about the key and operations performed on the value associated with it. 
 
 Transaction item includes also a table name in order to distinguish modifications associated with the same token, but in different tables. This can be extended to any other name spacing.
-Token alone only directs us to nodes with modified data, but to know what has been modified, we also need names of tables. 
+Token alone only directs us to nodes with modified data, but to know what was modified, we also need names of tables. 
 
 Transaction state has deterministic memory footprint, since it stores fixed-length tokens instead of keys with unknown size. 
 

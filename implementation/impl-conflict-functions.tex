@@ -5,36 +5,45 @@ In order for \node{i} to know whether two transactions are conflicting it requir
 given \txStateOne and \txStateTwo such check requires network messages to replicas, which compare mutations in private transaction storage of \txStateOne and \txStateTwo. 
 Distributed algorithms should minimize round trips, because they cost resources and decrease performance \cite{rotem2006fallacies}.
 
-Local conflict functions, which use only \txState, as it is without accessing \mutations on \nodesTx do not require network, but as a tradeoff have false positives, are presented in Table \ref{conflictFunctions}. 
+Local conflict functions, which use only \txState, as it is without accessing \mutations on \nodesTx do not require network, but as a tradeoff have false positives, are presented in Figure \ref{fig:conflictFunctions}. 
 
-TODO tabelka plus definicje
-Przepisać początek (zrobione). Transakcje konflikutją jeśli coś tam coś tam. Dalej rozwinąć kiedy rozwinąć i jakie są opcje i jakie są konsekwencje tych opcji. Mogą być funkcje takie które robią Round tripy i takie które ich nie robią.
+% TODO tabelka plus definicje
+% Przepisać początek (zrobione). Transakcje konflikutją jeśli coś tam coś tam. Dalej rozwinąć kiedy rozwinąć i jakie są opcje i jakie są konsekwencje tych opcji. Mogą być funkcje takie które robią Round tripy i takie które ich nie robią.
 
-TODO wdrozyc poprawki z review i zaznaczonych fragmentow
+% TODO wdrozyc poprawki z review i zaznaczonych fragmentow
 
-\begin{description}
-\label{conflictFunctions}
-\item[Conflict on same transaction items] \hfill \\
-	Transactions are considered conflicting if they share transaction item. 
-	\\
-	If transactions $tx_{1}, tx{_2}$ modify row with key $k_{1}$ in table $t_{1}$ then both transactions have same transaction item. Given transaction states of two transactions, transaction items can be checked for intersection.
-	If they intersect then transactions are considered to be in conflict with each other. \\
-	False positives occur when transactions modify row with key $k_{1}$, but $tx_{1}$ modifies column $c_{1}$ and $tx_{2}$ modifies column $c_{2}$. Since transaction item is not resolved to level of column, but to level of row, then function yields conflict when there is none, because different columns are modified.	
-\item[Conflict on same table] \hfill \\
-		Function marks transactions as conflicting if they have transaction item for same table. It greatly increases number of conflicts, but reduces number of paxos rounds since all conflicting transactions participate in same paxos round.
-		False positives occur when transactions modify different keys $k_{1}, k_{2}$ in same table $t_{1}$. 
-\item[Conflict on same token range slice] \hfill \\
-		Function slices token range into $s$ slices, where $s$ is a configurable parameter. Function takes transaction item and finds slice number for token in transaction item that falls into sliced token range. If two transactions have transaction items which fall into same slice, then transactions are considered conflicting.
-		Fuction allows to have configurable number of concurrent paxos rounds since there will be at most as many rounds as there are slices. False positives are expected result of the function.
-\end{description}
+\begin{figure}
+\centering
+\begin{tabular}{|p{3cm}|p{11cm}|}
+        \toprule
+        Function name & Description \\ \midrule
+        Conflict on same \txItem &
+If transactions $tx_{1}, tx{_2}$ modify a row with key $k_{1}$ in table $t_{1}$ then both transactions have same transaction item. Given transaction states of two transactions, transaction items can be checked for intersection.
+	If they intersect then transactions are considered conflicting. 
+	False positives occur when transactions modify a row with key $k_{1}$, but $tx_{1}$ modifies column $c_{1}$ and $tx_{2}$ modifies column $c_{2}$. 
+	Transaction items for the same partition $k_p$ but different $k_c$ are not distinguished, thus function can yield conflict when there is none. \\
+	Conflict on the same table & Function marks transactions as conflicting if they have \txItem for the same table. It greatly increases number of conflicts, but reduces number of Paxos rounds since all conflicting transactions participate in the same Paxos round.
+		False positives occur when transactions modify different keys $k_{1}, k_{2}$ in the same table.  \\
+	
+	Conflict on the same token range slice & 
+         Function slices token range into $s$ slices, where $s$ is a configurable parameter. Function takes \txItem and finds slice number for token in \txItem that falls into sliced token range. If two transactions have transaction items which fall into the same slice, then transactions are considered conflicting.
+		Fuction allows to have configurable number of concurrent Paxos rounds since there will be at most, as many rounds, as the number of slices. False positives are expected result of the function.
+         \\ \bottomrule
+      \end{tabular}     
+     \caption{Conflict functions}
+     \label{fig:conflictFunctions}
+\end{figure}
 
-Conflict functions allow to eliminate round trips, put bounds on number of concurrent transactions, but with a cost of false positives. \mpt algorithm works with any conflict resolution function. Conflict resolution functions can be defined per table.
+
+Conflict functions presented in Figure \ref{fig:conflictFunctions} eliminate network messages and put bounds on number of concurrent transactions, but with a cost of false positives. In principle \txIndex can use any conflict function, which satifies its properties, thus it is possible to develop a new function, which may use network messages to detect conflicts, but such function would decrease performance of the solution. 
+
+%We presented functions which do not use network messages, but alternatives exist and could be implemented.
 
 
 \subsection{Configurable conflict functions}
-The implementation provides configuration of conflict functions per column family, enabling different choice of conflict functions for different tables depending on intended workload.
+The implementation provides configuration of conflict functions per column family, thus supporting different choice of conflict functions for different tables depending on intended workload.
 
-Per table configuration is an additional feature to the algorithm implemented using column family metadata, which can be changed dynamically at runtime of the cluster by executing \code{ALTER TABLE} commands. Listing \ref{lst:configureConflictFunctions} shows how the conflict function is set to resolve conflict on same token range slice number, which puts bounds on number of concurrent transactions in table \code{sliced_counters} to $2000$ transactions. 
+Per table configuration is an additional feature to the algorithm implemented using column family metadata, which can be changed dynamically at runtime of the cluster by executing \code{ALTER TABLE} commands. Listing \ref{lst:configureConflictFunctions} shows how the conflict function is set to resolve conflict on the same token range slice number, which puts bounds on number of concurrent transactions in table \code{sliced_counters} to $2000$ transactions. 
 
 \begin{lstlisting}[style=outcode,label={lst:configureConflictFunctions},caption={Configuring conflict function on Cassandra table}]
 CREATE TABLE counters.sliced_counters 
@@ -46,11 +55,9 @@ ALTER TABLE counters.sliced_counters WITH extensions = {
    'token_range_slices' : '2000' };
 \end{lstlisting}
 
-%It will divide token range into 2000 even slices. Such configuration allows to have at most 2000 transactions running on single node for that particular table.
-
-Conflict functions  are available with following names:
+Conflict functions are available with the following names:
 \begin{enumerate*}
-\item \code{COMMON_TX_ITEMS} -- conflict on same transaction items, used as the default conflict function,
-\item \code{TOKEN_RANGE_SLICES} -- conflict on same token range slice number. Function has additional configurable parameter \code{int token_range_slices}
-\item \code{ONE_FOR_ALL} -- conflict on same table.
+\item \code{COMMON_TX_ITEMS} -- conflict on the same transaction items, used as the default conflict function,
+\item \code{TOKEN_RANGE_SLICES} -- conflict on the same token range slice number. Function has additional configurable parameter \code{int token_range_slices}
+\item \code{ONE_FOR_ALL} -- conflict on the same table.
 \end{enumerate*}

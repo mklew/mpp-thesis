@@ -2,82 +2,161 @@
 
 \chapter{Tests and performance analysis}\label{chapter:testing}
 
-This chapter is focused on explaining theory behind testing of \mpt algorithm and its components that gives high certainty about correctness of algorithm and its implementation. Many tests were performed on different levels that had to verify if implementation is correct, but what is more important if new \mpt algorithm delivers its promise of multi--partition read-committed transactions. 
-\mpt algorithm developed during this research has been proven to work in practice for all written tests. 
+This chapter is focused on explaining theory behind testing of \mpt algorithm and its components. Many tests were performed on different levels that had to verify if implementation is correct and what is more important whether new \mpt algorithm provides multi-partition read-committed transactions. 
+\mpt algorithm developed during this research was proven to work in practice for all considered scenarios. 
 %Writing a formal proof is a complex task which would require further research and is out of scope of this work.
 
 \section{Unit testing}
-Components such as \emph{Transaction Index}, \emph{Transaction Log}, \emph{Private Transaction Storage} were  tested for their expected behaviour. Tests also covered parts of \mpt which were not cluster dependent such as \emph{phase} transitions. Unit tests are not enough to check for correctness especially when testing distributed algorithms which are  exposed to network latencies, concurrency issues like deadlocks and other problems in the distributed environment. 
+Components such as \emph{Transaction Index}, \emph{Transaction Log}, \emph{Private Transaction Storage} were  tested for their expected behaviour. Tests also covered parts of \mpt which were not cluster dependent such as \emph{phase} transitions. Unit tests are not enough to check for correctness especially when testing distributed algorithms which can be affected by network latencies, concurrency issues like deadlocks and other problems in the distributed environment. 
 
 \section{Cluster tests}
-Tests on real cluster of nodes were major part of all tests performed to validate \mpt correctness. We conducted multiple experiments which covered all aspects of \mpt algorithm. 
+Tests on real cluster of nodes were major part of all tests performed to validate \mpt correctness. We conducted multiple experiments which covered the following aspects of \mpt algorithm:
+\begin{enumerate*}
+\item isolation of mutations,
+\item detection of conflicts,
+\item forcing conflicting transactions into the same \paxosRoundId,
+\item finishing in-progress proposal,
+\item selecting consistent data and finishing in-progress proposals,
+\item moving mutations from \txStorage to \database,
+\item rolling back conflicting transactions on commit of the single transaction,
+\item correctness of phase transitions.
+\end{enumerate*}
 
 \subsection{Testing environment}
-Cluster tests were performed independently on two clusters with \RF{3} and \N{5}. Tests run on $5$ nodes yielded important results, because with $5$ nodes and \RF{3} there are at most $10$ replica groups. 
+Cluster tests were performed independently on two clusters with \N{3} and \N{5}. \RF{3} was used in both clusters.
+Tests run on $5$ nodes yielded important results, because with $5$ nodes and \RF{3} there are at most $10$ replica groups. 
 
-Clusters were run locally using \emph{Cassandra Cluster Manager} which is a tool to quickly set up local cluster.
+Clusters were run locally using \emph{Cassandra Cluster Manager} \cite{ccm}, which is a tool to quickly set up local cluster.
 
 \subsection{Testing method}
 
-\subsubsection{Counters}
-Tests are performed using testing schema with counter tables. Figure \ref{fig:counterTable} shows counter table, which consists of $5$ columns with \emph{int} counter values: $c1,c2,c3,c4,c5$
-Testing schema consists of $2$ keyspaces with number of counter tables in each. Counter tables in each keyspace differ in name, but structure is the same.
+\subsubsection{Increments}
+Tests are performed using testing schema with incrementation tables. Figure \ref{fig:incrementationTable} shows incrementation table, which consists of $5$  \emph{int} columns with incremental values: $in1,in2,in3,in4,in5$
+Testing schema consists of $2$ keyspaces with multiple incrementation tables in each. Incrementation tables in each keyspace differ in name, but structure is the same.
 
 \begin{figure}[h]
 \centering
 \begin{tabular}{c||c|c|c|c|c}
         \toprule
-        id 		 & $c_{1}$ & $c_{2}$ & $c_{3}$ & $c_{4}$ & $c_{5}$ \\ \midrule
-        $counter_{1}$ & 1  & 1  & 1  &  1 & 1  \\
-        $counter_{2}$ & 1  & 2  & 3  &  4 & 5  \\ \bottomrule
+        id 		 & $in_{1}$ & $in_{2}$ & $in_{3}$ & $in_{4}$ & $in_{5}$ \\ \midrule
+        $i_{1}$ & 1  & 1  & 1  &  1 & 1  \\
+        $i_{2}$ & 1  & 2  & 3  &  4 & 5  \\ \bottomrule
       \end{tabular}
-      \caption{A counter table with two sample rows}
-  \label{fig:counterTable}
+      \caption{A increment table with two sample rows}
+  \label{fig:incrementationTable}
 \end{figure}
 
 \subsubsection{Iterations}
-Each test case is done in many iterations i.e. $300$. During each iteration, there are many concurrent transactions which execute at the same time. Each transaction performs operations on counters. Most basic operation is to increment counter column using transactional update operation.
+Each test case is done in many iterations i.e. $300$. During each iteration, there are many concurrent transactions which execute at the same time. Each \transaction performs operations on incrementation tables. Most basic operation is to increment column using transactional update.
 
-\subsubsection{Counter executors}
-Counter executors run in parallel through all iterations. 
-Counter executors operate on set of counters. They perform same operation on each counter in each iteration, where each iteration is a new transaction that is committed at the end of an iteration. 
-Basic executor increments specific counter column $c$ of each counter in the set.
+\subsubsection{Increment executors}
+Increment executors run in parallel through all iterations and perform a transaction during each iteration.
+Increment executors operate on set of rows from incrementation tables. They perform the same operation on each row in each iteration, where each iteration is a new transaction that is committed at the end of an iteration. 
+Basic executor increments specific increment column $in$ of each row in the set.
 
-\subsection{Testing of repair of in progress proposal}
-Tests required modification of an implementation. During this test, counters from table named \code{stop_after_proposed} are incremented. \mpt has been modified to fail after algorithm reached has successfully proposed, thus before commit. It leaves transaction as accepted in progress proposal that should be finished by next proposer. 
-Normal select is used to check that changes were not yet committed by the transaction. 
-Then a transactional select is used which has to run \mpt algorithm until \emph{prepare phase} is reached. In progress proposal is detected during prepare and has to be completed. Transactional select commits transaction and returns incremented column. Results of select statement are checked for correctness. 
+Let us present an example, assume we have $2$ executors: $e_1, e_2$ where $e_1$ increments $in_1$ column and $e_2$ increments $in_2$ column of each row. Futhermore, assume that executors increment only a single row. Figure \ref{fig:executorsExample} presents results of $6$ iterations. Note that, there are iterations in which both executors committed, due to concurrent execution of executors and short life-span of transactions.
+
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c||c|c|c|c|c|c}
+        \toprule
+        iteration & $in_{1}$ & $in_{2}$ & $in_{3}$ & $in_{4}$ & $in_{5}$ & which $e$ committed \\ \midrule
+        0 &         0        & 0        & 0        &  0       & 0        &    \\
+        1 &         1        & 0        & 0        &  0       & 0        &   $e_1$ \\ 
+        2 &         1        & 1        & 0        &  0       & 0        &   $e_2$ \\ 
+        3 &         1        & 2        & 0        &  0       & 0        &   $e_2$ \\ 
+        4 &         2        & 3        & 0        &  0       & 0        &   $e_1, e_2$ \\ 
+        5 &         3        & 3        & 0        &  0       & 0        &   $e_1$ \\ 
+        6 &         3        & 4        & 0        &  0       & 0        &   $e_2$ \\  \bottomrule
+      \end{tabular}
+      \caption{Example of iterations of 2 executors incrementing a single row}
+  \label{fig:executorsExample}
+\end{figure}
+
+\subsection{Testing of repair of in-progress proposal}
+%Tests required modification of an implementation.
+ During this test, counters from table named \code{stop_after_proposed} are incremented. 
+ \mpt was modified to fail after proposal was accepted, thus before commit. It leaves transaction as accepted in-progress proposal that should be finished by the next proposer. 
+ Then nontransactional select is used to check that changes were not yet committed by the transaction. If there was no isolation or if some replicas applied mutation before commit, select would return non committed results. Nextly,
+ select with \emph{transactional} consistency level is used, which has to run \mpt algorithm until \emph{prepare phase} is reached and any in-progress proposal are detected and committed
+  %is detected during prepare and has to be completed. 
+  Transactional select commits in-progress transaction and returns incremented column. Results of select statement are checked for correctness. This test could fail if transactional select would return results without committing in-progress transaction.
 
 \subsection{Testing of independent transactions}
-Tests employs multiple counter executors which receive disjoint sets of counters. Each executor increments counters by one and commits transactions. Each executor keeps track of number of committed transactions.
+Tests employs multiple increment executors which mutate different columns of different rows. 
+Each executor increments one column and commits transaction. Each executor keeps track of number of committed transactions. 
 
-After iterations, number of committed transactions must match counter values. In case of non conflicting counters, all transactions need to commit, thus counters must have counts equal to number of iterations.
+\begin{figure}[h]
+\centering
+\begin{tabular}{c||c|c|c|c|c}
+        \toprule
+        id & $in_{1}$ & $in_{2}$ & $in_{3}$ & $in_{4}$ & $in_{5}$ \\ \midrule
+        i_1 &   100        & 100        & 100        &  100       & 100        \\
+        i_2 &   100        & 100        & 100        &  100       & 100        \\
+        i_3 &   100        & 100        & 100        &  100       & 100        \\
+        i_4 &   100        & 100        & 100        &  100       & 100        \\        
+        i_5 &   100        & 100        & 100        &  100       & 100        \\  \bottomrule
+      \end{tabular}
+      \caption{Example of results of independent transactions}
+  \label{fig:exampleIndependentTransactions}
+\end{figure}
+
+Figure \ref{fig:exampleIndependentTransactions} presents results of $5$ executors after $100$ iterations. 
+Assume that $e_n$ increments $in_n$ of row with id $i_n$, where $n\in [1,5]$, thus each $e_n$ performs transaction on different row.
+Note that, number of committed transactions has to be equal to number of iterations, which has to be equal to values in columns.
+
+Test could fail if number of committed transactions did not match value of columns. It would mean that transactions were classified, as conflicting, whereas they were not.
 
 \subsection{Testing of conflicting transactions}
-There are $5$ counter executors which receive same set of counters. Each executor increments different count column. 
+Scenario has to test whether conflicting transactions are rolled back. 
+There are $5$ executors which receive same set of rows: $i_1, i_2, i_3, i_4, i_5, i_6, i_7$. Each executor increments different column. 
 
-After iterations, number of committed transactions must match counter values. In case of conflicting transactions counts are less than number of iterations. Counters may have different counts in columns, but all counter rows must have same values in $c_{x}$ columns, because they were incremented by single executor.
+Figure \ref{fig:exampleConflictingTransactions} presents how rows look at the end of $10$ iterations.
+After iterations, number of committed transactions must match counter values, but it might be different value than number of iterations, since not all transactions should commit. $e_1$ committed $4$ transactions and $4$ must be the value of $in_1$ column of each row: $i_1, i_2, i_3, i_4, i_5, i_6, i_7$. If one row, for example $i_3$ had different value in $in_1$ column then it would mean that transaction was not fully committed.
+Rows may have different values in columns, but all rows must have the same values in the same $in_{x}$ columns, because they were incremented by the same executor in a single transaction in each iteration.
+
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c||c|c|c|c|c}
+        \toprule
+        id & $in_{1}$ & $in_{2}$ & $in_{3}$ & $in_{4}$ & $in_{5}$ \\ \midrule
+        i_1 &   4        & 3        & 5        &  2       & 6        \\
+        i_2 &   4        & 3        & 5        &  2       & 6         \\ 
+        i_3 &   4        & 3        & 5        &  2       & 6         \\ 
+        i_4 &   4        & 3        & 5        &  2       & 6         \\ 
+        i_5 &   4        & 3        & 5        &  2       & 6         \\ 
+        i_6 &   4        & 3        & 5        &  2       & 6         \\ 
+        i_7 &   4        & 3        & 5        &  2       & 6         \\  \bottomrule
+      \end{tabular}
+      \caption{Example of results of conflicting transactions}
+  \label{fig:exampleConflictingTransactions}
+\end{figure}
 
 \subsection{Testing of partially conflicting transactions}
-Test runs the same way as test for conflicting transactions, but executors receive additional disjoint sets of counters, so each executor has intersection on counters plus additional ones private for executor. 
+Test runs the same way, as scenario for conflicting transactions, but executors receive additional disjoint sets of counters, so each executor has the same subset of rows plus additional ones exclusive for an executor. 
 
-Assertions are the same as in the previous test.
+This scenario checks whether replicas on which there is no conflict do not commit trnasaction that has to be rolled back, due to conflict on other replicas. Assertions and logic is the same, as in the previous scenario. If values in columns across modified rows were different then it would mean that part of transaction was committed, which should not happen.
 
-\subsubsection{Different conflict functions}
-Testing schema has counter tables with different conflict functions set. \mpt has to work for any conflict functions. Testing scenario remains the same. Expected results are also the same.
+% \subsubsection{Different conflict functions}
+% Testing schema has counter tables with different conflict functions set. \mpt has to work for any conflict functions. Testing scenario remains the same. Expected results are also the same.
 
 \subsection{Testing correctness of commit and rollback}
-Testing correctness of rollback and commit is the most crucial test, because tests with incrementations are dependent on truth about rollback and commit responses.
+Testing correctness of rollback and commit is the most crucial test, because tests with increments are dependent on truth about rollback and commit responses. 
 
-For this test, different counter executors were used. There are $2$ different counter executors. Both of them receive set of counters with even number of counters. Size of the set is double number of iterations. All counters start at $0$.
+This scenario checks whether roll back happened not based on the response from a node, but from the state of rows. We want to check whether rollback and commit responses return valid information and whether transactions are indeed rolled back.
 
-First counter executor, \emph{Next Two Counter Executor}, in each iteration increments next two counters. In iteration $0$, increments $counter_{0}$, $counter_{1}$, in iteration $1$ increments $counter_{2}, counter_{3}$ and so continues until end of iterations. Second counter, \emph{Even Counter Executor}, in each iteration increments all counters which have even index in the set.
+In this scenario there are $2$ different executors. Both of them receive the same set of rows with even number of rows. Size of the set is double number of iterations. 
 
-Rationale behind test is that when \emph{Next Two Counter Executor} fails to commit and receives rollback, then for this particular iteration counter with odd index should not be incremented by executor, thus must have initial $0$ count. Otherwise transaction should be committed instead of rolled back.
+First executor, \emph{Next Two Executor}, in each iteration increments columns of next two rows. In iteration $0$, increments $i_{0}$, $i_{1}$, in iteration $1$ increments rows $i_{2}, i_{3}$ and so continues until end of iterations. Second executor, \emph{Even Executor}, in each iteration increments all rows which have even index in the set.
+
+Rationale behind test is that there is a transaction performed by \emph{Next Two Executor}, which is rolled back, due to conflict with \emph{Even Executor}, in which case conflict is caused by the even row. However, odd row is not incremented by \emph{Even Executor}, which committed its transaction, but by \emph{Next Two Executor}, whose transaction was rolled back and if it was rolled back then value of the column in the odd row must have initial $0$ value.  Otherwise transaction would be committed instead of rolled back, which would be inconsistent.
+
 
 \subsection{Testing during partial failure}
 
-All previously described tests were also run with cluster during partial failure. Node was shutdown and tests were run. Since \mpt tolerates partial failures, as long as quorum is alive and responds to requests, tests yield same results.
+All previously described tests were also run with cluster during partial failure, in which nodes were shutdown and tests were run. Since \mpt tolerates partial failures, as long as quorum is alive and responds to requests, tests yielded the same results.
 
 \section{Theoretical network partition tolerance}
 The algorithm makes progress, as long as quorum in each replica group moves in the expected phase, thus the algorithm is resilient to failures of $k$ nodes. The best case and the worst case is shown in Figure \ref{fig:tests:networkPartitionTolerance}. $RGs$ denotes number of replica groups. The key conclusion is that resilience scales with the size of a transaction, since it relies only on quorums in each replica group.
@@ -90,8 +169,8 @@ The algorithm makes progress, as long as quorum in each replica group moves in t
     \resizebox{\textwidth}{!}{\begin{tabular}{c|c|c}
       \toprule
       case & k & conclusion \\ \midrule
-      best case & $RGs * (N - (\frac{N}{2} + 1)$ & occurs, when replica groups are disjoint  \\
-      worst case & $N - (\frac{N}{2} + 1)$  & occurs, when all replica groups intersect  \\  \bottomrule      
+      best case & $RGs * (N - (\frac{N}{2} + 1)$ & replica groups are disjoint  \\
+      worst case & $N - (\frac{N}{2} + 1)$  & all replica groups intersect  \\  \bottomrule      
     \end{tabular}}
   }
   \caption{The best and the worst case of the network partition tolerance}
@@ -99,24 +178,24 @@ The algorithm makes progress, as long as quorum in each replica group moves in t
 \end{figure}
 
 \section{Analyzing number of requests}
-Assume transaction $t$, which modifies $PC=3$ partitions: $p_{1}, p_{2}, p_{3}$,
-, which might be replicated on one up to three unique replica groups, thus number of nodes affected spans from minimum of $N$ to maximum of $PC*N$. Number of unique replica groups depends whether replica groups are independent, thus contain different nodes, of if they overlap in nodes.
+Assume \transaction, which modifies keys: $k_{1}, k_{2}, k_{3}$,
+, which might be replicated on one up to three unique replica groups, thus size of \nodesTx spans from minimum of $RF$ to maximum of $PC*RF$. Number of unique replica groups depends whether replica groups are independent, thus contain different nodes, of if they overlap in nodes.
 
-Starting a transaction requires a single request, thus $1$ request to any node in the cluster, which responds with Transaction State.
-Each modification of the partition needs to be written to the private memtables, and acknowledged by the quorum from a replica group, thus writes perform $[N,PC*N]$ requests.
-Nextly transaction is committed, thus the single commit request $1$ is performed.
-The commit procedure performs most of the requests.
-Replicas need to transition to the pre prepare phase, thus leader has to send $[N,PC*N]$ requests and receive responses.
-Pre prepare phase performs data consistency check, thus each node reads from quorum of replicas, resulting in possible requests count: $[N * (\frac{N}{2} + 1),PC * N * (\frac{N}{2} + 1)]$.
-Nextly the leader transitions replicas to prepare phase, which requires $[N,PC*N]$ requests, followed by propose phase and another wave of $[N,PC*N]$ requests, and lastly it runs transition to the commit phase with another batch of $[N,PC*N]$ requests.
+Starting a transaction requires a single message, thus $1$ message to any node in the cluster, which responds with \txState.
+Each mutation of a key needs to be written to the \txStorage and acknowledged by the quorum from a replica group, thus writes send $[RF,PC*RF]$ messages.
+Nextly transaction is committed, thus the single commit message $1$ is sent.
+The commit procedure sends most of messages.
+Replicas need to transition to the setup phase, thus leader has to send $[N,RF*N]$ messages and receive responses.
+Setup phase performs data consistency check, thus each node reads from quorum of replicas, resulting in possible messages count: $[RF * (\frac{RF}{2} + 1),PC * RF * (\frac{RF}{2} + 1)]$.
+Nextly the leader transitions replicas to prepare phase, which requires $[RF,PC*RF]$ messages, followed by propose phase and another wave of $[RF,PC*RF]$ messages, and lastly it runs transition to the commit phase with another batch of $[RF,PC*RF]$ messages.
 
-The total number of requests, assuming the optimistic path without contention and no failures, 
-is: $[2 + 5 * N + N * (\frac{N}{2} + 1), 2 + 5 * PC*N + PC * N * (\frac{N}{2} + 1)]$,
-which generalises to $2 + 5 * PC*N + PC * N * (\frac{N}{2} + 1)$ where $PC \in [1, N]$.
+The total number of messages, assuming the optimistic path without contention and no failures, 
+is: $[2 + 5 * RF + RF * (\frac{RF}{2} + 1), 2 + 5 * PC*RF + PC * RF * (\frac{RF}{2} + 1)]$,
+which generalises to $2 + 5 * PC*RF + PC * RF * (\frac{RF}{2} + 1)$ where $PC \in [1, RF]$.
 
-Number of requests could be limited if at each step only quorums were considered, thus replacing single $N$ in formula by $\frac{N}{2} + 1$, which would result in the formula: 
-$2 + 5 * PC*(\frac{N}{2} + 1) + PC * (\frac{N}{2} + 1) * (\frac{N}{2} + 1)$ where $PC \in [1, N]$.
-Figure \ref{fig:tests:requestsCount} depicts numbers of requests in both cases.
+Number of messages could be limited if at each step only quorums were considered, thus replacing single $RF$ in formula by $\frac{RF}{2} + 1$, which would result in the formula: 
+$2 + 5 * PC*(\frac{RF}{2} + 1) + PC * (\frac{RF}{2} + 1) * (\frac{RF}{2} + 1)$ where $PC \in [1, RF]$.
+Figure \ref{fig:tests:requestsCount} depicts numbers of messages in both cases.
 
 
 \begin{figure}[hbt]
@@ -126,18 +205,18 @@ Figure \ref{fig:tests:requestsCount} depicts numbers of requests in both cases.
     \renewcommand{\tabcolsep}{0.1cm}
     \begin{tabular}{c|c|c|c}
       \toprule
-      $N$ & $PC$ & requests to all & requets to quorums  \\ \midrule
-      $N=3$ & $PC=1$   & 23  & 16 \\
-      $N=3$ & $PC=2$   & 44  & 30 \\
-      $N=3$ & $PC=3$   & 65  & 44 \\
-      $N=5$ & $PC=1$   & 37  & 16 \\
-      $N=5$ & $PC=2$   & 72  & 30 \\
-      $N=5$ & $PC=3$   & 107 & 44  \\
-      $N=5$ & $PC=4$   & 142 & 58  \\
-      $N=5$ & $PC=5$   & 177 & 72  \\ \bottomrule  
+      $RF$ & $PC$ & messages to all & messages to quorums  \\ \midrule
+      $RF=3$ & $PC=1$   & 23  & 16 \\
+      $RF=3$ & $PC=2$   & 44  & 30 \\
+      $RF=3$ & $PC=3$   & 65  & 44 \\
+      $RF=5$ & $PC=1$   & 37  & 16 \\
+      $RF=5$ & $PC=2$   & 72  & 30 \\
+      $RF=5$ & $PC=3$   & 107 & 44  \\
+      $RF=5$ & $PC=4$   & 142 & 58  \\
+      $RF=5$ & $PC=5$   & 177 & 72  \\ \bottomrule  
     \end{tabular}
   }
-  \caption{Request count given different $N$ and unique partitions count $PC$}
+  \caption{Message count given different $RF$ and unique partitions count $PC$}
   \label{fig:tests:requestsCount}
 \end{figure}
 
@@ -145,8 +224,8 @@ Figure \ref{fig:tests:requestsCount} depicts numbers of requests in both cases.
 Let us analyze the performance of the \mpt algorithm considering independent increase of the following parameters: 
 \begin{enumerate*}
 \item $p$ - modified partitions,
-\item $n$ - number of nodes in a cluster,
-\item $N$ - replication factor,
+\item $N$ - number of nodes in a cluster,
+\item $RF$ - replication factor,
 \item concurrent conflicting transactions,
 \item concurrent independent transactions.
 \end{enumerate*}
@@ -156,27 +235,27 @@ Let us analyze the performance of the \mpt algorithm considering independent inc
 When \mpt affects more partitions, it is more likely that these partitions are replicated on different replicas, thus the number of replica groups increases as well. Replica groups are bound in size by the total number of nodes in the cluster. If replica groups cover all nodes, then increase in modified partitions will not further affect number of requests performed. Therefore number of requests increases linearly with the replica groups, but is has a limit, after which it remains constant.
 
 \subsection{Increasing number of nodes}
-Let us consider a cluster of $n$ nodes and a transaction that modifides set of partitions $S_{p}$, which are replicated in the subset of nodes $S_{n}$.
-When nodes are added to the cluster token ranges are reassigned, thus nodes $n'$ are responsible for smaller token ranges, which causes two possible outcomes:
+Let us consider a cluster of $N$ nodes and a transaction that modifides set of partitions $S_{p}$, which are replicated in the subset of nodes \nodesTx.
+When nodes are added to the cluster token ranges are reassigned, thus nodes $N'$ are responsible for smaller token ranges, which causes two possible outcomes:
 \begin{enumerate*}
-\item $S_{n}$ increases to $S'_{n}$, since after reassignment $S_{p}$ is replicated by more nodes,
-\item $S_{n}$ remains the same, if the token ranges of $S_{p}$ were not affected by the reassignment.
+\item \nodesTx increases to $N''$, since after reassignment $S_{p}$ is replicated by more nodes,
+\item \nodesTx remains the same, if the token ranges of $S_{p}$ were not affected by the reassignment.
 \end{enumerate*}
 
 The former case increases the number of requests during \mpt, as if number of partitions is increased \ref{sec:tests:perf:partitions}.
 
 \subsection{Higher replication factor}
-In this case $N$ is increased to $N'$, thus replica groups contain more replicas. \mpt relies on the quorum of each replica group, thus number of requests increases as well, but only if replica groups remain disjoint. In case they overlap, the number of requests stays the same, even if replication factor increases.
+In this case $RF$ is increased to $RF'$, thus replica groups contain more replicas. \mpt relies on the quorum of each replica group, thus number of requests increases as well, but only if replica groups remain disjoint. In case they overlap, the number of requests stays the same, even if replication factor increases.
 
 \subsection{Increase in concurrent conflicting transactions}
-Let us consider a partition $p$ and an set of transactions $S_{t}$, in which each transaction modifies $p$, that increases to a larger set $S'_{t}$. 
-Transactions participate in same \paxos round, due to the fact that all of them modify same partition $p$, and any conflict function \label{sec:theory:conflictFunctions} will detect it.
-Concurrent transactions could cause contention and leadership changes of the \paxos round, but only if transactions are committed at the same time. Contention is detected by rejecting proposed ballot, in which case the coordinator of a transaction waits until a timeout occurs and tries again with a higher ballot. The timeout provides the time window, in which the current leader proposes its transaction. Even if leadership changes, the proposed and accepted transaction is committed and other conflicting transactions are rolledback, thus if contention is resolved, then the algorithm finishes the one transaction from the set $S'_{t}$. Initial contention might have negative effect on the overall performance of the algorithm.
+Let us consider a partition $k_p$ and an set of transactions $S_{\text{\transaction}}$, in which each transaction modifies $k_p$, that increases to a larger set $S'_{\text{\transaction}}$. 
+Transactions participate in the same \paxos round, due to the fact that all of them modify the same partition $k_p$, and any conflict function \label{sec:theory:conflictFunctions} detects it.
+Concurrent transactions could cause contention and leadership changes of the \paxos round, but only if transactions are committed at the same time. Contention is detected by rejecting proposed ballot, in which case the coordinator of a transaction waits until a timeout occurs and tries again with a higher ballot. The timeout provides the time window, in which the current leader proposes its transaction. Even if leadership changes, the proposed and accepted transaction is committed and other conflicting transactions are rolledback, thus if contention is resolved, then the algorithm finishes the one transaction from the set $S'_{\text{\transaction}}$. Initial contention might have negative effect on the overall performance of the algorithm.
 
-Moreover, transactions $S'_{t}$ will store its modifications of $p$ on the same replica group $RG$, and register in an index, which increases memory footprint on the nodes in $RG$.
+Moreover, transactions $S'_{\text{\transaction}}$ will store its mutations of $k_p$ on the same replica group $N^{RF}_{k_p}$, and register in \txIndex, which increases memory footprint on the nodes in $N^{RF}_{k_p}$.
 
 \subsection{Increase in concurrent independent transactions}
-Independent transactions, which do not modify same partitions, do not cause contention on each other, thus the algorithm scales and its performance is not affected by the increase. Likewise the memory footprint is divided among the cluster, thus there are no single nodes, which would have to handle more data than other nodes.
+Independent transactions, which do not mutate same keys, do not cause contention on each other, thus the algorithm scales and its performance is not affected by the increase. Likewise the memory footprint is divided among the cluster, thus there are no single nodes, which would have to handle more data than other nodes.
 
 % TODO opis teoretyczny od czego zależy wydajność
 % liczba partycji
