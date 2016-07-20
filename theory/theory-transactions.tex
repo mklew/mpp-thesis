@@ -1,12 +1,12 @@
 %!TEX root = ../thesis.tex
 \section{Transactions}\label{sec:theory:transactions}
 Transactions in RDBMS are fully ACID compliant, whereas non-relational databases lack transaction support in most cases. 
-In case where transactions are supported, NoSql databases provide only a subset of functionality provided by ACID compliant transactions. 
-Some of NoSql databases introduce new concepts, which represent transactions, but are specific to the database and its schema.
+In case where transactions are supported, NoSql databases provide only partial functionality offered by ACID compliant transactions \cite{StonebrakerSqlVsNosql}. 
+Some of NoSql databases introduce new concepts, which offer transactions, but are specific to the database and its schema.
 
 
 \subsection{Regular transactions}
-Regular transactions, known from RDBMS, are ACID compliant. ACID is an acronym that stands for \emph{Atomicity} -- many operations, such as inserts, updates and removals, are performed either all together or none at all, \emph{Consistency} -- operations move the data in the database from one consistent state to the other consistent state, which satisfies all data integrity constraints, \emph{Isolation} -- transactions do not interfere with each other during execution, \emph{Durability} -- changes made by a committed transaction are preserved even after the database failure.
+Regular transactions, known from RDBMS, are ACID compliant \cite{ACID}. ACID is an acronym that stands for \emph{Atomicity} -- many operations, such as inserts, updates and removals, are performed either all together or none at all, \emph{Consistency} -- operations move data in the database from one consistent state to another state, which satisfies all data integrity constraints, \emph{Isolation} -- transactions do not interfere with each other during execution, \emph{Durability} -- changes made by a committed transaction are preserved even after the database shutdown.
 
 \subsubsection{A transactional system}
 A transactional system should provide following operations to run transactions:
@@ -14,10 +14,10 @@ A transactional system should provide following operations to run transactions:
 % Napisać co jest charakterystyczne dla transakcji rozproszonych, wspomnieć o BASE
 \begin{enumerate*}
 %\item isolation from other transactions -- transaction's state and data should be isolated from other transaction's state and data.
-\item begin transaction operation -- transaction is begun, subsequent operations are part of the transaction. 
-\item commit transaction operation -- as a result, transaction is either committed or rolled back.
-\item rollback transaction operation -- rollback whole transaction and its modification if needed
-\item do an operation within a transaction -- any data manipulation operation should be possible to execute in context of a transaction
+\item begin transaction -- transaction is begun, subsequent operations are part of the transaction. 
+\item commit transaction -- as a result, transaction is either committed or rolled back.
+\item rollback transaction -- rollback the entire transaction and its modification if needed
+\item do an operation within a transaction -- any data manipulation operation on unlocked\footnote{not acquired by another transaction} should be possible to execute in context of a transaction
 \end{enumerate*}
 % \item concurrency control -- 
 % \item atomicity
@@ -25,14 +25,14 @@ A transactional system should provide following operations to run transactions:
 % \item consistency 
 
 
-The system should also provide \emph{concurrency control} -- if two transactions modify same piece of data and commit at same time, only one transaction can be committed, as a corollary second has to be rolled back.
+The system should also provide \emph{concurrency control} -- if two transactions modify same piece of data and commit at same time, only one transaction can be committed, 
+thus, the other transaction has to be rolled back.
 
 
 \subsubsection{The consensus}
-In general terms, a database has to reach a \emph{consensus} on the state of the database, which means that it has to know which transaction can be committed, and which should be rolled back, as well what is the data after operations.
+In general terms, a database has to reach a \emph{consensus} on the state of the database, which means that it has to know which transaction can be committed, and which should be rolled back, as well what is data after operations.
 
-Reaching a consensus is a general problem, for which algorithms exist, and this paper presents some of them, starting with 2 phase commit. 
-Solving the problem of consensus is the backbone of the distributed transactions. 
+Solving the problem of consensus is the core of distributed transactions. We present set of algorithms, which allow to reach consensus.
 
 \subsubsection{2 phase commit}
 2PC \cite{2phaseC}  operates in two distinct phases:
@@ -41,24 +41,13 @@ Solving the problem of consensus is the backbone of the distributed transactions
 \item If all nodes agree, contact every node again to let it know about agreement. Otherwise, contact every node to abort the consensus.
 \end{enumerate}
 
-The node which proposes a value is called the \emph{coordinator}, and does not have to be elected to be the coordinator, thus any node can act as the coordinator and initiate another round of 2PC. Figure \ref{fig:2phaseCommit} depicts the algorithm during fault-free execution. Note that, in 2PC nodes cannot suggest other value than proposed one, they can only accept it, or decline, thus it is a binary variable: commit or abort. Another proposal can be done only through another round.
+A value is proposed by any node, which is then called the \emph{coordinator} who initiates round of 2PC.
+Figure \ref{fig:2phaseCommit} depicts the algorithm during fault-free execution. Note that, in 2PC nodes cannot suggest other value than the proposed one, they can only accept it, or decline it. Another proposal can be done only through another round.
 
 The 2PC solves the consensus problem in the absense of failures. If a failure occurs, even to a single node, then the coordinator will not proceed to phase 2, thus consensus will not be reached.
 
-\begin{figure}[H]
-	\centering
-	\subfloat[Phase 1]
-	{
-	\includegraphics[height=50mm]{images/tpc-fault-free-phase-1.png}\hspace{10mm}
-	}
-	\subfloat[Phase 2]
-	{
-	\includegraphics[height=50mm]{images/tpc-fault-free-phase-2.png}\hspace{10mm}
-	}
-	%\label{fig:replicationRing}
-	\caption{2 phase commit}
-	\label{fig:2phaseCommit}
-\end{figure}
+
+\input{theory/theory-2pc-diagram.tex}
 
 
 \subsection{Distributed transactions}

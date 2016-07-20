@@ -1,15 +1,15 @@
 %!TEX root = ../thesis.tex
 
 \section{Distributed databases}\label{sec:theory:distDbs}
-In order to discuss distributed databases, we need to introduce concepts and techniques commonly used in the non-relational distributed databases, such as: data partitioning and replication.
+We need to introduce concepts and techniques commonly used in the non-relational distributed databases, such as: data partitioning and replication.
 
-Distributed programming is the way of solving similar problems that can be solved on a single machine using multiple machines - usually, because the problem no longer fits on a single machine \cite{DistributeSystemsForFunAndProfit}.  To paraphrase, distributed databases exist, because the data no longer fits in the relational database. To solve this problem, and to handle amounts of data, different techniques are used.
+The amounts of data to be processed grows much faster than the computational power of a single machine. Therefore, researchers and programmers started looking into distributed programming as an alternative way of solving problems which cannot fit a lone computer anymore. 
 
 %, and also we need to be aware of the pitfalls of the distributed systems, which can be grouped into \begin{enumerate*} \item overcoming problems with distance, \item independent failures of the systems \end{enumerate*}.
 %Key features of the distributed databases are replication
 
 \subsection{Scalability}
-Relational databases scale, as in Definition \ref{def:scalability}, vertically, or up, which means that a single machine is upgraded to be more powerful, whereas the distributed databases scale horizontally, which means that another machine is added to the system in order to handle more requests. Distributed databases usually run on a commoditiy hardware, as opposed to dedicated servers.
+Non distributed databases scale, as in Definition \ref{def:scalability}, vertically, or up, which means that a single machine is upgraded to be more powerful, whereas distributed databases scale horizontally, which means that another machine is added to the system in order to handle more requests. Distributed databases usually run on a commoditiy hardware, as opposed to dedicated servers.
 
 \begin{definition}
   \label{def:scalability}
@@ -22,7 +22,7 @@ Availability \ref{def:availability} and fault tolerance \ref{def:fault-tolerance
 
 Distributed databases must handle network partition -- \emph{P} in \emph{CAP} -- otherwise the whole system goes down with a failure of a single node. Therefore the distinction between databases is whether they are \emph{AP}, thus drop consistency, or \emph{CP}, which preserves consistency, but sacrifices availability.
 
-If the database remains consistent, then it cannot accept writes, which would break the consistency of the data. Available database accepts writes during network partition, thus sacrifices consistency of data.
+If the database remains consistent, then it cannot accept writes, which would break the consistency of data. Available database accepts writes during network partition, thus sacrifices consistency of data.
 
 \begin{definition}
 	\label{def:availability}
@@ -37,19 +37,19 @@ If the database remains consistent, then it cannot accept writes, which would br
 
 \subsection{Partitioning}
 Partitioning is a technique of distributing data between servers. 
-It divides the whole dataset into an independent subsets and assigns these subsets to the nodes. 
-Moreover, partitioning provides efficient look up of the data, since it is knows the assignment. In order to perform any computation of the data, a partition needs to be located first. 
+It divides the whole dataset into independent subsets and assigns these subsets to nodes. 
+Moreover, partitioning provides efficient look up of data, because it knows the assignment. In order to perform any operation, the partition needs to be located first. 
 
-Partitioning increases data processing capabilities of the database, since different nodes are responsible for different parts of the data. 
+Partitioning increases data processing capabilities and total capacity of a database, since different nodes are responsible for different chunks of data. 
 
 \subsection{Replication}
-Replication is another technique, commonly used with partitioning to additionally copy the data into more than a single node in order to increase fault tolerance. If the data is available only on the single node, then SPOF exists, but if the data is available on two nodes or more, then the data is accessible even if a node fails. Definition \ref{def:replicationFactor} presents \emph{replication factor}, which a parameter of any system that provides replication.
+Replication is another technique, commonly used with partitioning to copy data to one or more different nodes in order to increase fault tolerance. If data are available only on a single node, then SPOF exists, but if data are available on two nodes or more, then data are accessible even if a node fails. 
 
-Replication provides means of achieving scalability, performance, and fault tolerance, but it also is the root of the problems with the consistency, since data is present at different nodes, then any consistent modification requires communication with different nodes, and that communication, as well as the nodes, might be unreliable, and might fail. 
+Replication provides means of achieving scalability, performance, and fault tolerance, but it also is the root of the problems with the consistency, since data are present on different nodes, then any consistent modification requires communication with different nodes, and that communication, as well as the nodes, might be unreliable, and might fail. 
 
 \begin{definition}
   \label{def:replicationFactor}
-  \emph{Replication factor} \emph{RF} is the number of data copies stored in the cluster. Data is stored on different nodes, thus if \RF{3}, then a value is stored on $3$ nodes.
+  \emph{Replication factor} \emph{RF} is the number of data copies stored in the cluster on different nodes.
 \end{definition}
 
 %A replication factor of $3$ means that three copies of the data exist across the cluster on $3$ different nodes.

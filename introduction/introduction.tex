@@ -58,7 +58,7 @@ Such model requires client's logic to be written in a specific manner that handl
 Multi partition transactions would remove burden of ensuring consistency based on flags and would allow users to perform their operations in more natural way without additional restrictions, and changes in the logic. Moreover, if users relied on relational databases for specific multi-row transactions and used NoSql database for rest of their operations, then all operations would be supported in a single NoSql database instead of mix of the two.
 
 \section{Goals}
-The main goal of the thesis is to design an algorithm that provides multi-partition transactions. Moreover it has to be scalable by design and it cannot have a single point of failure. Additionally, the algorithm should be efficient in terms of memory consumption and network usage. The algorithm should be verified and tested for correctness by implementing and testing it in Cassandra. Results, such as scalability and performance should be analyzed.
+The main goal of the thesis is to design an algorithm that provides multi-partition transactions. Moreover it has to be scalable by design and it cannot have a single point of failure (SPOF). Additionally, the algorithm should be efficient in terms of memory consumption and network usage. The algorithm should be verified and tested for correctness by implementing and testing it in Cassandra. Results, such as scalability and performance should be analyzed.
 
  
 \section{Structure}\label{sec:introduction:structure}
