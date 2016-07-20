@@ -1,15 +1,15 @@
 %!TEX root = ../thesis.tex
-\newcommand{\pcPOne}{\small Participant 1}
-\newcommand{\pcPTwo}{\small Participant 2}
-\newcommand{\pcPThree}{\small Participant 2}
-\newcommand{\pcCorr}{\small Coordinator}
+\newcommand{\pcPOne}{$P_1$}
+\newcommand{\pcPTwo}{$P_2$}
+\newcommand{\pcPThree}{$P_3$}
+\newcommand{\pcCorr}{$C$}
 
 \begin{figure}[H]
 \centering
 	\subfloat[Phase 1]
 	{
 	
-\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=5cm,
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3cm,
   thick,main node/.style={circle,fill=blue!20,draw,
   ,minimum size=5mm}]
 
@@ -29,7 +29,7 @@
 \end{tikzpicture}
 \hspace{15mm}
 
-\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=5cm,
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3cm,
   main node/.style={circle,fill=blue!20,draw,
   ,minimum size=5mm}]
 
@@ -49,10 +49,10 @@
 \end{tikzpicture}
 
 	}
-	\newline
+	%\newline
 	\subfloat[Phase 2]
 	{
-	\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=5.5cm,
+	\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3cm,
   thick,main node/.style={circle,fill=blue!20,draw,
   ,minimum size=5mm}]
 
@@ -66,7 +66,7 @@
   	% Right-hand-side arrows rendered from top to bottom to
   	% achieve proper rendering of labels over arrows.
     (C) edge node {Commit/Abort} (P1)
-    edge node {Commit/Abort} (P2)
+    edge node[above right=7mm and 5mm] {Commit/Abort} (P2)
     edge node {Commit/Abort} (P3);
 
 \end{tikzpicture}
