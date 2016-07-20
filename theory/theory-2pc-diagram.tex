@@ -1,0 +1,77 @@
+%!TEX root = ../thesis.tex
+\newcommand{\pcPOne}{\small Participant 1}
+\newcommand{\pcPTwo}{\small Participant 2}
+\newcommand{\pcPThree}{\small Participant 2}
+\newcommand{\pcCorr}{\small Coordinator}
+
+\begin{figure}[H]
+\centering
+	\subfloat[Phase 1]
+	{
+	
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node, fill=blue!60] (C) {\pcCorr};
+  \node[main node] (P1) [above right of=C] {\pcPOne};
+  \node[main node] (P2) [right of=C] {\pcPTwo};
+  \node[main node] (P3) [below right of=C] {\pcPThree};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (C) edge node {Propose} (P1)
+    edge node {Propose} (P2)
+    edge node {Propose} (P3);
+
+\end{tikzpicture}
+\hspace{15mm}
+
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=5cm,
+  main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node, fill=blue!60] (C) {\pcCorr};
+  \node[main node] (P1) [above right of=C] {\pcPOne};
+  \node[main node] (P2) [right of=C] {\pcPTwo};
+  \node[main node] (P3) [below right of=C] {\pcPThree};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (P1) edge node {Vote} (C)
+    (P2) edge node {Vote} (C)
+    (P3) edge node {Vote} (C);
+
+\end{tikzpicture}
+
+	}
+	\newline
+	\subfloat[Phase 2]
+	{
+	\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=5.5cm,
+  thick,main node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm}]
+
+  \node[main node, fill=blue!60] (C) {\pcCorr};
+  \node[main node] (P1) [above right of=C] {\pcPOne};
+  \node[main node] (P2) [right of=C] {\pcPTwo};
+  \node[main node] (P3) [below right of=C] {\pcPThree};
+
+  \path[every node/.style={font=\sffamily\small,
+  		fill=white,inner sep=1pt}]
+  	% Right-hand-side arrows rendered from top to bottom to
+  	% achieve proper rendering of labels over arrows.
+    (C) edge node {Commit/Abort} (P1)
+    edge node {Commit/Abort} (P2)
+    edge node {Commit/Abort} (P3);
+
+\end{tikzpicture}
+
+	}
+\caption{2 phase commit}
+\label{fig:2phaseCommit}
+\end{figure}
