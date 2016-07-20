@@ -34,6 +34,13 @@ In general terms, a database has to reach a \emph{consensus} on the state of the
 
 Solving the problem of consensus is the core of distributed transactions. We present set of algorithms, which allow to reach consensus.
 
+\subsection{Distributed transactions}
+
+% TODO rozrysować co czym jest, Raft, Paxos -> distributed consensous algorithm
+% RAMP atomic commit
+
+This section presents the following algorithms: \emph{2PC}, \emph{3PC}, \paxos, and \emph{Raft} to solve the consensus problem. \lwt (see Subsection \ref{sec:theory:transactions:lwt}) is an implementation of distributed transaction, which uses \paxos to provide distributed consensus. \emph{RAMP} (see Subsection \ref{sec:theory:transactions:ramp}) is an algorithm, which provides atomic commit.
+
 \subsubsection{2 phase commit}
 2PC \cite{2phaseC}  operates in two distinct phases:
 \begin{enumerate}
@@ -44,45 +51,22 @@ Solving the problem of consensus is the core of distributed transactions. We pre
 A value is proposed by any node, which is then called the \emph{coordinator} who initiates round of 2PC.
 Figure \ref{fig:2phaseCommit} depicts the algorithm during fault-free execution. Note that, in 2PC nodes cannot suggest other value than the proposed one, they can only accept it, or decline it. Another proposal can be done only through another round.
 
-The 2PC solves the consensus problem in the absense of failures. If a failure occurs, even to a single node, then the coordinator will not proceed to phase 2, thus consensus will not be reached.
+\paragraph{Fault tolerance} is not provided by 2PC. The 2PC solves the consensus problem in the absense of failures. If a failure occurs, even to a single node, then the coordinator will not proceed to phase 2, thus consensus will not be reached.
+
+\paragraph{Latency} of the algorithm in case of $n$ nodes is $3n$, one round of messages for a proposal, second for votes and third for commit or abort.
+
+\paragraph{Blocking} occurs, when during sending the proposal the coordinator fails, in which case some participants received the proposal, voted and then wait in phase 2 possibly blocking resources, whereas other participants did not receive the proposal, thus are unware of the round.
 
 
 \input{theory/theory-2pc-diagram.tex}
 
 
-\subsection{Distributed transactions}
-
-% TODO rozrysować co czym jest, Raft, Paxos -> distributed consensous algorithm
-% RAMP atomic commit
-
-This section presents more algorithms: \emph{3PC}, \paxos, and \emph{Raft} to solve the consensus problem, which can lead to the implementation of distributed transactions. \lwt is the implementation of the distributed transaction, which uses \paxos to provide distributed consensus. \emph{RAMP} is an algorithm, which provides atomic commit.
-
-
 \subsubsection{3 phase commit}\label{sec:theory:transactions:3pc}
 3PC \cite{3phaseC}, depicted on Figure \ref{fig:3phaseCommit}, divides phase 2 of 2PC into two sub-phases: prepare to commit phase and commit phase, thus it has three phases in total. Upon the prepare to commit message nodes enter the state, in which they are able to commit the value, but also to abort and undo any changes made. The key principle behind this phase is to eliminate the possibility that any node actually commits the value before other nodes are aware of the decision to commit.
 
-In case of the coordinator failure, a recovery node takes over the protocol and queries the state of the remaining nodes. If a node that has committed the transaction failed along with the coordinator, then it is known that all nodes received prepare to commit message therefore the recovery node is able to finish the protocol by committing the value. If a node replies that it hasn't seen a prepare to commit message, then it means that none of the nodes received commit yet, thus the recovery node can re-run the protocol. 
+In case of the coordinator failure, a recovery node takes over the protocol and queries the state of the remaining nodes. If a node that committed the transaction failed along with the coordinator, then it is known that all nodes received prepare to commit message therefore the recovery node is able to finish the protocol by committing the value. If a node replies that it did not recive prepare to commit message, then it means that none of the nodes received commit message, thus the recovery node can re-run the protocol. 
 
-\begin{figure}[H]
-	\centering
-	\begin{tabular}{c}
-	\subfloat[Phase 1 propose]
-	{
-	\includegraphics[height=50mm]{images/3pc-phase1.png}\hspace{10mm}
-	} \\
-	\subfloat[Phase 2 prepare to commit]
-	{
-	\includegraphics[height=50mm]{images/3pc-phase2.png}\hspace{10mm}
-	} \\
-	\subfloat[Phase 3 commit]{
-		\includegraphics[height=50mm]{images/3pc-phase3.png}\hspace{10mm}
-	}
-	\end{tabular}
-	
-	%\label{fig:replicationRing}
-	\caption{3 phase commit}
-	\label{fig:3phaseCommit}
-\end{figure}
+\input{theory/theory-3pc-diagram.tex}
 
 \subsubsection{Paxos}
 Paxos is another algorithm to solve distributed consensus problem, originally presented in \cite{Lamport1998partTimeParliment}, caused confusion among researchers, due to its complicated explaination and mathematical proofs, and had to be explained in simpler terms in \cite{lamport2001paxosMadeSimple}. 
@@ -244,6 +228,7 @@ There are three variants of \emph{RAMP} algorithm which differ in type of the me
 
 \subsubsection{LWT}\label{sec:theory:transactions:lwt}
 % TODO źródło w (more on this)
+TODO DODAĆ ŹRÓDŁO
 As mentioned earlier, Light Weight Transactions is the name of compare-and-swap functionality implemented in Cassandra. Internally, LWT uses the Paxos algorithm with some modifications which were aimed to prevent potential single point of failure, thus improving high availability. SPOFs may surface in case the leader fails when it is about to propose a new value. The problem was addressed by sacrificing the standard leader election in favour of allowing any node to act as a leader, so that it can propose a value at any time. On the downside, such approach increases the risk of contention. 
 
 One of the key requirements of Paxos protocol is storage of PaxosState - a data structure composed of the proposed value, proposed ballot, promised ballot and most recent commit. In case of LWT, the value represents the update itself along with the token of the partition key where that update should be applied. That token uniquely identifies PaxosState so that several proposals for the same partition can be associated with the same Paxos instance. 
