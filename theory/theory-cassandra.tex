@@ -2,29 +2,23 @@
 
 \section{Cassandra}
 \label{sec:theory:cassandra}
-% TODO referencje do Cassandry, krotki wstep o Cassandrze
-% TODO wspomnieć o LWT.
 Cassandra \cite{CassandraApacheDocs} \cite{CassandraDataStaxDocs} \cite{lakshman2010cassandra} is a high performance, scalable, fault tolerant (i.e. no single point of failure), distributed post-relational database solution, which combines benefits of Google Bigtable \cite{chang2008bigtable} and Amazon Dynamo \cite{decandia2007dynamo}.
-% to handle the types of database management needs that traditional RDBMS vendors cannot support. 
-
-%Cassandra offers linear scale performance, which means that, for example if four nodes can handle hundred thousand 
-%requests per second, then adding another four nodes results in the cluster, which can handle twice as much requests per second. Cassandra provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime. 
 
 \subsection{Key features}
 Its key features are:
-\begin{enumerate*}[label=(\alph*)]
-\item masterless architecture,
-\item linear scale performance \ref{sec:theory:cassandra:linear},
-\item continuous availability,
-\item flexible data model \ref{sec:theory:cassandra:datamodel},
-\item multi data center support,
-\item all nodes accept reads and writes,
-\item Cassandra Query Language \ref{sec:theory:cassandra:cql}.
-\end{enumerate*}
+\begin{itemize}
+\item masterless architecture -- there is no distinguished node to coordinate the work, thus no single point of failure,
+\item linear scale performance -- data are distributed among nodes, thus in order to handle more data, nodes are added to the cluster (see Section \ref{sec:theory:cassandra:linear}),
+\item continuous availability -- data are replicated in the cluster, therefore as long as there are replicas then data are available,
+\item flexible data model -- wide-row storage in which each column can have different schema, (described in Section \ref{sec:theory:cassandra:datamodel}),
+\item multi data center support -- explicit support and dedicated configuration for multiple data centers,
+\item all nodes accept reads and writes -- as consequence of masterless architecture each node in the cluster is able handle any request, 
+\item Cassandra Query Language -- language similar in syntax to SQL (see Section \ref{sec:theory:cassandra:cql}).
+\end{itemize}
 
 \subsection{Architecture}
-Cassandra has a masterless \emph{ring} architecture, presented on Figure \ref{fig:archCluster}, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication and provides continous availability, due to redundancy of both data and node functions, which eliminate SPOF and provide constant uptime.
-Inter-node communication depends on \emph{gossip} protocol, which is a scalable, distributed protocol.
+Cassandra has a masterless \emph{ring} architecture, presented on Figure \ref{fig:archCluster}, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication and provides continous availability, due to redundancy of both data and node functions.
+Inter-node communication bases on scalable and distributed \emph{Gossip} protocol.
 
 \begin{figure}[H]
 	\centering
@@ -32,38 +26,38 @@ Inter-node communication depends on \emph{gossip} protocol, which is a scalable,
 	%{
 	\includegraphics[height=60mm]{images/cassandra-ring.png}\hspace{10mm}
 	%}	
-	\caption{A cluster on the ring}
+	\caption{WIEM, ZE TO DO POPRAWY A cluster on the ring}
 	\label{fig:archCluster}
 \end{figure}
 
 \subsubsection{Token ring}
 Cassandra's cluster consists of nodes placed on the token ring. Figure \ref{fig:replicationRing} presents cluster with \N{4}, where each node is associated with \emph{token range}, which is part of the token ring. 
 
-Partitioning in Cassandra is implemented by assigning tokens, denoted as $tk$, which are numbers computed by a some  function (usually hash function), to keys and storing the data in node for which token is in its token range. 
+Partitioning in Cassandra is implemented by assigning tokens, which are numbers computed by a some function (usually hash function), to keys and storing data in a node for which token is in its token range. 
 
 \subsection{Replication}
 Cassandra supports configurable \emph{replication factor} \ref{def:replicationFactor} defined per \emph{keyspace} \ref{sec:theory:cassandra:datamodel}. Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
 Each node is the \emph{primary replica} for the token range placed counter clock-wise to it, thus node $1$ is the primary replica for range $75-0$, node $2$ for $1-25$, node $3$ for $26-50$, and node $4$ for $51-75$. 
-Token value $91$ belongs to the node $1$, and since \RF{3}, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $2$ and node $3$, which are \emph{secondary replicas} of the token. Tokens define the units of replication -- the smallest segments of the data that can be replicated. 
+Token value $91$ belongs to the node $1$, and since \RF{3}, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $2$ and node $3$, which are \emph{secondary replicas} of the token. Tokens define the units of replication -- the smallest segments of data that can be replicated. 
 
-We analyzed replication of a token $91$ using topology of the cluster, which is defined in Definition \ref{def:topology}. If we used topology function (Definition \ref{def:topologyFunction}) and assumed that $H(k) \mapsto 91$, then \topology{\node{1}, \node{2}, \node{3}}.
+% We analyzed replication of a token $91$ using topology of the cluster, which is defined in Definition \ref{def:topology}. If we used topology function (Definition \ref{def:topologyFunction}) and assumed that $H(k) \mapsto 91$, then \topology{\node{1}, \node{2}, \node{3}}.
 
-\begin{definition}
-  \label{def:topology}
-  \emph{Topology} denoted as $T$ 
-  is the information about assignment of token ranges to nodes, as well as which nodes replicate particular token range. Given $T$ and a token, replicas of a token can be identified.
-  $T$ is known by any node in the cluster.  
-\end{definition}
+% \begin{definition}
+%   \label{def:topology}
+%   \emph{Topology} denoted as $T$ 
+%   is the information about assignment of token ranges to nodes, as well as which nodes replicate particular token range. Given $T$ and a token, replicas of a token can be identified.
+%   $T$ is known by any node in the cluster.  
+% \end{definition}
 
-\begin{definition}
-  \label{def:topologyFunction}
-  \emph{Topology function} $\tau(T, H, k) \mapsto \{ \text{\node{i}, ..., \node{j} } \}$  takes three parameters: $T$ -- topology, $H$ mapping function from keys to tokens, key \key and produces set of nodes which are replicas of \key.   
+% \begin{definition}
+%   \label{def:topologyFunction}
+%   \emph{Topology function} $\tau(T, H, k) \mapsto \{ \text{\node{i}, ..., \node{j} } \}$  takes three parameters: $T$ -- topology, $H$ mapping function from keys to tokens, key \key and produces set of nodes which are replicas of \key.   
 
-  An alternative notation to topology function skips token mapping function $H$ and uses tokens instead
-  \topologyTk{\node{i}, ..., \node{j}} 
+%   An alternative notation to topology function skips token mapping function $H$ and uses tokens instead
+%   \topologyTk{\node{i}, ..., \node{j}} 
   
-  % \topology{\node{i}, ..., \node{j}}
-\end{definition}
+%   % \topology{\node{i}, ..., \node{j}}
+% \end{definition}
 
 %Tokens define the units of replication, since \kv associated with a token is replicated on other nodes, which are responsible for parts of token range.
 
@@ -79,7 +73,7 @@ We analyzed replication of a token $91$ using topology of the cluster, which is 
 	\includegraphics[height=100mm]{images/cassandra-replication-ring.png}\hspace{10mm}
 	%}
 	%\label{fig:replicationRing}
-	\caption{Replication of the token 91}
+	\caption{WIEM, ZE TO DO POPRAWY Replication of the token 91}
 	\label{fig:replicationRing}
 \end{figure}
 
@@ -96,7 +90,8 @@ We analyzed replication of a token $91$ using topology of the cluster, which is 
 
 \subsection{Data model}
 \label{sec:theory:cassandra:datamodel}
-Cassandra's data model is a wide-row store, which consists of tables, which reside in keyspaces\footnote{comparable to schemas in RDBMS} with rows, identified by primary keys, with up to 2 billion columns. Although data model concepts are similar to relational ones, data modeling techniques depart from the relational modeling, since models are supposed to be highly denormalized, which provide ability to perform fast queries by reading a single partition, which is the unit of the data replication in Cassandra, in order to fetch all the data the query needs without further communication with other nodes and performing joins\footnote{which do not exist in Cassandra}.
+Cassandra provides physical data model and logical data model built on top of it. Physical data model is a wide-row store, which consists of column families, which reside in keyspaces\footnote{comparable to schemas in RDBMS} with rows, identified by primary keys, with up to 2 billion columns. 
+Although data model concepts are similar to relational ones, data modeling techniques depart from the relational modeling, since models are supposed to be highly denormalized, which provide ability to perform fast queries by reading a single partition, which is the unit of data replication in Cassandra, in order to fetch all data the query needs without further communication with other nodes and performing joins\footnote{which do not exist in Cassandra}.
 
 %\begin{description}
 %\item[keyspace] 
@@ -106,62 +101,69 @@ Cassandra's data model is a wide-row store, which consists of tables, which resi
 %\item[primary key]
 %\end{description}
 
-\subsection{Linear scale performance}
+\subsection{Performance linear scaling}
 \label{sec:theory:cassandra:linear}
-Cassandra offers linear scale performance, which means that if two nodes can handle hundred thousand requests per second, then adding another two nodes results in the cluster, which can handle twice as much requests per second. Figure \ref{fig:archLinearScale} depicts the example.
+Cassandra offers performance linear scaling, which means that if two nodes can handle hundred thousand requests per second, then cluster with two more nodes can handle twice as much requests per second. 
 
-The key principles behind linear scaling are:  data partitioning and token ranges. 
-Partitioning is the assignment of the token values, which are \emph{long} values, to the partitioning keys of a primary key. Cassandra provides different \emph{Partitioners}, which implement different algorithms to perform such token assignment. \emph{Murmur3Partitioner} uses \emph{Murmur3} hash algorithm that provides a good distribution over the hash space, and is fast due to the fact that it does not support cryptographic properties, which are not required by Cassandra.
+The key principles behind linear scaling are: data partitioning and tuneable consistency. 
+% Partitioning is the assignment of the token values, which are \emph{long} values, to the partitioning keys of a primary key. 
+Cassandra provides different \emph{Partitioners}, which implement different algorithms to perform such token assignment. \emph{Murmur3Partitioner} uses \emph{Murmur3} \cite{Murmur3} hash algorithm that provides a good distribution over the hash space, but cannot be used for cryptography, which is not a problem in this case, because such properties are not required by Cassandra.
 
-Each node is responsible for a token range, which is a part of the token ring. Responsibility means that a node stores the data for which the token value falls into its token range. When a new node is added, it automatically receives a token range and then the data is moved between the nodes in order to adjust to the new division of the token ring.
+Hashing which evenly distributes keys over the hash space causes data to be distributed evenly on nodes in the cluster. Otherwise cluster would be unbalanced, which is an operational problem that decreases performance, because certain nodes would handle more workload than other nodes, thus resources would not be well allocated.
 
-Correct data modeling is also an important aspect of the linear scalability, since partitioning keys of tables have to be designed in a way that provides high cardinality of the keys. Otherwise part of the cluster starts to collect more data than its storage capabilities, and it will fail. 
+% Each node is responsible for a token range, which is a part of the token ring. Responsibility means that a node stores data for which the token value falls into its token range. When a new node is added, it automatically receives a token range and then data are moved between the nodes in order to adjust to the new division of the token ring.
 
-
-\begin{figure}[H]
-  \centering  
-  % TODO źródło?
-  % Źródło http://docs.datastax.com/en/cassandra/2.1/cassandra/images/intro_cassandra.png
-  \includegraphics[width=\textwidth]{images/cassandra-linear-scalability.png}\hspace{10mm}  
-  \caption{The linear scalability from 100k to 400k requests per second}
-  \label{fig:archLinearScale}
-\end{figure}
+% Correct data modeling is also an important aspect of the linear scalability, since partitioning keys of tables have to be designed in a way that provides high cardinality of the keys. Otherwise part of the cluster starts to collect more data than its storage capabilities, and it will fail. 
 
 
-%Linear scale performance is provided by even assignment of token ranges of the token ring to the nodes in the cluster combined with data \emph{partitioning} -- which is assigning a token values to the keys -- that evenly distributes the data around the cluster. When a new node is added to the cluster, it automatically 
+% \begin{figure}[H]
+%   \centering  
+%   % TODO źródło?
+%   % Źródło http://docs.datastax.com/en/cassandra/2.1/cassandra/images/intro_cassandra.png
+%   \includegraphics[width=\textwidth]{images/cassandra-linear-scalability.png}\hspace{10mm}  
+%   \caption{The linear scalability from 100k to 400k requests per second}
+%   \label{fig:archLinearScale}
+% \end{figure}
+
 
 
 \subsection{Cassandra Query Language}
 \label{sec:theory:cassandra:cql}
-Cassandra Query Language (CQL) is the query language, similar in syntax to SQL, but provides only limited functionality compared to SQL, as there are no joins and inner queries. CQL provides select, insert, update and delete statements. Select statement's \emph{where} clause supports equality condition on the partition key columns and restrictions such as: IN, =, >, >=, <= and < on the clustering columns. Columns, which are not part of the primary key cannot be restricted in the \emph{where} clause. Listing \ref{lst:cqlSelect} shows two examples of select statements, first with equality restriction on the partition key column \emph{user_id}, second with equality restrictions on the partition key columns: \emph{cluster}, \emph{date}, \emph{datacenter}, and range restrictions on the clustering key columns: \emph{hour} and \emph{minute}.
+Cassandra Query Language (CQL)\footnote{Cassandra from version 3.0 is released in a tick-tock manner, which means that there are frequent releases. CQL changes fast and gets new features almost every release} is the query language, similar in syntax to SQL, but provides only limited functionality compared to SQL, as there are no joins and inner queries. 
+
+Cassandra provides CQL on top of logical data model, which introduces tables instead of column families and enforces table schema. Each row in a table has the same sequence of columns. Translation between physical and logical data models is done by means of key prefixes, so that all rows in a table $a$ have keys, which start with letter $a$. The same rule holds for columns; column names are embedded in keys.
+
+CQL provides select, insert, update and delete statements. Select statement's \emph{where} clause supports equality condition on the partition key columns and restrictions such as: IN, =, >, >=, <= and < on the clustering columns. Columns, which are not part of the primary key cannot be restricted in the \emph{where} clause. Listing \ref{lst:cqlSelect} shows two examples of select statements, first with equality restriction on the partition key column \emph{user_id}, second with equality restrictions on the partition key columns: \emph{cluster}, \emph{date}, \emph{datacenter}, and range restrictions on the clustering key columns: \emph{hour} and \emph{minute}.
 %Cassandra uses binary protocol named Cassandra Query Language (CQL). In order to do anything with database, we need to use a driver that speaks binary protocol. 
 
 \begin{lstlisting}[style=outcode,label={lst:cqlSelect},caption={Examples of CQL select statements}]
 SELECT user_name, user_email 
 FROM app.users 
-WHERE user_id = 10123;
+WHERE user_id=10123;
     
 SELECT * FROM app.requests
- WHERE cluster = 'cluster1'
- AND date = '2015/06/05'
- AND datacenter = 'EU_NORTH'
- AND (hour, minute) >= (12, 0) AND (hour, minute) <= (15, 30);
+WHERE cluster='cluster1'
+AND date='2015/06/05'
+AND datacenter='EU_NORTH'
+AND (hour, minute)>=(12, 0) 
+AND (hour, minute)<=(15, 30);
 \end{lstlisting}
 
  
 \subsection{Use cases}
 Cassandra is a general purpose non-relational database, however there are areas in which Cassandra excels over other databases:
-\begin{enumerate*}
-\item internet of things applications - Cassandra is able to consume large quantity of incoming data\footnote{depends on cluster size} from devices, sensors and similar internet connected devices,
+\begin{itemize}
+\item internet of things applications -- Cassandra is able to consume large quantity of incoming data\footnote{depends on cluster size} from devices, sensors and similar internet connected devices,
 %\item E-commerce - durable shopping cart protection combined with fast product catalog browsing
 %\item Messaging - Cassandra serves as the database for mobile phone applications
-\item data analytics - Cassandra provides storage with fast access to the data for analysis. Apache Spark, which is an engine to perform large-scale data processing \cite{ApacheSpark} supports Cassandra, as one of its data sources, therefore Cassandra provides data storage for analytics and also stores results of the analysis done in Spark,
-\item storage of time series data - Cassandra's fast writes, wide-rows and ability to read only particular data ranges are well suited for time series based applications, because such data fits natively into the data model.
-\end{enumerate*} 
+\item data analytics -- Apache Spark is an engine to perform large-scale data processing \cite{ApacheSpark} supports Cassandra, as one of its data sources.
+Integration with Cassandra is token aware, thus it knows where data are on the cluster. Spark tries to load data locally if possible to avoid network overhead. Moreover it supports server-side filters that allow Cassandra to filter data before loading it in for analysis,
+\item storage of time series data -- Cassandra's fast writes, wide-rows and ability to read only particular data ranges are well suited for time series based applications, because such data fits natively into the data model.
+\end{itemize} 
 
 \subsection{Transactions}
-Cassandra provides \lwt, which are transactions limited to the single partition.
-Section \ref{sec:theory:transactions:lwt} provides more on this subject in comparison to other distributed transactions. 
+Cassandra provides \lwt, which are transactions limited to a single partition.
+Comparison to the other distributed transaction implementations was provided in Section \ref{sec:theory:transactions:lwt}.
 
 \subsubsection{Compared to RDBMS}
 Figure \ref{fig:cassandraToRdbms} presents comparison of Cassandra and RDBMS.
@@ -187,6 +189,6 @@ Figure \ref{fig:cassandraToRdbms} presents comparison of Cassandra and RDBMS.
 \end{figure}
 
 \subsection{Eventual consistency}\label{sec:theory:eventualConsistency}
-In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is the \emph{AP} database with eventual consistency, which means that over time the data becomes consistent on all nodes, but there are no guarantees about the time it takes. Cassandra uses techniques such as: \begin{enumerate*} 
+In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is the \emph{AP} database with eventual consistency, which means that over time data becomes consistent on all nodes, but there are no guarantees about the time it takes. Cassandra uses techniques such as: \begin{enumerate*} 
 \item \emph{hinted handoff} - stores a message for the currently unavailable replica about the modification and sends it to the replica when it comes back up \cite{CassandraHintedHandoff},  
-\item \emph{read repairs} - detects inconsistency in the data during read and repairs it by sending a message, which includes consistent data \cite{CassandraReadRepair},  \end{enumerate*} to pro-actively reduce incosistency in the data during normal operations.
+\item \emph{read repairs} - detects inconsistency in data during read and repairs it by immediate updates \cite{CassandraReadRepair},  \end{enumerate*} to pro-actively reduce incosistency in data during normal operations.

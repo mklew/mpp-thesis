@@ -17,7 +17,7 @@ A transactional system should provide following operations to run transactions:
 \item begin transaction -- transaction is begun, subsequent operations are part of the transaction. 
 \item commit transaction -- as a result, transaction is either committed or rolled back.
 \item rollback transaction -- rollback the entire transaction and its modification if needed
-\item do an operation within a transaction -- any data manipulation operation on unlocked\footnote{not acquired by another transaction} should be possible to execute in context of a transaction
+\item do an operation within a transaction -- any data manipulation operation on unlocked\footnote{not acquired by another transaction} data should be possible to execute in context of a transaction
 \end{enumerate*}
 % \item concurrency control -- 
 % \item atomicity
@@ -26,7 +26,7 @@ A transactional system should provide following operations to run transactions:
 
 
 The system should also provide \emph{concurrency control} -- if two transactions modify same piece of data and commit at same time, only one transaction can be committed, 
-thus, the other transaction has to be rolled back.
+thus the other transaction has to be rolled back.
 
 
 \subsubsection{The consensus}
@@ -39,7 +39,7 @@ Solving the problem of consensus is the core of distributed transactions. We pre
 % TODO rozrysować co czym jest, Raft, Paxos -> distributed consensous algorithm
 % RAMP atomic commit
 
-This section presents the following algorithms: \emph{2PC}, \emph{3PC}, \paxos, and \emph{Raft} to solve the consensus problem. \lwt (see Subsection \ref{sec:theory:transactions:lwt}) is an implementation of distributed transaction, which uses \paxos to provide distributed consensus. \emph{RAMP} (see Subsection \ref{sec:theory:transactions:ramp}) is an algorithm, which provides atomic commit.
+This section presents the following algorithms: \emph{2PC}, \emph{3PC}, \paxos and \emph{Raft} to solve the consensus problem. \lwt (see Subsection \ref{sec:theory:transactions:lwt}) is an implementation of distributed transaction, which uses \paxos to provide distributed consensus. \emph{RAMP} (see Subsection \ref{sec:theory:transactions:ramp}) is an algorithm, which provides atomic commit.
 
 \subsubsection{2 phase commit}
 2PC \cite{2phaseC}  operates in two distinct phases:
@@ -66,87 +66,176 @@ Figure \ref{fig:2phaseCommit} depicts the algorithm during fault-free execution.
 
 In case of the coordinator failure, a recovery node takes over the protocol and queries the state of the remaining nodes. If a node that committed the transaction failed along with the coordinator, then it is known that all nodes received prepare to commit message therefore the recovery node is able to finish the protocol by committing the value. If a node replies that it did not recive prepare to commit message, then it means that none of the nodes received commit message, thus the recovery node can re-run the protocol. 
 
+\paragraph{Fault tolerance} is provided by 3PC in a way that the protocol can be run to its conclusion no matter which node fails. 3PC tolerates configurable number of $f$ failures, because the coordinator can move to phase 3 after it receives $f+1$ acknowledges of prepare to commit.
+
+3PC does not work well during network partition, because if part of nodes on one side of the partition received prepare to commit message and all nodes on the other side did not receive that message, then recovery node on the former side commits transaction, whereas the other recovery node aborts it. After network partition is gone, nodes remain in inconsistent state, in which transaction is committed and aborted at the same time.
+
+\paragraph{Latency} is higher compared to 2PC. 3PC requires $6n$ messages, thus twice, as 2PC. Higher latencies are cost of availability.
+
+\paragraph{Blocking} does not occur, because recovery node can always run 3PC to its end and either commit or abort transaction.
+
+2PC can be applied to systems, which value low latencies the most, whereas 3PC is more suitable for systems where availability is more important than latency.
+
 \input{theory/theory-3pc-diagram.tex}
 
 \subsubsection{Paxos}
-Paxos is another algorithm to solve distributed consensus problem, originally presented in \cite{Lamport1998partTimeParliment}, caused confusion among researchers, due to its complicated explaination and mathematical proofs, and had to be explained in simpler terms in \cite{lamport2001paxosMadeSimple}. 
+\paxos is an algorithm to solve distributed consensus problem \cite{Lamport1998partTimeParliment} \cite{lamport2001paxosMadeSimple}, which was used, as the solution to the distributed consensus problem as part of the larger systems in \cite{chandra2007PaxosMadeLive}, \cite{lampson1996build}, and more recently in the Google's Chubby service \cite{burrows2006chubby}, which is a lock service intended to provide coarse-grained locking, as well as reliable storage. 
 
-Paxos was used, as the solution to the distributed consensus problem, as part of the larger systems in \cite{chandra2007PaxosMadeLive}, \cite{lampson1996build}, and more recently in the Google's Chubby service \cite{burrows2006chubby}, which is a lock service intended to provide coarse-grained locking, as well as reliable storage. 
+\paxos works within an asynchronous, non-Byzantine communications model, in which nodes can fail, but if they do not fail then they must operate according to \paxos protocol.
 
-Paxos defines requirements and constraints that the protocol must operate within \cite{lamport2001paxosMadeSimple}. Some of them are: \begin{enumerate}
-  \item every proposal has a sequence number called ballot \ballot, that can be generated by any proposer,
-  \item majority has to promise to a proposer, before proposer can make proposal,
-  \item acceptors reply with a value associated with the highest \ballot already accepted by them. Then proposer is bound to ask acceptors to only commit that value (which might be different from its original proposal) -- this forces proposer to commit other completed proposals instead of his own,\label{sec:mpp:requirements:finishInProgress}
-  \item proposer can finish protocol only when majority of acceptors acknowledge commit.
-\end{enumerate}
+Actors in \paxos have one of more of the following roles: \begin{enumerate*}
+\item proposer - actor which proposes a new value,
+\item acceptor - actor which is supposed to accept or decline a proposal,
+\item learner - actor which learns accepted proposal.
+\end{enumerate*} To follow naming from 2PC and 3PC let us assume that proposer is the same, as the coordinator.
 
-Figure \ref{fig:paxosBasic} shows complete paxos round and exchanged messages between coordinator and nodes. The coordinator \coordinator has to propose new value \paxosValue, therefore it begins next \paxos round represented by a higher ballot \ballot. Nodes which learn new value are called \emph{acceptors}, which arrive at consensus about value \paxosValue after $3$ phases:
-\begin{enumerate*}[label=(\alph*)]
-\item prepare phase,
-\item propose phase,
-\item commit phase.
-\end{enumerate*}
-In prepare phase \coordinator has to establish leadership between acceptors, therefore it sends prepare message with \ballot to nodes \node{1}, \node{2}, \node{3}. An acceptor promises to listen iff \ballot is higher than currently promised. Acceptors responds with the promise and also attaches already accepted proposal. In this case there are no other ballots, nor proposals, thus all nodes promise and \coordinator gains leadership, which allows \coordinator to send proposal.
+\paxos round consists of $3$ phases: \begin{enumerate*} \item prepare phase, \item propose phase, \item commit phase \end{enumerate*}.
 
-In propose phase \coordinator sends a message including \ballot and the proposal, which is either one of already accepted proposals received from acceptors or \paxosValue if there are no other proposals pending.
-Acceptors check if their ballot is smaller than the one in the message and if it is then they reply with acceptance. If \coordinator received majority of acceptances then it can commit. If it received majority of rejections then it has to abandon the proposal and start again.
+\paragraph{Prepare phase}
+A proposer has to establish leadership among majority of acceptors before sending a proposal. Every proposal consists of a value and a ballot \ballot, which is a increasing number that should be distinct for each proposal. Any proposer should be able to generate new \ballot.
 
-In commit phase \coordinator broadcasts the commit message and waits for majority of acknowledges. If acknowledges do not arrive it has to start over.
+Proposer sends proposal \ballot to acceptors, which are supposed to promise to listen to that proposer, but only if \ballot is the highest ballot acceptor received so far. Otherwise an acceptor declines to promise to a proposer, in which case that proposer can start over with next \ballot. 
 
-\paxos depends only on majorities within each phase, thus is resilient to node failures, therefore \paxos has advantage over \emph{3PC}.
+Futhermore, acceptors reply with a value associated with the highest \ballot already accepted by them. Then proposer is bound to ask acceptors to only accept that value (which might be different from its original proposal) -- this forces proposer to propose other not yet committed proposals instead of his own.
+
+\paragraph{Propose phase}
+A proposer sends a proposal to acceptors and has to obtain majority of acceptances. If quorum of acceptors agree to the proposal then proposer can proceed to the commit phase. Otherwise proposer needs to start over. Acceptor must accept the proposal if that proposal is associated with promised \ballot.
+
+\paragraph{Commit phase}
+A proposer notifies learners about an accepted new value. Note that, actors\footnote{nodes} can play different roles, thus learners can be the same, as acceptors. \paxos round is finished when majority of learners acknowledge commit.
+
+% Paxos defines requirements and constraints that the protocol must operate within . Some of them are: \begin{enumerate}
+%   \item every proposal has a sequence number called ballot \ballot, that can be generated by any proposer. Moreover, \ballot should be distinct and increasing. 
+%   \item proposer has to establish leadership among majority of acceptors before sending a proposal. Proposer sends \ballot to acceptors, which are supposed to promise to listen to that proposer, but only if \ballot is the highest ballot acceptor received so far.
+%   \item acceptors reply with a value associated with the highest \ballot already accepted by them. Then proposer is bound to ask acceptors to only accept that value (which might be different from its original proposal) -- this forces proposer to propose other not completed proposals instead of his own,\label{sec:mpp:requirements:finishInProgress}
+%   \item proposer can finish protocol only when majority of acceptors acknowledge commit.
+% \end{enumerate}
+
+% \paragraph{Example of Paxos round}
+
+Figure \ref{fig:paxosBasic} shows complete \paxos round and exchanged messages between $2$ proposers and acceptors. The proposer $p_1$ has to propose a new value $v_1$, therefore it begins next \paxos round represented by a higher ballot \ballot.
+% In this case acceptors are also learners.
+% Nodes which learn that new value are called \emph{acceptors}\footnote{nodes have 2 roles: acceptor, learner}
+
+In prepare phase $p_1$ has to establish leadership between acceptors, therefore it sends prepare message with $\beta_1$ to acceptors $acc_1$, $acc_2$, $acc_3$. An acceptor promises to listen iff \ballot is higher than currently promised. In this case there are neither other ballots, nor proposals, thus all acceptors promise and $p_1$ gains leadership, which allows $p_1$ to send proposal.
+
+When $p_1$ begins propose phase, second proposer $p_2$ begins its prepare phase, in which $p_2$ sends $\beta_2$ that is higher than $\beta_1$. Messages of two proposers are interleaved so that when $p_1$ sends proposals with value $v_1$, $p_2$ sends prepare messages. $acc_1$ receives proposal from $p_1$ and accepts it, after which it receives prepare message with $\beta_2$, to which $acc_1$ responds with already accepted proposal $\beta_1,v_1$.
+$acc_2$ and $acc_3$ receive prepare from $p_2$ before proposals from $p_1$ arrive, in which case both acceptors promise to $p_2$ and decline proposal from $p_1$. $p_1$ failed to obtain majority of acceptances, therefore aborts the protocol. $p_1$ can start over with another ballot for the same proposal $v_1$. 
+
+$p_2$ established leadership among majority of acceptors, thus proceeds to propose phase. $p_2$ received proposal value $v_1$, which is proposed instead of $v_2$, therefore $p_2$ sends proposals with $\beta_2,v_1$, which are accepted by all acceptors.
+
+ In the next phase $p_2$ notifies learners about value $v_1$ by sending commit message, which is acknowledeged by each learner. Note that, in this example acceptors and learners are the same actors.
+
+ \paragraph{Fault tolerance} A proposer proceeds to next phase, as long as majority requirement is met, thus \paxos tolerates failures of 
+ $(\frac{n}{2}-1)$ acceptors and learners.
+
+ \paragraph{Latency} let us assume that number of acceptors and learners is the same and equals $n$, thus number of messages exchanged is equal to $6n$, which is the same, as for 3PC.
+
+ \paragraph{Blocking} \paxos does not block, other proposers are able to propose at any time, which might interrupt former proposer.
+
+
+% In propose phase \coordinator sends a message including \ballot and the proposal, which is either one of already accepted proposals received from acceptors or \paxosValue if there are no other proposals pending.
+% Acceptors check if their ballot is smaller than the one in the message and if it is then they reply with acceptance. If \coordinator received majority of acceptances then it can commit. If it received majority of rejections then it has to abandon the proposal and start again.
+
+% In commit phase \coordinator broadcasts the commit message and waits for majority of acknowledges. If acknowledges do not arrive it has to start over.
+
+% \paxos depends only on majorities within each phase, thus is resilient to node failures, therefore \paxos has advantage over \emph{3PC}.
 
 \begin{figure}[H]
   \centering
+  TODO na diagramie jest bałagan, ale to pozniej poprawie, załóż, że widać tutaj dwóch proposerów
 
   \begin{sequencediagram} 
-  	\newthread[blue]{c}{:Coordinator node} 
-  	\newinst{n1}{:Node 1}
-  	\newinst{n2}{:Node 2}
-  	\newinst{n3}{:Node 3}
+  	\newthread[blue]{c}{:Proposer 1} 
+  	\newinst{n1}{:Acceptor 1}
+  	\newinst{n2}{:Acceptor 2}
+  	\newinst{n3}{:Acceptor 3}
+  	\newthread{c2}{:Proposer 2}
 
-	\mess[1]{c}{prepare ballot}{n1}
+	\mess[1]{c}{prepare $ballot_1$}{n1}
+	% \prelevel
+	\mess[1]{c}{prepare $ballot_1$}{n2}
 	\prelevel
-	\mess[2]{c}{prepare ballot}{n2}
-	\prelevel
-	\prelevel	
-	\mess[2]{c}{prepare ballot}{n3}
-	
 	\mess[1]{n1}{promise}{c}
+	% \prelevel
+	% \prelevel	
+	\mess[1]{n2}{promise}{c}	
 	\prelevel
-	\mess[1]{n2}{promise}{c}
 	\prelevel
+	\prelevel
+	\mess[1]{c}{prepare $ballot_1$}{n3}
 	\mess[1]{n3}{promise}{c}
-
-
-	\mess[1]{c}{propose ballot, value}{n1}
-	\prelevel
-	\mess[2]{c}{propose ballot, value}{n2}
-	\prelevel
-	\prelevel
-	\mess[2]{c}{propose ballot, value}{n3}
-
-	\mess[1]{n1}{accept}{c}
-	\prelevel
-	\mess[1]{n2}{accept}{c}
-	\prelevel
-	\mess[1]{n3}{accept}{c}
-
-	\mess[1]{c}{commit ballot}{n1}
-	\prelevel
-	\mess[2]{c}{commit ballot}{n2}
-	\prelevel
-	\prelevel
-	\mess[2]{c}{commit ballot}{n3}
 	
-	\mess[1]{n1}{ack}{c}
+	\mess[1]{c}{propose $ballot_1, value_1$}{n1}
 	\prelevel
-	\mess[1]{n2}{ack}{c}
+	\mess[10]{c}{propose $ballot_1, value_1$}{n2}
 	\prelevel
-	\mess[1]{n3}{ack}{c}
+	\prelevel
+	\prelevel
+	\prelevel
+	\prelevel
+	\prelevel
+	\prelevel
+	\prelevel
+	\mess[1]{n1}{accept}{c}
+	\mess[1]{c2}{prepare $ballot_2$}{n1}	
+	\mess[1]{n1}{promise $ballot_1, value_1$}{c2}
+	\prelevel
+	
+	\mess[1]{c2}{prepare $ballot_2$}{n2}	
+	\mess[1]{n2}{promise}{c2}
+
+	\mess[1]{n2}{decline}{c}
+	\prelevel
+	\mess[1]{c2}{prepare $ballot_2$}{n3}
+	\mess[1]{n3}{promise}{c2}
+	\prelevel
+	\prelevel
+	\prelevel
+	\prelevel
+	\prelevel
+	\mess[5]{c}{propose $ballot_1, value_1$}{n3}
+	\mess[1]{n3}{decline}{c}
+	
+	%\mess[1]{n1}{accept}{c}
+	
+	\prelevel
+	% \mess[1]{c2}{prepare $ballot_2$}{n2}	
+	% \mess[1]{n2}{decline}{c}
+	% \mess[1]{n2}{promise}{c2}
+	\prelevel
+	
+	% \mess[1]{n3}{accept}{c}
+	
+	
+
+	\mess[1]{c2}{propose $ballot_2, value_1$}{n1}
+	\prelevel
+	\mess[2]{c2}{propose $ballot_2, value_1$}{n2}
+	\prelevel
+	\prelevel
+	\mess[2]{c2}{propose $ballot_2, value_1$}{n3}
+
+	\mess[1]{n1}{accept}{c2}
+	\mess[1]{n2}{accept}{c2}
+	\mess[1]{n3}{accept}{c2}
+
+	\mess[1]{c2}{commit $ballot_2$}{n1}
+	\prelevel
+	\mess[2]{c2}{commit $ballot_2$}{n2}
+	\prelevel
+	\prelevel
+	\mess[2]{c2}{commit $ballot_2$}{n3}
+	
+	\mess[1]{n1}{ack}{c2}
+	\prelevel
+	\mess[1]{n2}{ack}{c2}
+	\prelevel
+	\mess[1]{n3}{ack}{c2}
 \end{sequencediagram}
 
 	
-  \caption{Paxos failure-free round}
+  \caption{Paxos round with two proposers}
   \label{fig:paxosBasic}
 \end{figure}
 
@@ -185,7 +274,7 @@ The main idea behind the algorithm is decomposition of the consensus problem int
 \begin{enumerate*}
 \item leader election,
 \item log replication,
-\item safety,
+% \item safety,
 \item membership changes.
 \end{enumerate*} 
 %Safety property is that: if any server
@@ -193,18 +282,13 @@ The main idea behind the algorithm is decomposition of the consensus problem int
 %then no other server may apply a different command for the same log index.
  
  A server supporting \emph{Raft} is in one of three states: \begin{enumerate*} \item leader, \item follower, \item candidate \end{enumerate*}. The leader can be only one and it handles all client requests.
-  When a follower, which is a node listening to the leader, does not receive an heartbeat message within specific time it becomes the candidate and requests election votes from other nodes. If it receives the majority of votes it becomes the leader for the next \emph{term}. Client's request is handled by the leader, which saves the value in uncommitted state in its log and communicates the value to the followers, which acknowledge it. Upon majority of acknowledges the value is committed at the leader node, and the followers are notified about the commit on the next heartbeat message. The leader responds to the client, as soon as the value is committed just at the leader node. When a follower, receives a request from a client, it has to redirect request to the leader.
+  When a follower, which is a node listening to the leader, does not receive a heartbeat message within certain time it becomes the candidate and requests election votes from other nodes. If it receives the majority of votes it becomes the leader for the next \emph{term}. Client's request is handled by the leader, which saves the value in uncommitted state in its log and communicates the value to the followers, which acknowledge it. Upon majority of acknowledges the value is committed at the leader node, and the followers are notified about the commit on the next heartbeat message. The leader responds to the client, as soon as the value is committed just at the leader node. When a follower, receives a request from a client, it has to redirect request to the leader. \emph{Raft} algorithm is visualized in \cite{raftVisual}.
 
-  \emph{Raft} is resilient to network partitions, since the candidate has to acquire majority of the votes. If there is a split vote, which means that two nodes are candidates which received same number of votes, the election begins again in the next term after a timeout, thus there is only one leader.
-  \emph{Raft} algorithm is visualized in \cite{raftVisual}.
+\paragraph{Fault tolerance} \emph{Raft} is fault tolerant, because the the leader has to acquire only majority of acknowledges, thus is resilient to faults of minority. However failure of the leader causes delay, because a new leader has to be elected before client's request is handled.
 
-% TODO reszta opisu
+\paragraph{Latency} Assuming that the leader is already elected, a new value is learnt by followers in at least $3n$ messages. Election process is an additional overhead. Morever, heartbeat messages are exchanged, thus total number of messages exchanged can be greater than in previous algorithms.
 
-
-% TODO %
-% Napisać jak ten RAFT działa
-%\emph{Raft} uses \emph{Leader election}. Leader is elected for specific term. \emph{Raft} uses \emph{Log Replication} to arrive at consensus. Leader proposes new value to \emph{followers} which append value to uncommitted log. Once leader has majority of acknowledges it sends commit message. Followers receive commit message and commit value in the log. 
-
+\paragraph{Blocking} In principle \emph{Raft} does not block, because all client requests are handled by the same leader. However election of the leader can be delayed in case of \emph{split vote}, in which two candidates receive the same number of votes, thus neither of them obtained majority vote and election has to start over in the next term after certain timeout.
 
 
 \subsubsection{RAMP}\label{sec:theory:transactions:ramp}
@@ -213,13 +297,20 @@ The main idea behind the algorithm is decomposition of the consensus problem int
 enforcement, and materialized view maintenance.
 \emph{RAMP} identifies new transaction isolation level \emph{Read Atomic}, which 
 assures consistent visibility of changes made by the transaction: either all or none of each transaction's updates are seen by other transactions.
-\emph{RAMP} is resilient to failures of part of the nodes in the cluster -- for the reason that RAMP's transaction does not contact nodes that are not affected by the transaction. 
-\emph{RAMP} also guarantees \emph{synchronization independence}, which means that transactions do not stall or fail other transactions, due to the fact that reads and writes do not block each other. 
-
 %The transaction is able to detect non-atomic partial read and repair it with additional rounds of communication with nodes. 
 The key principle behind \emph{RAMP} is its ability to detect non-atomic partial read, and to repair it with additional rounds of communication with the nodes by the means of \emph{the metadata} attached to each write and \emph{multi-versioning}, which means that the data is accessible in different versions and each modification to the data creates a new version. Versions are either committed or not yet committed, in which case the data can be discarded by aborting the transaction \cite[p. 6]{Bailis:2014}. 
 There are three variants of \emph{RAMP} algorithm which differ in type of the metadata. \emph{RAMP-small} uses a 64 bit timestamp as the metadata and requires additional two rounds of communication when non-atomic read is detected. Other variants of \emph{RAMP} are described in \cite[p. 5]{Bailis:2014}.
 \emph{RAMP} is linearly scalable, which was tested during trials with the number of nodes spanning up to 100 servers \cite[p. 10]{Bailis:2014}.
+
+\paragraph{Fault tolerance} \emph{RAMP} is resilient to failures of part of the nodes in the cluster -- for the reason that RAMP's transaction does not contact nodes that are not affected by the transaction. 
+
+\paragraph{Latency} depends on variant of \emph{RAMP}. In case of \emph{RAMP-small} latency is $2n$. Other variants allow to have latency $n$ in the race-free case and $2n$ in the event of race.
+
+\paragraph{Blocking} \emph{RAMP} does not block, read transactions race write transactions, but such races are detected and handled by \emph{RAMP}.
+
+
+% \emph{RAMP} also guarantees \emph{synchronization independence}, which means that transactions do not stall or fail other transactions, due to the fact that reads and writes do not block each other. 
+
 
 %  TODO Może to gdzieś się opłaca dodać:
 % \emph{RAMP} transactions \ref{sec:theory:transactions:ramp} have support for multi-partition operations. 
@@ -228,7 +319,7 @@ There are three variants of \emph{RAMP} algorithm which differ in type of the me
 
 \subsubsection{LWT}\label{sec:theory:transactions:lwt}
 % TODO źródło w (more on this)
-TODO DODAĆ ŹRÓDŁO
+
 As mentioned earlier, Light Weight Transactions is the name of compare-and-swap functionality implemented in Cassandra. Internally, LWT uses the Paxos algorithm with some modifications which were aimed to prevent potential single point of failure, thus improving high availability. SPOFs may surface in case the leader fails when it is about to propose a new value. The problem was addressed by sacrificing the standard leader election in favour of allowing any node to act as a leader, so that it can propose a value at any time. On the downside, such approach increases the risk of contention. 
 
 One of the key requirements of Paxos protocol is storage of PaxosState - a data structure composed of the proposed value, proposed ballot, promised ballot and most recent commit. In case of LWT, the value represents the update itself along with the token of the partition key where that update should be applied. That token uniquely identifies PaxosState so that several proposals for the same partition can be associated with the same Paxos instance. 
@@ -258,4 +349,9 @@ Note that \lwt affects only limited number of nodes -- replicas of \emph{John}, 
 \lwt is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt.
 The proposed algorithm supports multi-partition operations, and provides read-committed isolation level, whereas \lwt provides serializable isolation.
 
+\paragraph{Fault tolerance} is the same, as in \paxos.
+
+\paragraph{Latency} is greater than in \paxos, single \lwt instance can run even two\footnote{second round does not require prepare phase} rounds of \paxos, in case there is in-progress proposal.
+
+\paragraph{Blocking} does not happen, as instances of \lwt for different partitions are independent. However \lwt transactions for the same partition can stall each other the same way concurrent proposers interrupt each other in \paxos.
 

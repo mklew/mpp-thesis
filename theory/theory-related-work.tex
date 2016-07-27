@@ -1,30 +1,36 @@
 %!TEX root = ../thesis.tex
 \section{Related work}
-Section presents databases that provide a level of transactional operations, which are compared to the algorithm proposed in the paper.
+Section presents databases that provide a level of transactional operations, which are compared to the algorithm proposed in this paper.
 
 \subsection{Cassandra}
-Cassandra is a NoSql database with a token ring masterless architecture and key to wide-row store data model, 
-in which different rows are accessible by arbitrary keys. 
-The data in Cassandra is accessible through Cassandra Query Language (CQL) \ref{sec:theory:cassandra:cql}, which is similar to SQL, but provides limited functionality. Cassandra supports \lwt transactions \ref{sec:theory:transactions:lwt}.
+As we mentioned before, the only transactions supported by Cassandra are LWT.
 
 \lwt is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt providing multi partition transactions.
-Figure \ref{fig:mppVsLwt} presents comparison of the proposed algorithm to \lwt.
+Table \ref{fig:mppVsLwt} presents comparison of the proposed algorithm to \lwt.
 
-\begin{figure}[hbt]
-  %\centering
-  \setlength{\unitlength}{1.3cm}  
-  \subfloat{
-    \renewcommand{\tabcolsep}{0.1cm}
-    \resizebox{\textwidth}{!}{\begin{tabular}{c|c|c|c|c|c|c}
+% \begin{figure}[hbt]
+%   %\centering
+%   \setlength{\unitlength}{1.3cm}  
+%   \subfloat{
+%     \renewcommand{\tabcolsep}{0.1cm}
+%     \resizebox{\textwidth}{!}{}
+%   }
+  
+% \end{figure}
+\begin{table}
+\begin{tabular}{c||c|c}
       \toprule
-      Algorithm & multi-partition operations & isolation level & atomicity & durability & consistency & \emph{CAP} \\ \midrule
-      the proposed algorithm      &   yes                      & read-committed  &   yes     & yes        & eventually consistent & \emph{AP}  \\
-      \lwt      &   no, single partition     & serializable  &   yes     & yes        & eventually consistent & \emph{AP}  \\  \bottomrule      
-    \end{tabular}}
-  }
+      Algorithm & the proposed algorithm & \lwt \\ \midrule
+      multi-partition operations & yes & no, single partition \\
+      isolation level & read-committed & serializable \\
+      atomicity & yes & yes \\
+      durability & yes & yes \\
+      consistency & eventually consistent & eventually consistent \\
+      \emph{CAP} & \emph{AP} & \emph{AP} \\ \bottomrule     
+  \end{tabular}
   \caption{The proposed algorithm compared to \lwt}
   \label{fig:mppVsLwt}
-\end{figure}
+\end{table}
 
 \subsection{MarkLogic}
 MarkLogic is a NoSql database with the document-centric schema-agnostic data model \cite{markLogicDataModel} with native support for formats such as JSON, XML and RDF, and support of ACID transactions \cite{markLogicAcid}.
@@ -34,8 +40,9 @@ The database uses these timestamps to ensure that all users see consistent data.
 Transaction has to acquire write locks on all of the updated documents and read locks on all of the queried documents in order to complete evaluation. Acquired locks are held until the transaction ends, which prevents other transactions from updating the read locked documents and ensures a read-consistent view of the documents. 
 Deadlocks might happen, but are detected by the database, and are dealt with by aborting one or the other request and retrying it later.
 
-MarkLogic's transactions rely on the locks that provide pesimistic concurrency control.
-By principle, the solution with locks provides less performance, due to contention and waiting on the locks, than the lock-free solution proposed in this paper, which uses \paxos algorithm.
+MarkLogic's transactions rely on the locks that provide pesimistic concurrency control. Holding locks causes contention and blocks other transasctions. 
+The algorithm proposed in this paper is lock-free.
+% By principle, the solution with locks provides less performance, due to contention and waiting on the locks, than the lock-free solution proposed in this paper, which uses \paxos algorithm.
 
 % Bazy które wspierają jakieś transakcje
 % ACID transactions
@@ -44,21 +51,21 @@ By principle, the solution with locks provides less performance, due to contenti
 FoundationDB is a NoSql database with ACID compliant transactions, strong scalability and SQL querying capabilities, that chooses \emph{CP} in terms of \emph{CAP} theorem.
 Its core data model is a ordered key-value store, in which the ordering property increases efficiency of range reads. It also supports document store and relational DBMS as layers on top of the core model. 
 
-FoundationDB was acquired by Apple \cite{foundationDbAcquired} and since then no information is available. Its website is shutdown, documentation is not accessible nor downloads of the database. According to the press, the database running in AWS with $32$ \emph{c3.8xlarge}\footnote{$32$ virtual CPUs, $60$ GB memory, $2x320$ SSD} servers scaled up to $14,4$ million random writes per second.
+FoundationDB was acquired by Apple \cite{foundationDbAcquired} and since then no information is available. Its website is shutdown, documentation is not accessible nor downloads of the database. According to press articles, the database running in AWS with $32$ \emph{c3.8xlarge}\footnote{$32$ virtual CPUs, $60$ GB memory, $2x320$ SSD} servers scaled up to $14,4$ million random writes per second.
 
-Since FoundationDB disappeared the advantage of the proposed algorithm is that it is and will remain Open Source and accessible for studies.
+Since FoundationDB disappeared there is no point in discussing its advantages and disadvantages over the solution proposed in this work.
 
 \subsection{Datomic}
-Datomic \cite{datomic} is a database with completely different approach, since it moves the database inside the applications, which in terms of Datomic are called \emph{peers}, by embedding the peer compontent library, which provides data access, caching, query capabilities, communication to \emph{transactors} and to \emph{storage services}. A \emph{transactor} is the second part of the database, which accepts transactions, processes them serially, commits the results to the \emph{storage service}, transmits changes to the peers and indexes the changed data. The third part are \emph{storage services}, which provide reliable, redundant storage, such as Cassandra \ref{sec:theory:cassandra}, or AWS DynamoDB.
+Datomic \cite{datomic} moves the database inside applications, which in terms of Datomic are called \emph{peers}. Peers embed the peer compontent library, which provides data access, caching, query capabilities, communication to \emph{transactors} and to \emph{storage services}. A \emph{transactor} is the second part of the database, which accepts transactions, processes them serially, commits the results to the \emph{storage service}, transmits changes to the peers and indexes changed data. The third part are \emph{storage services}, which provide reliable, redundant storage, such as Cassandra (see Section \ref{sec:theory:cassandra}), or AWS DynamoDB.
 
-Datomic supports ACID transactions, and provides the query language -- Datalog, which is a declarative logic programming language. Transactions are provided by the single active \emph{transactor}. The key difference between NoSql databases and Datomic is a tradeoff betweed scalability of writes and transactions. In Datomic, each write is a transaction, which needs to be processed by the transactor, thus it sacrifices writes scalability in order to provide ACID transactions.
+Datomic supports ACID transactions, and provides the query language -- Datalog. Datalog is a declarative logic programming language. Transactions are provided by the single active \emph{transactor}. The key difference between NoSql databases and Datomic is a tradeoff betweed scalability of writes and transactions. In Datomic, each write is a transaction, which needs to be processed by the transactor. Datomic sacrifices writes scalability in order to provide ACID transactions.
 
 The proposed algorithm provides weaker guarantees than ACID transactions in Datomic, but it does not limit the writes scalability. 
 
 
 \subsection{Oracle RAC}
-Oracle Real Application Clusters (RAC) is a relational database with fully ACID compliant transactions available in the distributed cluster. It provides higher performance scalability and
-reliability without requiring changes to existing applications, which use Oracle database.
+Oracle Real Application Clusters (RAC) is a relational database with fully ACID compliant transactions available in the distributed cluster. 
+It provides higher scalability and reliability without requiring changes to existing applications, which use Oracle database.
 In a clustered server environment, the database
 itself is shared across a pool of servers, which means that if any server in the server pool fails,
 the database continues to run on surviving servers.
