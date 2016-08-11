@@ -10,6 +10,9 @@
   \node[main node] (S) [below right of=REP] {Setup};
   \node[main node] (PRE) [below of=S] {Prepared};
   
+  \foreach \x in {0,...,4}
+    \foreach \y [count=\yi] in {0,...,3}  
+      \draw (\x\y)--(\x\yi) (\y\x)--(\yi\x) ;
 
   \path[every node/.style={font=\sffamily\small,
   		fill=white,inner sep=1pt}]

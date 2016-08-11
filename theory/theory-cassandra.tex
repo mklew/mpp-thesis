@@ -17,17 +17,45 @@ Its key features are:
 \end{itemize}
 
 \subsection{Architecture}
-Cassandra has a masterless \emph{ring} architecture, presented on Figure \ref{fig:archCluster}, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication and provides continous availability, due to redundancy of both data and node functions.
+Cassandra has a masterless \emph{ring} architecture, in which all nodes are equally significant, and there is no master node, therefore there is no single point of failure (SPOF). Cassandra uses replication and provides continous availability, due to redundancy of both data and node functions.
 Inter-node communication bases on scalable and distributed \emph{Gossip} protocol.
 
+A cluster presented on Figure \ref{fig:archCluster} consists of 2 data centers: DC1 and DC2, where DC1 is represented by blue nodes and DC2 by red nodes. All nodes within the cluster use peer to peer communication. Nodes with dashed border are replica nodes of a key $k$. Note that, replicas exist in both data centers, therefore if first data center fails, then $k$ is still accessible from second data center.
+
 \begin{figure}[H]
-	\centering
-	%\subfloat[The cluster on the ring]
-	%{
-	\includegraphics[height=60mm]{images/cassandra-ring.png}\hspace{10mm}
-	%}	
-	\caption{WIEM, ZE TO DO POPRAWY A cluster on the ring}
-	\label{fig:archCluster}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,main node 1/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm},
+  main node 1/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm},
+  main node 2/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm},
+  main node 3/.style={circle,dashed,fill=blue!20,draw,
+  ,minimum size=5mm},
+  main node 4/.style={circle,fill=red!20,draw,
+  ,minimum size=5mm},
+  main node 5/.style={circle,dashed,fill=red!20,draw,
+  ,minimum size=5mm},
+  main node 6/.style={circle,dashed,fill=red!20,draw,
+  ,minimum size=5mm}]
+
+\node[draw, text width=3cm] at (-6,3.5) {a key k is replicated on dashed nodes, RF=3};
+
+\draw[thick, line width=3mm, gray, opacity=0.3] (0,0) circle (4cm);
+
+\foreach \a in {1,2,...,6}{
+\draw (\a*360/6: 4cm) node[main node \a] (\a) {Node \a};
+}
+
+\foreach \x in {1,...,6}
+    \foreach \y [count=\yi] in {1,...,6}  
+      \draw (\x)--(\yi) ;
+
+
+\end{tikzpicture}
+\caption{A cluster on the token ring}
+\label{fig:archCluster}
 \end{figure}
 
 \subsubsection{Token ring}
@@ -37,8 +65,8 @@ Partitioning in Cassandra is implemented by assigning tokens, which are numbers 
 
 \subsection{Replication}
 Cassandra supports configurable \emph{replication factor} \ref{def:replicationFactor} defined per \emph{keyspace} \ref{sec:theory:cassandra:datamodel}. Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
-Each node is the \emph{primary replica} for the token range placed counter clock-wise to it, thus node $1$ is the primary replica for range $75-0$, node $2$ for $1-25$, node $3$ for $26-50$, and node $4$ for $51-75$. 
-Token value $91$ belongs to the node $1$, and since \RF{3}, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $2$ and node $3$, which are \emph{secondary replicas} of the token. Tokens define the units of replication -- the smallest segments of data that can be replicated. 
+Each node is the \emph{primary replica} for the token range placed counter clock-wise to it, thus node $1$ is the primary replica for range $75-0$, node $2$ for $51-75$, node $3$ for $26-50$, and node $4$ for $1-25$. 
+Token value $91$ belongs to the node $1$, and since \RF{3}, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $4$ and node $3$, which are \emph{secondary replicas} of the token. Tokens define the units of replication -- the smallest segments of data that can be replicated. 
 
 % We analyzed replication of a token $91$ using topology of the cluster, which is defined in Definition \ref{def:topology}. If we used topology function (Definition \ref{def:topologyFunction}) and assumed that $H(k) \mapsto 91$, then \topology{\node{1}, \node{2}, \node{3}}.
 
@@ -66,15 +94,58 @@ Token value $91$ belongs to the node $1$, and since \RF{3}, then the value is re
 
 % źródło https://pandaforme.gitbooks.io/introduction-to-cassandra/content/understand_replication.html
 % prawdziwe źródło to prawdopodobnie kurs z DataStax, ale nie mogę tego znaleźć.
+
 \begin{figure}[H]
-	\centering
-	%\subfloat[The cluster on the ring]
-	%{
-	\includegraphics[height=100mm]{images/cassandra-replication-ring.png}\hspace{10mm}
-	%}
-	%\label{fig:replicationRing}
-	\caption{WIEM, ZE TO DO POPRAWY Replication of the token 91}
-	\label{fig:replicationRing}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,
+  main node 1/.style={circle,dashed,fill=green!20,draw,
+  ,minimum size=5mm},
+  main node 2/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm},
+  main node 3/.style={circle,dashed,fill=orange!60,draw,
+  ,minimum size=5mm},
+  main node 4/.style={circle,dashed,fill=red!20,draw,
+  ,minimum size=5mm}]
+
+%\node[draw, text width=3cm] at (-6,3.5) {a key k is replicated on dashed nodes, RF=3};
+
+% token ring
+\draw[thick, line width=3mm, gray, opacity=0.3] (0,0) circle (4cm);
+
+% token range for node 1
+\draw[thick, line width=2mm, red, opacity=0.4] (0,6) arc (90:0:6cm); % node[pos=0.5]{$1-25$};
+
+\draw[thick, line width=2mm, green, opacity=0.4] (-6,0) arc (180:90:6cm); % node[pos=0.5]{$76-0$};
+
+\draw[thick, line width=2mm, blue, opacity=0.4] (0,-6) arc (270:180:6cm);
+
+\draw[thick, line width=2mm, orange, opacity=0.4] (6,0) arc (360:270:6cm); % node[pos=0.5]{$25-50$};
+
+\node at (-3.5,-3.5) {$51-75$};
+
+\node at (-3.5,3.5) {$76-0$};
+
+\node at (3.5,3.5) {$1-25$};
+
+\node at (3.5,-3.5) {$26-50$};
+
+\node[draw] at (-2.6,5.5) {$91$};
+
+%\node[draw, text width=5cm] at (-6,6) {\small{token 91 is replicated on dashed nodes, RF=3}};
+
+\foreach \a in {1,4,3,2}{
+\draw (\a*360/4: 4cm) node[main node \a] (\a) {Node \a};
+}
+
+\foreach \x in {1,...,4}
+    \foreach \y [count=\yi] in {1,...,4}  
+      \draw (\x)--(\yi) ;
+
+
+\end{tikzpicture}
+\caption{Replication of the token 91 on dashed nodes, \RF{3}}
+  \label{fig:replicationRing}
 \end{figure}
 
 %\subsubsection{Read path}
