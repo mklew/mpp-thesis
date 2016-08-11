@@ -113,7 +113,7 @@ A proposer notifies learners about an accepted new value. Note that, actors\foot
 
 % \paragraph{Example of Paxos round}
 
-Figure \ref{fig:paxosBasic} shows complete \paxos round and exchanged messages between $2$ proposers and acceptors. The proposer $p_1$ has to propose a new value $v_1$, therefore it begins next \paxos round represented by a higher ballot \ballot.
+Figure \ref{fig:paxosBasic} and Figure \ref{fig:paxosBasicPart2} show complete \paxos round and exchanged messages between $2$ proposers and acceptors. The proposer $p_1$ has to propose a new value $v_1$, therefore it begins next \paxos round represented by a higher ballot \ballot.
 % In this case acceptors are also learners.
 % Nodes which learn that new value are called \emph{acceptors}\footnote{nodes have 2 roles: acceptor, learner}
 
@@ -122,7 +122,8 @@ In prepare phase $p_1$ has to establish leadership between acceptors, therefore 
 When $p_1$ begins propose phase, second proposer $p_2$ begins its prepare phase, in which $p_2$ sends $\beta_2$ that is higher than $\beta_1$. Messages of two proposers are interleaved so that when $p_1$ sends proposals with value $v_1$, $p_2$ sends prepare messages. $acc_1$ receives proposal from $p_1$ and accepts it, after which it receives prepare message with $\beta_2$, to which $acc_1$ responds with already accepted proposal $\beta_1,v_1$.
 $acc_2$ and $acc_3$ receive prepare from $p_2$ before proposals from $p_1$ arrive, in which case both acceptors promise to $p_2$ and decline proposal from $p_1$. $p_1$ failed to obtain majority of acceptances, therefore aborts the protocol. $p_1$ can start over with another ballot for the same proposal $v_1$. 
 
-$p_2$ established leadership among majority of acceptors, thus proceeds to propose phase. $p_2$ received proposal value $v_1$, which is proposed instead of $v_2$, therefore $p_2$ sends proposals with $\beta_2,v_1$, which are accepted by all acceptors.
+Figure \ref{fig:paxosBasicPart2} continues with the example, in which
+ $p_2$ established leadership among majority of acceptors, thus proceeds to propose phase. $p_2$ received proposal value $v_1$, which is proposed instead of $v_2$, therefore $p_2$ sends proposals with $\beta_2,v_1$, which are accepted by all acceptors.
 
  In the next phase $p_2$ notifies learners about value $v_1$ by sending commit message, which is acknowledeged by each learner. Note that, in this example acceptors and learners are the same actors.
 
@@ -143,102 +144,80 @@ $p_2$ established leadership among majority of acceptors, thus proceeds to propo
 
 \begin{figure}[H]
   \centering
-  TODO na diagramie jest bałagan, ale to pozniej poprawie, załóż, że widać tutaj dwóch proposerów
-
   \begin{sequencediagram} 
-  	\newthread[blue]{c}{:Proposer 1} 
+  	\newthread[blue]{c1}{:Proposer 1} 
   	\newinst{n1}{:Acceptor 1}
   	\newinst{n2}{:Acceptor 2}
   	\newinst{n3}{:Acceptor 3}
   	\newthread{c2}{:Proposer 2}
 
-	\mess[1]{c}{prepare $ballot_1$}{n1}
-	% \prelevel
-	\mess[1]{c}{prepare $ballot_1$}{n2}
-	\prelevel
-	\mess[1]{n1}{promise}{c}
-	% \prelevel
-	% \prelevel	
-	\mess[1]{n2}{promise}{c}	
+	\mess[1]{c1}{prepare $b_1$}{n1}
+	%\prelevel
+	\mess[1]{c1}{prepare $b_1$}{n2}
+	\mess[1]{n1}{promise}{c1}
 	\prelevel
 	\prelevel
 	\prelevel
-	\mess[1]{c}{prepare $ballot_1$}{n3}
-	\mess[1]{n3}{promise}{c}
-	
-	\mess[1]{c}{propose $ballot_1, value_1$}{n1}
-	\prelevel
-	\mess[10]{c}{propose $ballot_1, value_1$}{n2}
-	\prelevel
-	\prelevel
-	\prelevel
-	\prelevel
-	\prelevel
-	\prelevel
-	\prelevel
-	\prelevel
-	\mess[1]{n1}{accept}{c}
-	\mess[1]{c2}{prepare $ballot_2$}{n1}	
-	\mess[1]{n1}{promise $ballot_1, value_1$}{c2}
-	\prelevel
-	
-	\mess[1]{c2}{prepare $ballot_2$}{n2}	
+	\mess[1]{c1}{prepare $b_1$}{n3}
+	\mess[1]{n2}{promise}{c1}
+	\mess[1]{n3}{promise}{c1}
+
+	\mess[1]{c2}{prepare $b_2$}{n3}
+	\mess[1]{c2}{prepare $b_2$}{n2}
+
+	\mess[1]{c1}{propose $b_1, v_1$}{n1}
+	\mess[1]{c1}{propose $b_1, v_1$}{n2}
+	\mess[1]{c1}{propose $b_1, v_1$}{n3}	
+	\mess[1]{n3}{promise}{c2}
 	\mess[1]{n2}{promise}{c2}
 
-	\mess[1]{n2}{decline}{c}
-	\prelevel
-	\mess[1]{c2}{prepare $ballot_2$}{n3}
-	\mess[1]{n3}{promise}{c2}
-	\prelevel
-	\prelevel
-	\prelevel
-	\prelevel
-	\prelevel
-	\mess[5]{c}{propose $ballot_1, value_1$}{n3}
-	\mess[1]{n3}{decline}{c}
-	
-	%\mess[1]{n1}{accept}{c}
-	
-	\prelevel
-	% \mess[1]{c2}{prepare $ballot_2$}{n2}	
-	% \mess[1]{n2}{decline}{c}
-	% \mess[1]{n2}{promise}{c2}
-	\prelevel
-	
-	% \mess[1]{n3}{accept}{c}
+	\mess[1]{n1}{accept}{c1}
+	\mess[1]{n2}{decline}{c1}
+	\mess[1]{n3}{decline}{c1}
+	\mess[1]{c2}{prepare $b_2$}{n1}	
+	\mess[1]{n1}{promise $b_1, v_1$}{c2}
 	
 	
-
-	\mess[1]{c2}{propose $ballot_2, value_1$}{n1}
-	\prelevel
-	\mess[2]{c2}{propose $ballot_2, value_1$}{n2}
-	\prelevel
-	\prelevel
-	\mess[2]{c2}{propose $ballot_2, value_1$}{n3}
-
-	\mess[1]{n1}{accept}{c2}
-	\mess[1]{n2}{accept}{c2}
-	\mess[1]{n3}{accept}{c2}
-
-	\mess[1]{c2}{commit $ballot_2$}{n1}
-	\prelevel
-	\mess[2]{c2}{commit $ballot_2$}{n2}
-	\prelevel
-	\prelevel
-	\mess[2]{c2}{commit $ballot_2$}{n3}
-	
-	\mess[1]{n1}{ack}{c2}
-	\prelevel
-	\mess[1]{n2}{ack}{c2}
-	\prelevel
-	\mess[1]{n3}{ack}{c2}
 \end{sequencediagram}
 
 	
-  \caption{Paxos round with two proposers}
+  \caption{Paxos round with two proposers part 1}
   \label{fig:paxosBasic}
 \end{figure}
 
+\begin{figure}[H]
+  \centering
+  \begin{sequencediagram} 
+  	\newthread[blue]{c1}{:Proposer 1} 
+  	\newinst{n1}{:Acceptor 1}
+  	\newinst{n2}{:Acceptor 2}
+  	\newinst{n3}{:Acceptor 3}
+  	\newthread{c2}{:Proposer 2}
+
+	\mess[1]{c2}{propose $b_2, v_1$}{n3}
+	\mess[1]{c2}{propose $b_2, v_1$}{n2}
+	\mess[1]{c2}{propose $b_2, v_1$}{n1}
+
+	\mess[1]{n3}{accept}{c2}
+	\mess[1]{n2}{accept}{c2}
+	\mess[1]{n1}{accept}{c2}
+
+	\mess[1]{c2}{commit $b_2$}{n3}
+	\prelevel
+	\mess[2]{c2}{commit $b_2$}{n2}
+	\prelevel
+	\prelevel
+	\mess[2]{c2}{commit $b_2$}{n1}
+	
+	\mess[1]{n3}{ack}{c2}
+	\prelevel
+	\mess[1]{n2}{ack}{c2}
+	\prelevel
+	\mess[1]{n1}{ack}{c2}
+\end{sequencediagram}
+	\caption{Paxos round with two proposers part 2}
+  \label{fig:paxosBasicPart2}
+\end{figure}
 
 % These are requirements that need to be satisfied in order to be sure that \paxos can work the way it was designed and proven formally \cite{Lamport1998partTimeParliment}. 
 

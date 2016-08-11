@@ -148,16 +148,6 @@ Token value $91$ belongs to the node $1$, and since \RF{3}, then the value is re
   \label{fig:replicationRing}
 \end{figure}
 
-%\subsubsection{Read path}
-%TODO Read path
-%\subsubsection{Write path}
-%TODO Write path
-
-%Architecture
-% Token ring
-% rysunek z klastrem
-
-
 
 \subsection{Data model}
 \label{sec:theory:cassandra:datamodel}
@@ -220,6 +210,147 @@ AND (hour, minute)>=(12, 0)
 AND (hour, minute)<=(15, 30);
 \end{lstlisting}
 
+
+\subsection{Write path}
+Cassandra write path \cite{CassandraWritePath} shown of Figure \ref{fig:writePath} consists of several stages. Writing starts with logging of a write in the \emph{commit log} so that writes are durable and survive permanently even if power fails on a node. 
+Nextly, data is written to the \emph{memtable}, which is in-memory table that stores writes in sorted order.
+If memtable exceeds its limit of memory then data from the memable are flushed to disk to files called \emph{SSTables}. SSTables are immutable after memtable is flushed. A single partition is typically stored across multiple SSTable files, thus read path has multiple files to read (more on read path in Section \ref{sec:readPath}).
+
+When a new SSTable is created, Cassandra creates additional supporting files, which include: \begin{enumerate}
+\item primary index -- index of the row keys with pointers to their positions in the data file,
+\item bloom filter -- a structure stored in momery that checks if row data exists in the memtable before accessing SSTables on disk,
+\item Compression information -- holds inforamtion about uncompressed data length and chunk offsets,
+\item statistics -- statistical metadata about content in the SSTable,
+\item digest -- file holding checksum of the data file,
+\item crc -- file holding the CRC32 for data chunks,
+\item summary -- a sample of the partition index stored in memory,
+\item table of contents -- a file that stores the list of all components for the SSTable,
+\item secondary index -- built-in secondary index.
+\end{enumerate}
+
+Over time Cassandra writes many timestamped versions of a row and many SSTables. This means that Cassandra must access more and more SSTables to retrieve an entire row of data. 
+Compaction is a process of merging SSTables together so that old versions of rows are discarded preserving only most recent version. Compaction reduces disk usage by removing old data and improves read performance by limiting number of SSTables to read from.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,
+  node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm},
+  main node 2/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm},
+  main node 3/.style={circle,dashed,fill=orange!60,draw,
+  ,minimum size=5mm},
+  main node 4/.style={circle,dashed,fill=red!20,draw,
+  ,minimum size=5mm},
+  database/.style={
+      cylinder,
+      cylinder uses custom fill,
+      cylinder body fill=blue!20,
+      cylinder end fill=blue!10,
+      shape border rotate=90,
+      aspect=0.25,
+      draw
+    }]
+
+\node[node] (write) at (-4,8) {Write data};
+
+
+\node[database,text height=1.5cm] (commitLog) at (0,0) {Commit log};
+
+\draw[thick, dashed, line width=1mm, black] (-5,5) node[below] {Memory} node[above] {Disk} -- ++(15,0);
+
+
+\node[draw=blue,line width=5mm, align=center,thick,text height=2cm, rounded corners=0.55cm, text width=3cm,inner sep=2pt] (memtable) at (4,8) {Memtable}; 
+
+\draw[thick,black, ->] (write) -- (memtable);
+
+
+
+\node[draw=blue,fill=blue!20,line width=5mm, align=center,thick,text height=3cm, rounded corners=0.55cm, text width=4cm,inner sep=2pt] (ssTable) at (4,0) {SSTable}; 
+
+\draw[thick,dashed,black, ->] (memtable) -- ++(4,0) -- ++(0,-8) node[midway] {Flush} -- (ssTable);
+
+\draw[thick,black,->] (0,8) -- (commitLog);
+
+\end{tikzpicture}
+\caption{Write path}
+  \label{fig:writePath}
+\end{figure}
+
+\subsection{Read path}
+\label{sec:readPath}
+To read a partition, Cassandra has to combine data from the active memtable and potentially multiple SSTables \cite{CassandraReadPath}. Reading path is optimized in a way that reduces number of SSTables that need to be read. 
+
+Figure \ref{fig:readPath} presents Cassandra's read path. There are several stages on the read path to find where the data is stored. Reading starts from reading the memtable followed by reading from row cache. It then checks bloom filters if SSTable might have the data. If bloom filter is positive then the SSTable might have the data, but does not have to. Cassandra goes directly to the compression offset map if a partition key is found in the partition key cache. Otherwise it checks partition summary followed by partition index and then goes to compression offset map, which allows to locate the data in the SSTable data file. At the end, Cassandra fetches the data from the SSTable on disk. The same process is performed for all SSTables, which have positive bloom filters, thus compaction and reducing number of SSTables is important for read performance.
+
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=3.5cm,
+  thick,
+  node/.style={circle,fill=blue!20,draw,
+  ,minimum size=5mm},
+  bloomPositive/.style={circle,fill=blue!80,draw,
+  ,minimum size=5mm},
+  bloomNegative/.style={circle,fill=red!80,draw,
+  ,minimum size=5mm},
+  main node 4/.style={circle,dashed,fill=red!20,draw,
+  ,minimum size=5mm},
+  database/.style={
+      cylinder,
+      cylinder uses custom fill,
+      cylinder body fill=blue!20,
+      cylinder end fill=blue!10,
+      shape border rotate=90,
+      aspect=0.25,
+      draw
+    }]
+
+\node[node] (read) at (-12,7) {Read data};
+
+\node[draw=blue,line width=5mm, align=center,thick,text height=0.8cm, rounded corners=0.55cm, text width=3cm,inner sep=2pt] (bloomFilter) at (-5,7) {Bloom filter}; 
+
+\node[draw=blue,line width=5mm, align=center,thick,text height=0.8cm, rounded corners=0.1cm, text width=3cm,inner sep=2pt] (partitionKeyCache) at (0,3) {Partition key cache};
+
+\node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=0.8cm, text width=2cm,inner sep=2pt] (partitionSummary) at (-4,3) {Partition summary};
+
+\node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=3cm, text width=0.5cm,inner sep=2pt] (compressionOffsets) at (-9,3) {Compression offsets};
+
+\node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=2cm, text width=2cm,inner sep=2pt] (partitionIndex) at (-6,-4) {Partition index};
+
+\node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=4cm, text width=2cm,inner sep=2pt] (data) at (-11,-4) {Data};
+
+\draw[thick,black, ->] (read) -- (bloomFilter);
+
+\draw[thick,black] (bloomFilter) -- ++(0,1) node[bloomPositive] {};
+\draw[thick,black] (bloomFilter) -- ++(0,-1) node[bloomNegative] {};
+
+\draw[thick, dashed, line width=1mm, black] (-12,0) node[below] {Memory} node[above] {Disk} -- ++(13,0);
+
+
+\draw[thick,black, ->] (bloomFilter) -- ++(5,0) -- (partitionKeyCache);
+
+\draw[thick,black, ->] (partitionKeyCache) -- (partitionSummary);
+
+ \draw[thick,black, ->] (partitionKeyCache) -- ++(0,-9) -- ++(-9,0) -- (compressionOffsets);
+
+ \draw[thick,black, ->] (partitionSummary) -- ++(0,-7) -- (partitionIndex);
+
+\draw[thick,black, ->] (partitionIndex) -- ++(-2,0) -- ++(0,7) -- (compressionOffsets);
+
+\draw[thick,black, ->] (compressionOffsets) -- ++(-2,0) -- (data);
+
+\draw[thick,black, ->] (data) -- ++(-2,0) node[below] {Return row};
+
+% \node[draw=blue,fill=blue!20,line width=5mm, align=center,thick,text height=3cm, rounded corners=0.55cm, text width=4cm,inner sep=2pt] (ssTable) at (4,0) {SSTable}; 
+
+% \draw[thick,black,->] (0,8) -- (commitLog);
+
+\end{tikzpicture}
+\caption{Read path}
+  \label{fig:readPath}
+\end{figure}
  
 \subsection{Use cases}
 Cassandra is a general purpose non-relational database, however there are areas in which Cassandra excels over other databases:
