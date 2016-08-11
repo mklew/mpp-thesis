@@ -52,14 +52,18 @@
 
 \definecolor{ListingBackground}{rgb}{0.95,0.95,0.95}
 
+\definecolor{bluekeywords}{rgb}{0.13,0.13,1}
+\definecolor{greencomments}{rgb}{0,0.5,0}
+\definecolor{redstrings}{rgb}{0.9,0,0}
+
 \lstdefinestyle{outcode}
 {
-basicstyle={\footnotesize},
+basicstyle={\ttfamily},
 language=sql,
-keywordstyle={\bf\footnotesize\color{blue}},
+keywordstyle=\color{bluekeywords}\bfseries,
 commentstyle={\em\footnotesize\color{magenta}},
 numbers=left,
-stepnumber=5,
+stepnumber=1,
 firstnumber=1,
 numberfirstline=true,
 numberblanklines=true,
@@ -86,6 +90,7 @@ morekeywords={IF}
 \lstset{
  morekeywords={IF}
 }
+
 
 
 \author{Marek Lewandowski}
