@@ -14,7 +14,7 @@
 \begin{itemize}
 \item $\mathit{record\_as\_committed(\text{\txState})}$ -- record a committed transaction
 \item $\mathit{record\_as\_rolled\_back(\text{\txState})}$ -- record a rolled back transaction
-\item $\mathit{find(\text{\txState})} \mapsto \mathit{log\_state}$ -- finds information about a transaction. Returns $\mathit{log\_state}$ which can be one of: \begin{enumerate*} 
+\item $\mathit{find(\text{\txState})} \mapsto \mathit{log\_state}$ -- finds information about a transaction. Returns $\mathit{log\_state}$ which can be one of: \begin{enumerate*}[label=\alph*)]
 		\item $\mathit{committed}$ -- when transaction was committed,
 		\item $\mathit{rolled\_back}$ -- when transaction was rolled back,
 		\item $\mathit{unknown}$ -- when transaction is missing in the log

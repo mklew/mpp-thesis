@@ -27,7 +27,7 @@ If there are many \transactions being committed at same time and those \transact
 %If there are many values being proposed at same time, only one value should be accepted and nodes should consensus about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
 
 Rest of transactions $(\mathcal{C}\text{\txStates} - \text{\txState})$ can be rolledback, as long as they participate in the same \paxos round \paxosRoundId. In case of \lwt \paxosRoundId is determined by \emph{k}, however \mpt supports more than one key, therefore we need a function which maps \txState $\mapsto $ \paxosRoundId with properties: 
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 \item it maps conflicting transactions to same \paxosRoundId,
 \item it maps non-conflicting transactions to different $\iota'$.
 \end{enumerate*}

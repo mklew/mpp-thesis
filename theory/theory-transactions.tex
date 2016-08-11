@@ -12,7 +12,7 @@ Regular transactions, known from RDBMS, are ACID compliant \cite{ACID}. ACID is 
 A transactional system should provide following operations to run transactions:
 % TODO żeby wymagania na operacje nie były pomiesznae. Napisać że wymagania które chce spełnić są takie: ... alg ma zapewniać ... 
 % Napisać co jest charakterystyczne dla transakcji rozproszonych, wspomnieć o BASE
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 %\item isolation from other transactions -- transaction's state and data should be isolated from other transaction's state and data.
 \item begin transaction -- transaction is begun, subsequent operations are part of the transaction. 
 \item commit transaction -- as a result, transaction is either committed or rolled back.
@@ -83,13 +83,13 @@ In case of the coordinator failure, a recovery node takes over the protocol and 
 
 \paxos works within an asynchronous, non-Byzantine communications model, in which nodes can fail, but if they do not fail then they must operate according to \paxos protocol.
 
-Actors in \paxos have one of more of the following roles: \begin{enumerate*}
+Actors in \paxos have one of more of the following roles: \begin{enumerate*}[label=\alph*)]
 \item proposer - actor which proposes a new value,
 \item acceptor - actor which is supposed to accept or decline a proposal,
 \item learner - actor which learns accepted proposal.
 \end{enumerate*} To follow naming from 2PC and 3PC let us assume that proposer is the same, as the coordinator.
 
-\paxos round consists of $3$ phases: \begin{enumerate*} \item prepare phase, \item propose phase, \item commit phase \end{enumerate*}.
+\paxos round consists of $3$ phases: \begin{enumerate*}[label=\alph*)] \item prepare phase, \item propose phase, \item commit phase \end{enumerate*}.
 
 \paragraph{Prepare phase}
 A proposer has to establish leadership among majority of acceptors before sending a proposal. Every proposal consists of a value and a ballot \ballot, which is a increasing number that should be distinct for each proposal. Any proposer should be able to generate new \ballot.
@@ -271,7 +271,7 @@ $p_2$ established leadership among majority of acceptors, thus proceeds to propo
 %\emph{Raft} algorithm offers the same guarantees, as \paxos. 
 The aim of \emph{Raft} designers was to create a consensus algorithm which would be more understandable to its predecessor \cite{ongaro2014search}. 
 The main idea behind the algorithm is decomposition of the consensus problem into the following individual tasks:
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 \item leader election,
 \item log replication,
 % \item safety,
@@ -281,7 +281,7 @@ The main idea behind the algorithm is decomposition of the consensus problem int
 %has applied a particular log entry to its state machine,
 %then no other server may apply a different command for the same log index.
  
- A server supporting \emph{Raft} is in one of three states: \begin{enumerate*} \item leader, \item follower, \item candidate \end{enumerate*}. The leader can be only one and it handles all client requests.
+ A server supporting \emph{Raft} is in one of three states: \begin{enumerate*}[label=\alph*)] \item leader, \item follower, \item candidate \end{enumerate*}. The leader can be only one and it handles all client requests.
   When a follower, which is a node listening to the leader, does not receive a heartbeat message within certain time it becomes the candidate and requests election votes from other nodes. If it receives the majority of votes it becomes the leader for the next \emph{term}. Client's request is handled by the leader, which saves the value in uncommitted state in its log and communicates the value to the followers, which acknowledge it. Upon majority of acknowledges the value is committed at the leader node, and the followers are notified about the commit on the next heartbeat message. The leader responds to the client, as soon as the value is committed just at the leader node. When a follower, receives a request from a client, it has to redirect request to the leader. \emph{Raft} algorithm is visualized in \cite{raftVisual}.
 
 \paragraph{Fault tolerance} \emph{Raft} is fault tolerant, because the the leader has to acquire only majority of acknowledges, thus is resilient to faults of minority. However failure of the leader causes delay, because a new leader has to be elected before client's request is handled.
@@ -325,7 +325,7 @@ As mentioned earlier, Light Weight Transactions is the name of compare-and-swap 
 One of the key requirements of Paxos protocol is storage of PaxosState - a data structure composed of the proposed value, proposed ballot, promised ballot and most recent commit. In case of LWT, the value represents the update itself along with the token of the partition key where that update should be applied. That token uniquely identifies PaxosState so that several proposals for the same partition can be associated with the same Paxos instance. 
 
 
-LWT includes the following phases: \begin{enumerate*}
+LWT includes the following phases: \begin{enumerate*}[label=\alph*)]
 \item prepare,
 \item get promise,
 \item read row,
@@ -336,7 +336,7 @@ LWT includes the following phases: \begin{enumerate*}
 \item wait for acknowledgements.
 \end{enumerate*} 
 
-Let us analyze each of them in the environment with \N{5}, \RF{3} and request to insert user named \emph{John} to \emph{users} table, but only if \emph{John} does not exist. For simplicity, \emph{users} table has only two columns: \begin{enumerate*} 
+Let us analyze each of them in the environment with \N{5}, \RF{3} and request to insert user named \emph{John} to \emph{users} table, but only if \emph{John} does not exist. For simplicity, \emph{users} table has only two columns: \begin{enumerate*}[label=\alph*)]
 \item name -- text column and primary key, \item email -- text column. \end{enumerate*} \lwt begins with a node 5 receiving request. Node 5 is then called coordinator node. The coordinator has to become the leader of paxos round identified by the token computed from partition key of \emph{users} table, thus from string value \emph{John}. To become the leader, the coordinator has to create the new ballot and send it along with the token and table name to replica nodes: node 1, node 2, node 3. Each replica has to check whether the ballot is the highest ballot it has seen, and if it is, then replica saves it in the PaxosState and responds with a promise. The leader has to wait for majority of promises before it proceeds. When majority promises, the coordinator may proceed to read the row and check the condition. The condition is that \emph{John} cannot exist, thus read has to not find any rows querying users by user name \emph{John}. Let us assume that indeed user \emph{John} did not exist, thus condition is met which allows the coordinator to propose an insert of \emph{John} with email \emph{john.doe@gmail.com} to \emph{users} table. The coordinator sends proposal message, with an insert and same ballot, to replicas and waits for acceptances. A replica saves proposed insert to PaxosState and replies with acceptance message.
 When the coordinator receives majority of acceptances it broadcasts the commit message and waits for majority of acknowledgements. Upon receiving commit message a replica applies an update stored in PaxosState, thus it performs the insert of \emph{John} to \emph{users} table and acknowledges commit with a reply.
 

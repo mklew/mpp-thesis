@@ -11,7 +11,7 @@ Components such as \emph{Transaction Index}, \emph{Transaction Log}, \emph{Priva
 
 \section{Cluster tests}
 Tests on real cluster of nodes were major part of all tests performed to validate \mpt correctness. We conducted multiple experiments which covered the following aspects of \mpt algorithm:
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 \item isolation of mutations,
 \item detection of conflicts,
 \item forcing conflicting transactions into the same \paxosRoundId,
@@ -222,7 +222,7 @@ Figure \ref{fig:tests:requestsCount} depicts numbers of messages in both cases.
 
 \section{Theoretical performance analysis}
 Let us analyze the performance of the \mpt algorithm considering independent increase of the following parameters: 
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 \item $p$ - modified partitions,
 \item $N$ - number of nodes in a cluster,
 \item $RF$ - replication factor,
@@ -237,7 +237,7 @@ When \mpt affects more partitions, it is more likely that these partitions are r
 \subsection{Increasing number of nodes}
 Let us consider a cluster of $N$ nodes and a transaction that modifides set of partitions $S_{p}$, which are replicated in the subset of nodes \nodesTx.
 When nodes are added to the cluster token ranges are reassigned, thus nodes $N'$ are responsible for smaller token ranges, which causes two possible outcomes:
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 \item \nodesTx increases to $N''$, since after reassignment $S_{p}$ is replicated by more nodes,
 \item \nodesTx remains the same, if the token ranges of $S_{p}$ were not affected by the reassignment.
 \end{enumerate*}

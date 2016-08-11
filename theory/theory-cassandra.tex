@@ -189,6 +189,6 @@ Figure \ref{fig:cassandraToRdbms} presents comparison of Cassandra and RDBMS.
 \end{figure}
 
 \subsection{Eventual consistency}\label{sec:theory:eventualConsistency}
-In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is the \emph{AP} database with eventual consistency, which means that over time data becomes consistent on all nodes, but there are no guarantees about the time it takes. Cassandra uses techniques such as: \begin{enumerate*} 
+In terms of CAP \cite{brewer2000towards} \cite{Brewer:2012ba} Cassandra is the \emph{AP} database with eventual consistency, which means that over time data becomes consistent on all nodes, but there are no guarantees about the time it takes. Cassandra uses techniques such as: \begin{enumerate*}[label=\alph*)]
 \item \emph{hinted handoff} - stores a message for the currently unavailable replica about the modification and sends it to the replica when it comes back up \cite{CassandraHintedHandoff},  
 \item \emph{read repairs} - detects inconsistency in data during read and repairs it by immediate updates \cite{CassandraReadRepair},  \end{enumerate*} to pro-actively reduce incosistency in data during normal operations.

@@ -61,7 +61,7 @@ PrivateTransactionStorage {
 
 \end{lstlisting}
 
-\emph{Modification} returned by \code{getModifications} method is Cassandra's representation of any modification operation, such as: \begin{enumerate*} \item insert, \item update, \item delete. \end{enumerate*}
+\emph{Modification} returned by \code{getModifications} method is Cassandra's representation of any modification operation, such as: \begin{enumerate*}[label=\alph*)] \item insert, \item update, \item delete. \end{enumerate*}
 
 Private transaction storage satisfies requirement of performing many operations within \transactionj. Each \mutation{k}{v} is stored in the private storage and mapped to a \txItem.
 

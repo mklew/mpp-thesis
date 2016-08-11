@@ -32,7 +32,7 @@ We redefine structure of \txState (introduced in Definition \ref{def:transaction
 \begin{definition}
 \label{def:keyCassandra}
 \emph{Key} -- key in Cassandra $k(k_p,k_c)$ consists of two keys: 
-\begin{enumerate*} 
+\begin{enumerate*}[label=\alph*)]
 \item $k_p$ is a partitioning key, which is used by \topology to determine $\mathit{N}^{RF}_k$,
 \item $k_c$ is a clustering key, which determines column in wide rows.
 \end{enumerate*}
@@ -51,7 +51,7 @@ We redefine structure of \txState (introduced in Definition \ref{def:transaction
 
 \begin{definition}
 \label{def:transactionItemChapter4}
-\emph{Transaction item} denoted, as $\lambda(\mathit{keyspace}, \mathit{table}, \mathit{token})$ is a triple with \begin{enumerate*}
+\emph{Transaction item} denoted, as $\lambda(\mathit{keyspace}, \mathit{table}, \mathit{token})$ is a triple with \begin{enumerate*}[label=\alph*)]
 \item $\mathit{keyspace}$ -- name of keyspace,
 \item $\mathit{table}$ -- name of table,
 \item $\mathit{token}$ -- value of token (Definition \ref{def:tokenChapter4}) computed for a Cassandra key (Definition \ref{def:keyCassandra}).
@@ -96,7 +96,7 @@ Performs the rollback of \transaction.
 % \item[Rollback transaction statement] \hfill \\ \code{ROLLBACK TRANSACTION AS JSON <transaction state as json>;} \\
 % \end{description}
 
-% \begin{enumerate*}
+% \begin{enumerate*}[label=\alph*)]
 % \item ,
 % \item  and
 % \item rollback \transaction.

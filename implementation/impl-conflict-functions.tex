@@ -58,7 +58,7 @@ WITH extensions = {
 \end{lstlisting}
 
 Conflict functions are available with the following names:
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 \item \code{COMMON_TX_ITEMS} -- conflict on the same transaction items, used as the default conflict function,
 \item \code{TOKEN_RANGE_SLICES} -- conflict on the same token range slice number. Function has additional configurable parameter \code{int token_range_slices}
 \item \code{ONE_FOR_ALL} -- conflict on the same table.

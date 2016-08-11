@@ -21,7 +21,7 @@ $2$ replica groups, which have nodes $n_2, n_3$ in common.
 
 \subsection{Phases}
 The algorithm execution occurs in \emph{phases}, which are the following: 
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 \item idle phase (start phase),
 \item setup phase,
 \item repairng phase (optional),
@@ -116,7 +116,7 @@ Replicas start in \emph{idle phase}, which is a starting phase for all replicas,
 Each replica is in one of phases and moves between phases, as a result of phase transitions, which can be either successful transitions or not, in which case replica goes back in phase. 
 For example, \proposeTransition depicted on Figure \ref{fig:transitionToPropose}, can fail if replica refuses to accept a proposal, in which case replica goes back to setup phase and then has to transition again into prepare phase. Figure \ref{fig:allTransitions} presents outcomes of all transitions.
 
-% The most basic optimistic phase transition sequence is: \begin{enumerate*} \item idle phase, \item setup phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
+% The most basic optimistic phase transition sequence is: \begin{enumerate*}[label=\alph*)] \item idle phase, \item setup phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
 %Its transitions however depend on results of transitions of other replicas and other replica groups.
 
 
@@ -139,7 +139,7 @@ In this section we discuss details of each phase.
 Idle phase is a technical representation of starting phase.
 
 \subsection{Setup phase}
-Setup phase provides a foundation for further phases and provides guarantees that if a replica is in the phase, then it is eligible to participate in a \paxos round and its private data are ready to be committed. Two main steps in this phase are: \begin{enumerate*}
+Setup phase provides a foundation for further phases and provides guarantees that if a replica is in the phase, then it is eligible to participate in a \paxos round and its private data are ready to be committed. Two main steps in this phase are: \begin{enumerate*}[label=\alph*)]
 \item \transaction registers in \txIndex on each $n\in \text{\nodesTx}$, in order to participate in a paxos round,
 \item \transaction performs mutations consistency check, in order for \node{i} to have full subset of \mutations in its \txStorage.
 \end{enumerate*}
@@ -224,7 +224,7 @@ We have to achieve data consistency on each node in order to move mutations from
 \subsection{Rollback phase}
 Replica in a rollback phase, means that transaction was rolled back at the given replica node. 
 This phase is special, because even if one replica group decides to move to rollback phase, then all the other replicas have to move to rollback phase. Secondly, there is no transition out of rollback phase. \mpt algorithm ends and yields result that transaction was rolled back.
-% Any replica affected by transaction can transition to rollback  from the following phases: \begin{enumerate*}
+% Any replica affected by transaction can transition to rollback  from the following phases: \begin{enumerate*}[label=\alph*)]
 % \item prepare phase,
 % \item propose phase,
 % \item repairing phase.
@@ -239,7 +239,7 @@ If replica has to move to rollback phase upon decision of all replica groups and
 During prepare each replica receives a ballot, which is just a name for a timeuuid\footnote{which is universal unique identifier with encoded timestamp}. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by \paxosRoundId which is stored in \txIndex. To find \paxosRoundId, we need to look up \txIndex using \txState. That requires that ballot is passed along with \txState, which is used only to find \paxosRoundId and to compare ballots.
 
 In order to find \paxosRoundId using \txState, \txIndex is exclusively acquired and queried. Assumption is that \transaction has successfully registered in \txIndex beforehand. Therefore if it is not found in \txIndex it can mean one of:
-\begin{enumerate*}
+\begin{enumerate*}[label=\alph*)]
 \item \transaction was rolled back by concurrent \transactionj,
 \item \transaction was committed by other leader which repaired in-progress transaction - this is the case, when replicas go back in phase but at least one of them has successfully proposed \txState,
 \item this replica was down during setup phase and did not get the message. It could happen due to network partition or hardware failure.
