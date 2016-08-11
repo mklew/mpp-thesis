@@ -24,10 +24,10 @@ Transaction state \txState changes as transaction \transaction progresses and it
   \begin{algorithmic}       
     \State \beginTransactionMessage
     \State \initialTxStateMessage
-    \State $\mathit{M}(c, n_{i}, \mathit{insert(k_{1},v_{1})})$
+    \State $\mathit{M}(c, n_{i}, \mathit{upsert(k_{1},v_{1})})$
     \State $\mathit{M}(n_{i}, c, \mathit{update\_transaction\_state}(\lambda_{1}))$
     \State $\Lambda() \gets \Lambda() \oplus \lambda_{1}$
-    \State $\mathit{M}(c, n_{i}, \mathit{insert(k_{2},v_{2})})$
+    \State $\mathit{M}(c, n_{i}, \mathit{upsert(k_{2},v_{2})})$
     \State $\mathit{M}(n_{i}, c, \mathit{update\_transaction\_state}(\lambda_{2}))$
     \State $\Lambda(\lambda_{1}) \gets \Lambda(\lambda_{1}) \oplus \lambda_{2}$
     \State $\mathit{M}(c, n_{i}, \mathit{transaction\_commit}(\Lambda(\lambda_{1}, \lambda_{2})))$
