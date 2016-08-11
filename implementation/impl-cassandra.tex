@@ -24,7 +24,7 @@ Cassandra can operate on different consistency levels performing reads and write
 New transactional consistency levels are \code{TRANSACTIONAL, LOCAL_TRANSACTIONAL}. Both use \mpt, but latter is confined to the local data center.
 
 \section{Redefined Transaction state}
-We redefine structure of \txState (introduced in Definition \ref{def:transactionStateChapter3}), as well as \txItems (presented in Definition \ref{def:transactionItemChapter3}) for implementation purposes, due to structure of $k$ in Cassandra, which is presented in Definition \ref{def:keyCassandra}. Definition \ref{def:transactionStateChapter4} presents new \txState with a unique transaction id. Definition \ref{def:transactionItemChapter4} shows new structure of \txItem, which we previously defined, as equivalent of $k$ and we said that \txItem is a reference to the \mutation{k}{v}. Cassandra allows us to have a reference to the \mutation{k}{v} without the need to know the exact $k$, as long as token value of $k$ is known. \txItem and \topology determine $N^'$, where \txStorage of each $n$ can be checked for private data of \transaction and then information from \txItem allows us to find \mutation{k}{v}.
+We redefine structure of transaction state \txState (introduced in Definition \ref{def:transactionStateChapter3}), as well as transaction items \txItems (presented in Definition \ref{def:transactionItemChapter3}) for implementation purposes, due to structure of $k$ in Cassandra, which is presented in Definition \ref{def:keyCassandra}. Definition \ref{def:transactionStateChapter4} presents new \txState with a unique transaction id. Definition \ref{def:transactionItemChapter4} shows new structure of transaction item \txItem, which we previously defined, as equivalent of key $k$ and we said that \txItem is a reference to the mutation \mutation{k}{v}. Cassandra allows us to have a reference to the \mutation{k}{v} without the need to know the exact $k$, as long as token value of $k$ is known. \txItem and topology \topology determine $N^'$, where private transaction storage \txStorage of each node $n$ can be checked for private data of transaction \transaction and then information from \txItem allows us to find \mutation{k}{v}.
 % Names of keyspace and table are required
  % Cassandra organizes tables in \emph{keyspaces}, thus transaction items need additional information about keyspace to locate data at a node. Transaction item in Cassandra becomes:
 
@@ -33,29 +33,29 @@ We redefine structure of \txState (introduced in Definition \ref{def:transaction
 \label{def:keyCassandra}
 \emph{Key} -- key in Cassandra $k(k_p,k_c)$ consists of two keys: 
 \begin{enumerate*}[label=\alph*)]
-\item $k_p$ is a partitioning key, which is used by \topology to determine $\mathit{N}^{RF}_k$,
+\item $k_p$ is a partitioning key, which is used by topology \topology to determine $\mathit{N}^{RF}_k$,
 \item $k_c$ is a clustering key, which determines column in wide rows.
 \end{enumerate*}
 \end{definition}
 
 \begin{definition}
 \label{def:tokenChapter4}
-\emph{Token} is a value computed by hash function from $k_p$, which is used by \topology to determine replicas $\mathit{N}^{RF}_k$.
+\emph{Token} is a value computed by hash function from key $k_p$, which is used by topology \topology to determine replicas $\NRF_k$.
 \end{definition}
 
-
-\begin{definition}
-\label{def:transactionStateChapter4}
-\emph{Transaction state} denoted, as $\Lambda(\mathit{id}, (\lambda_{i}, \lambda_{j}, ...))$ a pair of unique id of type \emph{timeuuid}, which is UUID with encoded timestamp \cite{CassandraUUID} and set of transaction items (Definition \ref{def:transactionItemChapter4}). Its meaning and purpose is the same, as in Definition \ref{def:transactionStateChapter3}.
-\end{definition}
 
 \begin{definition}
 \label{def:transactionItemChapter4}
-\emph{Transaction item} denoted, as $\lambda(\mathit{keyspace}, \mathit{table}, \mathit{token})$ is a triple with \begin{enumerate*}[label=\alph*)]
+\emph{Transaction item} $\lambda(\mathit{keyspace}, \mathit{table}, \mathit{token})$ is a triple with \begin{enumerate*}[label=\alph*)]
 \item $\mathit{keyspace}$ -- name of keyspace,
 \item $\mathit{table}$ -- name of table,
 \item $\mathit{token}$ -- value of token (Definition \ref{def:tokenChapter4}) computed for a Cassandra key (Definition \ref{def:keyCassandra}).
 \end{enumerate*}
+\end{definition}
+
+\begin{definition}
+\label{def:transactionStateChapter4}
+\emph{Transaction state} $\Lambda(\mathit{id}, \{\lambda_{i}, \lambda_{j}, ...\})$ a pair of unique id of type \emph{timeuuid}, which is UUID with encoded timestamp \cite{CassandraUUID} and a set of transaction items (Definition \ref{def:transactionItemChapter4}). Its meaning and purpose is the same, as in Definition \ref{def:transactionStateChapter3}.
 \end{definition}
 
 
@@ -73,62 +73,20 @@ We redefine structure of \txState (introduced in Definition \ref{def:transaction
 
 
 \section{Extending CQL}
-Cassandra Query Language was extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. We wanted to reuse, as much of functionality, as possible, therefore we modified syntax of: insert, update and delete statements and extended \emph{USING} clause to represent modification in a transaction. Listing \ref{lst:insertUsingTx} presents insert done in a transaction. Extended \code{using} clause supports \code{transaction} keyword and accepts transaction id. Normal modifications do not have any results in the response. However in case of transactional modification, response has results set with \txItem that must be added to \txState by the \client. Moreover, additional \emph{CQL} syntax is added to: start, commit and rollback \transaction.
+Cassandra Query Language was extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. We wanted to reuse, as much of functionality, as possible, therefore we modified syntax of: insert, update and delete statements and extended \emph{USING} clause to represent modification in a transaction. Listing \ref{lst:insertUsingTx} presents insert\footnote{which still is the same operation, as update} done in a transaction. Extended \code{using} clause supports \code{transaction} keyword and accepts transaction id. Normal modifications do not have any results in the response. However in case of transactional modification, response has results set with transaction item that must be added to transaction state by the client. Moreover, additional \emph{CQL} syntax is added to: start, commit and rollback transaction \transaction.
 
 \paragraph{Start transaction statement} \code{START TRANSACTION;}
-Statement starts transaction and has response with result set with a single row, which represents initial empty \txState. 
+Statement starts transaction and has response with result set with a single row, which represents initial empty transaction state \txStatei{0}. 
  Important fact is that transaction id is generated inside cluster, thus timestamp encoded in id is in sync with clock in the cluster, therefore is reliable for comparing it with timestamps of other transactions.
 
 \paragraph{Commit transaction statement} \code{COMMIT TRANSACTION AS JSON <\txState as json>;}
-Begins the commit procedure of \mpt algorithm. \client has to serialize \txState into json and attach it to the statement.
+Begins the commit procedure of \mpt algorithm. A client has to serialize transaction state \txState into json and attach it to the statement.
 %Client has to serialize Transaction State into json and execute commit statement. Only client has transaction state with all transaction items existing in the cluster for that transaction.
 
 
 \paragraph{Rollback transaction statement} \code{ROLLBACK TRANSACTION AS JSON <\txState as json>;}
-Performs the rollback of \transaction. 
+Performs the rollback of a transaction. 
 %Transaction State is also required in order to send rollback messages only to nodes which have some data associated with transaction.
-
-
-% \begin{description}
-% \item[Start transaction statement] \hfill \\  \\
-% Statement uses \code{START} keyword instead of \code{BEGIN} in order to avoid conflict with existing \code{BEGIN BATCH} statement. 
-% \item[Commit transaction statement] \hfill \\ \code{COMMIT TRANSACTION AS JSON <transaction state as json>;} \\ Client has to serialize Transaction State into json and execute commit statement. Only client has transaction state with all transaction items existing in the cluster for that transaction.
-% \item[Rollback transaction statement] \hfill \\ \code{ROLLBACK TRANSACTION AS JSON <transaction state as json>;} \\
-% \end{description}
-
-% \begin{enumerate*}[label=\alph*)]
-% \item ,
-% \item  and
-% \item rollback \transaction.
-% % \item Read contents of private memtable - which is a technical statement that during development and tests
-% % \item Flush private memtable contents locally - another technical statement that moves data of given transaction from private memtable storage to real tables.
-% \end{enumerate*}
-
-
-
-%\begin{example}
-%\label{ex:insertUsing}
-
-% \begin{lstlisting}[style=outcode,label={lst:insertUsing},caption={Insert statement with using clause}]
-% INSERT INTO ks.users VALUES(...) 
-% WHERE ... 
-% USING TIMESTAMP = <timestamp>;
-% \end{lstlisting}
-%\end{example}
-
-%\begin{example}
-%\label{ex:updateUsing}
-
-% \begin{lstlisting}[style=outcode,label={lst:updateUsing},caption={Update statement with using clause}]
-% UPDATE ks.users 
-% USING TIMESTAMP = <timestamp> 
-% SET ...
-% WHERE ...;
-% \end{lstlisting}
-%\end{example}
-
-
-% Therefore it is possible to only extend \code{using} clause to add new functionality to all statements. Extended \code{using} clause supports \code{transaction} keyword and accept transaction id, as in Listing \ref{lst:insertUsingTx}. An example of transaction id is \code{32e4d520-15aa-11e6-b55d-bd89c88d765a}.
 
 
 \begin{lstlisting}[style=outcode,label={lst:insertUsingTx},caption={Insert statement with using transactional clause}]
@@ -140,14 +98,14 @@ USING TRANSACTION = <transaction_id>;
 % example of tx id 
 
 \section{Private Transaction Storage}
-\emph{Private Transaction Storage} implementation uses private \emph{memtables} to store transaction's \mutations. It maps transaction id to its data \code{TransactionData}, which stores mutations mapped by keyspace, table and $k$, thus \txStorage has information about which keys are mutated in \transaction. 
+\emph{Private Transaction Storage} implementation uses private \emph{memtables} to store transaction's mutations \mutations. It maps transaction id to its data \code{TransactionData}, which stores mutations mapped by keyspace, table and $k$, thus \txStorage has information about which keys are mutated in transaction \transaction. 
 %Each owned transaction item has corresponding entry in transaction data map.
-When new \mutation{k}{v} is done in \transaction, then \mutation{k}{v} is added to \code{TransactionData}. 
+When new mutation \mutation{k}{v} is done in \transaction, then \mutation{k}{v} is added to \code{TransactionData}. 
 It is either merged with present mutation for same partition key, or it is added as new entry in the map.
 
 
 \subsection{Applying changes locally}
-When \transaction is committed at \node{i}, its mutations are applied to target tables.
+When transaction \transaction is committed at node \node{i}, its mutations are applied to target tables.
 Cassandra uses timestamps to detect most recent writes, therefore all partition updates -- stored in mutations -- 
 which were added to \txStorage at arbitrary time during execution of \transaction, have to be applied to target tables with timestamp that comes from \paxos ballot.
 %have to be written with timestamp that comes from Paxos ballot, therefore timestamps of partition updates have to be modified and  Since mutations were added at arbitrary time during execution of transaction, their timestamps have to be updated to ballot's timestmap.,
@@ -156,7 +114,7 @@ which were added to \txStorage at arbitrary time during execution of \transactio
 
 
 \subsection{In memory data}
-Implementation of \txStorage stores \mutations only in-memory, thus there is a risk that given many transactions Cassandra runs out of memory. However transactions are supposed to be short lived, thus memory should not be an issue.
+Implementation of \txStorage stores mutations \mutations only in-memory, thus there is a risk that given many transactions Cassandra runs out of memory. However transactions are supposed to be short lived, thus memory should not be an issue.
 %Number of concurrent transactions can be even controlled by client of the cluster. 
 Another issue can be raised that \mutations are lost when node shuts down and comes back immediately. 
 %In that case transaction’s mutations is at this node. 
@@ -164,20 +122,16 @@ However \mutations are saved to quorum of replicas and we expect at least quorum
 
 
 \section{Transaction Index}
-\txIndex needs to be thread-safe and stay consistent when concurrent transactions try to register. One solution is to create global lock on \txIndex, but this can cause contention. Other solution with less contention uses many locks acquired per \txItem.
+The transaction index \txIndex needs to be thread-safe and stay consistent when concurrent transactions try to register. One solution is to create global lock on \txIndex, but this can cause contention. Other solution with less contention uses many locks acquired per transaction item \txItem.
 
-\subsection{Locking of Transaction Index}
-In order to register \txState in \txIndex, \txIndex has to be acquired.
-\txIndex is a map from \code{IndexKey} to \code{PaxosParticipants}, in which keys are computed from transaction state’s items replicated by this node. Each \txItem is mapped into index key by conflict function, which results in set of index keys. Locks are acquired from map of locks accessed by hash value of an index key. In order to avoid deadlock, index keys have to be sorted so that locks are acquired in same order by different transactions and released in reversed order.
-
-
-% \subsection{Registration}
-% In order to register \txState in \txIndex, \txIndex has to be acquired. Then \code{PaxosParticipant} is created for this transaction. All participants from all index keys are iterated over and checked if there is a single \paxosRoundId. If there are more potential rounds, transaction cannot be registered. Given at most one paxos round id, new participant is added to participants for all computed index keys.
+\subsection{Locking of the Transaction Index}
+In order to register transaction state \txState in \txIndex, \txIndex has to be acquired.
+\txIndex is a map from \code{IndexKey} to \code{PaxosParticipants}, in which keys are computed from transaction state’s items replicated by this node. Each transaction item \txItem is mapped into index key by conflict function, which results in set of index keys. Locks are acquired from map of locks accessed by hash value of an index key. In order to avoid deadlock, index keys have to be sorted so that locks are acquired in same order by different transactions and released in reversed order.
 
 \input{implementation/impl-conflict-functions.tex}
 
 \section{Transaction Log}
-\txLog is implemented using Cassandra table local to each node. 
+The Transaction Log \txLog is implemented using Cassandra table local to each node. 
 Transactions are added to the table with flag \code{commited = true} for committed transactions and \code{false} otherwise. We do not need to know about old transactions, thus we need to periodically clean the table. Cassandra supports TTL\footnote{Time to live} setting, which deletes rows after set time on the next run of compaction. Each row added to \txLog table has TTL set.
 
 
@@ -200,11 +154,11 @@ PRIMARY KEY (paxos_id))
 
 
 \section{Write path extensions}
-Write path of Cassandra \cite{CassandraWritePath} was modified in order to support transactional writes to \txStorage.
-Write is acknowledged by coordinator node, as soon as \mutation{k}{v} was written to quorum of replica nodes.
+Write path of Cassandra \cite{CassandraWritePath} was modified in order to support transactional writes to private transaction storage \txStorage.
+Write is acknowledged by coordinator node, as soon as mutation \mutation{k}{v} was written to quorum of replica nodes.
 Write path was extended by detecting whether \emph{using transaction} clause was used. 
 
-All mutations in Cassandra are represented by \code{Mutation} class. If \transaction is detected, mutation is wrapped with \code{TransactionalMutation} which has \mutation{k}{v} and transaction id.
+All mutations in Cassandra are represented by \code{Mutation} class. If transaction \transaction is detected, mutation is wrapped with \code{TransactionalMutation} which has \mutation{k}{v} and transaction id.
 When transactional mutation is applied by its \code{apply} method, all the changes go to \txStorage instead of main tables.
 
 \section{Read path extensions}
@@ -215,9 +169,9 @@ Syntax of select statement stays without changes, because logic of executing sel
 Transactional read guarantees that it will read consistent data and finish any in-progress transactions that can be found. It runs \mpt, but completes early when there are no in-progress proposals or when it has repaired all in-progress transactions.
 
 
-Since we want to reuse \mpt code we need to create a read-only transaction with single \txItem representing $k$ which we want to select. For read transactions, \mpt starts assuming all replicas are already in setup phase. 
-We marked \txState, as read-only \txState by encoding a future timestamp in its transaction id.
-\txIndex detects read-only transaction and return \paxosRoundId of first conflicting \txState it finds. There is no need to register read-only transaction in \txIndex, because it has to be invisible to other transactions.
+Since we want to reuse \mpt code we need to create a read-only transaction with a single transaction item \txItem representing key $k$ which we want to select. For read transactions, \mpt starts assuming all replicas are already in setup phase. 
+We marked transaction state \txState, as read-only \txState by encoding a future timestamp in its transaction id.
+The Transaction Index \txIndex detects read-only transaction and return \paxos round id \paxosRoundId of first conflicting \txState it finds. There is no need to register read-only transaction in \txIndex, because it has to be invisible to other transactions.
 Read is performed only when the coordinator has became the leader and completed all in-progress transactions. In such case tables have only committed data. Quorum consistency level is used for normal read, because \mpt relies at least quorum being consistent.
 
 % is represented by same Transaction State data structure, we need to convey information that it is indeed read-only transaction. Simple implementation could add another flag which would be worthless for all other use cases. We decided to convey read-only information in the timestamp of transaction by creating a UUID from timestamp far in the future. This way, there is no need for modifications to Transaction State data structure. This special read-only transaction state is only used between cluster nodes so internal details are not visible to the client.

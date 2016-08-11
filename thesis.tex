@@ -114,29 +114,29 @@ morekeywords={IF,WITH,uuid}
 \newcommand{\transactionm}{$\Delta_{m}$\xspace}
 \newcommand{\transactioni}[1]{$\Delta_{#1}$\xspace}
 \newcommand{\txStateM}{$\Lambda_{new}$\xspace}
-\newcommand{\transactions}{$(\Delta_{i}, \Delta_{j}, ...)$\xspace}
-\newcommand{\txStates}{$(\Lambda_{i}, \Lambda_{j}, ...)$\xspace}
+\newcommand{\transactions}{$\{\Delta_{i}, \Delta_{j}, ...\}$\xspace}
+\newcommand{\txStates}{$\{\Lambda_{i}, \Lambda_{j}, ...\}$\xspace}
 \newcommand{\conflictFunction}{$\zeta (\text{\txStateOne, \txStateTwo}) \mapsto ( \mathcal{C}_1, \mathcal{C}_2)$\xspace}
 
 \newcommand{\txLog}{$\mathcal{L}$\xspace}
 \newcommand{\conflictingTxSet}{$\mathcal{C}\text{\txStates}$\xspace}
 % messages
-\newcommand{\beginTransactionMessage}{$\mathit{M}(c, n_{i}, \mathit{begin\_transaction}())$\xspace}
-\newcommand{\initialTxStateMessage}{$\mathit{M}(n_{i}, c, \mathit{initial\_transaction\_state}(\Lambda))$\xspace}
-\newcommand{\selectMessage}{$\mathit{M}(c,n_{i},select(k))$\xspace}
-\newcommand{\updateTxStateMessage}{$\mathit{M}(c, n_{i}, \mathit{update\_transaction\_state}(\lambda))$\xspace}
-\newcommand{\txRollbackMessage}{$\mathit{M}(c,n_{i},\mathit{transaction\_rollback}(\Lambda))$\xspace}
+\newcommand{\beginTransactionMessage}{$\mathit{M}(c, n, \mathit{begin\_transaction}())$\xspace}
+\newcommand{\initialTxStateMessage}{$\mathit{M}(n, c, \mathit{initial\_transaction\_state}(\Lambda_{0}))$\xspace}
+\newcommand{\selectMessage}{$\mathit{M}(c,n,select(k))$\xspace}
+\newcommand{\updateTxStateMessage}{$\mathit{M}(c, n, \mathit{update\_transaction\_state}(\lambda))$\xspace}
+\newcommand{\txRollbackMessage}{$\mathit{M}(c,n,\mathit{transaction\_rollback}(\Lambda))$\xspace}
 \newcommand{\rollbackMessage}{$\mathit{M}(n_{i}, n_{j}, \mathit{rollback}(\Lambda))$\xspace}
 \newcommand{\nodesOfMutations}{$(\tau(k_1) \cup \tau(k_2) \cup ... ) =  \text{\nodesTx}\in\mathit{N}$\xspace}
 
-\newcommand{\txCommitMessage}{$\mathit{M}(c,n_{i}, \mathit{transaction\_commit}(\Lambda))$\xspace}
+\newcommand{\txCommitMessage}{$\mathit{M}(c,n, \mathit{transaction\_commit}(\Lambda))$\xspace}
 \newcommand{\txCommitResonseMessage}{$\mathit{M}(n_{i},c,\mathit{transaction\_commit\_response}(committed))$\xspace}
 
-\newcommand{\insertMessage}{$\mathit{M}(c, n_{i}, \mathit{insert(\text{\txState}, k,v)})$\xspace}
-
+\newcommand{\insertMessage}{$\mathit{M}(c, n, \mathit{upsert(\text{\txState}, k,v)})$\xspace}
+\newcommand{\NRF}{\mathit{N^{\mathbb{RF}}}}
 \newcommand{\database}{$\Omega$\xspace}
 \newcommand{\mutation}[2]{$\delta(#1, #2)$\xspace}
-\newcommand{\mutations}{$(\delta_{1}, \delta_{2}, ...)$\xspace}
+\newcommand{\mutations}{$\{\delta_{1}, \delta_{2}, ...\}$\xspace}
 \newcommand{\topology}{$\tau$\xspace}
 
 \newcommand{\topologyItem}[2]{$\tau(\text{\txItemi{#1}})) \mapsto \mathit{#2}$}
@@ -144,15 +144,15 @@ morekeywords={IF,WITH,uuid}
 
 \newcommand{\paxosRoundId}{$\iota$\xspace}
 \newcommand{\paxosRoundIdi}[1]{$\iota_{#1}$\xspace}
-\newcommand{\mutationsFull}{$(\delta_{1}(k_1, v_1), \delta_{2}(k_2, v_2), ...)$\xspace}
-\newcommand{\mutationsFullEnd}{$(\delta_{1}(k_1, v_1), \delta_{2}(k_2, v_2), ..., \delta_{i}(k_i, v_i))$\xspace}
+\newcommand{\mutationsFull}{$\{\delta_{1}(k_1, v_1), \delta_{2}(k_2, v_2), ...\}$\xspace}
+\newcommand{\mutationsFullEnd}{$\{\delta_{1}(k_1, v_1), \delta_{2}(k_2, v_2), ..., \delta_{i}(k_i, v_i)\}$\xspace}
 
 \newcommand{\transactionFull}{$\Delta(\delta_{1}, \delta_{2}, ...)$\xspace}
 
 
 
 \newcommand{\txItem}{$\lambda$\xspace}
-\newcommand{\txItems}{$(\lambda_{1}, \lambda_{2}, ...)$\xspace}
+\newcommand{\txItems}{$\{\lambda_{1}, \lambda_{2}, ...\}$\xspace}
 \newcommand{\txItemi}[1]{$\lambda_{#1}$\xspace}
 \newcommand{\txState}{$\Lambda$\xspace}
 \newcommand{\txStatei}[1]{$\Lambda_{#1}$\xspace}
@@ -166,7 +166,9 @@ morekeywords={IF,WITH,uuid}
 \newcommand{\paxos}{\emph{Paxos}\xspace}
 \newcommand{\mpt}{\emph{MPT}\xspace}
 \newcommand{\lwt}{\emph{LWT}\xspace}
-\newcommand{\RF}[1]{\emph{$\mathit{RF}=#1$}\xspace}
+\newcommand{\RF}[1]{\emph{$\mathbb{RF}=#1$}\xspace}
+\newcommand{\RFalone}{$\mathbb{RF}$\xspace}
+\newcommand{\RFalonePrim}{$\mathbb{RF'}$\xspace}
 
 \newcommand{\ballot}{$\beta$\xspace}
 \newcommand{\coordinator}{$C$\xspace}

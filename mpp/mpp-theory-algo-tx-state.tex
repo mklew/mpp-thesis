@@ -8,11 +8,14 @@
 %Each modification refers to \kv, where \key defines partition, thus \mutation{k}{v} is performed for a single partition. There can be many modifications done within transaction. 
 
 %\subsection{Transaction state}
-Transaction state (Definition \ref{def:transactionStateChapter3}) is used to identify transaction \transaction and to trace mutations (Definition \ref{def:mutation}) done in \transaction, where each mutation is represented by \emph{transaction item} \txItem (Definition \ref{def:transactionItemChapter3}) received in a response to a mutation message. \client begins transaction by sending \beginTransactionMessage and receives empty transaction state \txState in a message  \initialTxStateMessage.
-Values of \mutations traced by \txItems are unknown to \txItems, but each value $v$ can be found at replica nodes $N^{\mathit{RF}}(n_{i},n{j},...)\subset \mathit{N}$ by topology function \topology applied to each \txItem.
+Transaction state (Definition \ref{def:transactionStateChapter3}) is used to identify transaction \transaction and to
+ track mutations (Definition \ref{def:mutation}) done in \transaction, where each mutation is represented by
+ \emph{transaction item} \txItem (Definition \ref{def:transactionItemChapter3}) received in a response to a mutation message. A client \client begins transaction by sending \beginTransactionMessage and receives empty transaction state \txState in a message  \initialTxStateMessage.
+Values of \mutationsFull tracked by transaction items \txItems are unknown to \txItems, but each value $v$ can be found at replica nodes
+$N^{\mathbb{RF}}(n_{i},n{j},...)\subset \mathit{N}$ by topology function \topology applied to each \txItem.
 
-\subsubsection{Tracing updates}
-\txState changes as \transaction progresses and its set of transaction items has to be updated with new transaction items after each mutation message. 
+\subsubsection{Tracking updates}
+Transaction state \txState changes as transaction \transaction progresses and its set of transaction items has to be updated with new transaction items after each mutation message. 
 %Moreover, each operation should return new transaction item which can be appended to transaction state. 
 
 \begin{algorithm}

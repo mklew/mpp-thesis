@@ -17,7 +17,7 @@ Tests on real cluster of nodes were major part of all tests performed to validat
 \item forcing conflicting transactions into the same \paxosRoundId,
 \item finishing in-progress proposal,
 \item selecting consistent data and finishing in-progress proposals,
-\item moving mutations from \txStorage to \database,
+\item moving mutations from a private transaction storage \txStorage to a database \database,
 \item rolling back conflicting transactions on commit of the single transaction,
 \item correctness of phase transitions.
 \end{enumerate*}
@@ -179,22 +179,22 @@ The algorithm makes progress, as long as quorum in each replica group moves in t
 
 \section{Analyzing number of requests}
 Assume \transaction, which modifies keys: $k_{1}, k_{2}, k_{3}$,
-, which might be replicated on one up to three unique replica groups, thus size of \nodesTx spans from minimum of $RF$ to maximum of $PC*RF$. Number of unique replica groups depends whether replica groups are independent, thus contain different nodes, of if they overlap in nodes.
+, which might be replicated on one up to three unique replica groups, thus size of \nodesTx spans from minimum of \RFalone to maximum of $PC\cdot\mathbb{RF}$. Number of unique replica groups depends whether replica groups are independent, thus contain different nodes, of if they overlap in nodes.
 
 Starting a transaction requires a single message, thus $1$ message to any node in the cluster, which responds with \txState.
-Each mutation of a key needs to be written to the \txStorage and acknowledged by the quorum from a replica group, thus writes send $[RF,PC*RF]$ messages.
+Each mutation of a key needs to be written to the \txStorage and acknowledged by the quorum from a replica group, thus writes send $[\mathbb{RF},PC\cdot\mathbb{RF}]$ messages.
 Nextly transaction is committed, thus the single commit message $1$ is sent.
 The commit procedure sends most of messages.
-Replicas need to transition to the setup phase, thus leader has to send $[N,RF*N]$ messages and receive responses.
-Setup phase performs data consistency check, thus each node reads from quorum of replicas, resulting in possible messages count: $[RF * (\frac{RF}{2} + 1),PC * RF * (\frac{RF}{2} + 1)]$.
-Nextly the leader transitions replicas to prepare phase, which requires $[RF,PC*RF]$ messages, followed by propose phase and another wave of $[RF,PC*RF]$ messages, and lastly it runs transition to the commit phase with another batch of $[RF,PC*RF]$ messages.
+Replicas need to transition to the setup phase, thus leader has to send $[N,\mathbb{RF}\cdot N]$ messages and receive responses.
+Setup phase performs data consistency check, thus each node reads from quorum of replicas, resulting in possible messages count: $[\mathbb{RF} \cdot (\frac{\mathbb{RF}}{2} + 1),PC\cdot\mathbb{RF} \cdot (\frac{\mathbb{RF}}{2} + 1)]$.
+Nextly the leader transitions replicas to prepare phase, which requires $[\mathbb{RF},PC\cdot\mathbb{RF}]$ messages, followed by propose phase and another wave of $[\mathbb{RF},PC\cdot\mathbb{RF}]$ messages, and lastly it runs transition to the commit phase with another batch of $[\mathbb{RF},PC\cdot\mathbb{RF}]$ messages.
 
 The total number of messages, assuming the optimistic path without contention and no failures, 
-is: $[2 + 5 * RF + RF * (\frac{RF}{2} + 1), 2 + 5 * PC*RF + PC * RF * (\frac{RF}{2} + 1)]$,
-which generalises to $2 + 5 * PC*RF + PC * RF * (\frac{RF}{2} + 1)$ where $PC \in [1, RF]$.
+is: $[2 + 5 \cdot \mathbb{RF} + \mathbb{RF} \cdot (\frac{\mathbb{RF}}{2} + 1), 2 + 5 \cdot PC\cdot\mathbb{RF} + PC \cdot \mathbb{RF} \cdot (\frac{\mathbb{RF}}{2} + 1)]$,
+which generalises to $2 + 5 \cdot PC\cdot\mathbb{RF} + PC \cdot \mathbb{RF} \cdot (\frac{RF}{2} + 1)$ where $PC \in [1, \mathbb{RF}]$.
 
-Number of messages could be limited if at each step only quorums were considered, thus replacing single $RF$ in formula by $\frac{RF}{2} + 1$, which would result in the formula: 
-$2 + 5 * PC*(\frac{RF}{2} + 1) + PC * (\frac{RF}{2} + 1) * (\frac{RF}{2} + 1)$ where $PC \in [1, RF]$.
+Number of messages could be limited if at each step only quorums were considered, thus replacing single $\mathbb{RF}$ in formula by $\frac{\mathbb{RF}}{2} + 1$, which would result in the formula: 
+$2 + 5 \cdot PC \cdot (\frac{\mathbb{RF}}{2} + 1) + PC \cdot (\frac{\mathbb{RF}}{2} + 1) \cdot (\frac{\mathbb{RF}}{2} + 1)$ where $PC \in [1, \mathbb{RF}]$.
 Figure \ref{fig:tests:requestsCount} depicts numbers of messages in both cases.
 
 
@@ -205,18 +205,18 @@ Figure \ref{fig:tests:requestsCount} depicts numbers of messages in both cases.
     \renewcommand{\tabcolsep}{0.1cm}
     \begin{tabular}{c|c|c|c}
       \toprule
-      $RF$ & $PC$ & messages to all & messages to quorums  \\ \midrule
-      $RF=3$ & $PC=1$   & 23  & 16 \\
-      $RF=3$ & $PC=2$   & 44  & 30 \\
-      $RF=3$ & $PC=3$   & 65  & 44 \\
-      $RF=5$ & $PC=1$   & 37  & 16 \\
-      $RF=5$ & $PC=2$   & 72  & 30 \\
-      $RF=5$ & $PC=3$   & 107 & 44  \\
-      $RF=5$ & $PC=4$   & 142 & 58  \\
-      $RF=5$ & $PC=5$   & 177 & 72  \\ \bottomrule  
+      \RFalone & $PC$ & messages to all & messages to quorums  \\ \midrule
+      \RF{3} & $PC=1$   & 23  & 16 \\
+      \RF{3} & $PC=2$   & 44  & 30 \\
+      \RF{3} & $PC=3$   & 65  & 44 \\
+      \RF{5} & $PC=1$   & 37  & 16 \\
+      \RF{5} & $PC=2$   & 72  & 30 \\
+      \RF{5} & $PC=3$   & 107 & 44  \\
+      \RF{5} & $PC=4$   & 142 & 58  \\
+      \RF{5} & $PC=5$   & 177 & 72  \\ \bottomrule  
     \end{tabular}
   }
-  \caption{Message count given different $RF$ and unique partitions count $PC$}
+  \caption{Message count given different \RFalone and unique partitions count $PC$}
   \label{fig:tests:requestsCount}
 \end{figure}
 
@@ -225,7 +225,7 @@ Let us analyze the performance of the \mpt algorithm considering independent inc
 \begin{enumerate*}[label=\alph*)]
 \item $p$ - modified partitions,
 \item $N$ - number of nodes in a cluster,
-\item $RF$ - replication factor,
+\item \RFalone - replication factor,
 \item concurrent conflicting transactions,
 \item concurrent independent transactions.
 \end{enumerate*}
@@ -245,14 +245,14 @@ When nodes are added to the cluster token ranges are reassigned, thus nodes $N'$
 The former case increases the number of requests during \mpt, as if number of partitions is increased \ref{sec:tests:perf:partitions}.
 
 \subsection{Higher replication factor}
-In this case $RF$ is increased to $RF'$, thus replica groups contain more replicas. \mpt relies on the quorum of each replica group, thus number of requests increases as well, but only if replica groups remain disjoint. In case they overlap, the number of requests stays the same, even if replication factor increases.
+In this case \RFalone is increased to \RFalonePrim, thus replica groups contain more replicas. \mpt relies on the quorum of each replica group, thus number of requests increases as well, but only if replica groups remain disjoint. In case they overlap, the number of requests stays the same, even if replication factor increases.
 
 \subsection{Increase in concurrent conflicting transactions}
 Let us consider a partition $k_p$ and an set of transactions $S_{\text{\transaction}}$, in which each transaction modifies $k_p$, that increases to a larger set $S'_{\text{\transaction}}$. 
 Transactions participate in the same \paxos round, due to the fact that all of them modify the same partition $k_p$, and any conflict function \label{sec:theory:conflictFunctions} detects it.
 Concurrent transactions could cause contention and leadership changes of the \paxos round, but only if transactions are committed at the same time. Contention is detected by rejecting proposed ballot, in which case the coordinator of a transaction waits until a timeout occurs and tries again with a higher ballot. The timeout provides the time window, in which the current leader proposes its transaction. Even if leadership changes, the proposed and accepted transaction is committed and other conflicting transactions are rolledback, thus if contention is resolved, then the algorithm finishes the one transaction from the set $S'_{\text{\transaction}}$. Initial contention might have negative effect on the overall performance of the algorithm.
 
-Moreover, transactions $S'_{\text{\transaction}}$ will store its mutations of $k_p$ on the same replica group $N^{RF}_{k_p}$, and register in \txIndex, which increases memory footprint on the nodes in $N^{RF}_{k_p}$.
+Moreover, transactions $S'_{\text{\transaction}}$ will store its mutations of $k_p$ on the same replica group $N^{RF}_{k_p}$, and register in the transaction index \txIndex, which increases memory footprint on the nodes in $N^{RF}_{k_p}$.
 
 \subsection{Increase in concurrent independent transactions}
 Independent transactions, which do not mutate same keys, do not cause contention on each other, thus the algorithm scales and its performance is not affected by the increase. Likewise the memory footprint is divided among the cluster, thus there are no single nodes, which would have to handle more data than other nodes.

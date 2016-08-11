@@ -4,68 +4,77 @@
 %Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$. Node is defined, as $n_{i}\in\mathit{N}$ where $\mathit{N}$. Client of a cluster is an actor, which communicates to a cluster, denoted by $c_{i}\in\mathit{C}$. Changes to data are represented by \emph{mutations}, where mutation is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$.
 %A set of mutations is a transaction denoted, as $\Theta(\delta_{1}, \delta_{2}, ...)$. Topology is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N^{RF}}$ which given $k$ returns set of replica nodes. 
 
-\section{The outline}
-Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$ in which a node is defined, as $n_{i}, n_{i}\in\mathit{N}$.
-Changes to data are represented by \emph{mutations}, where mutation (Definition \ref{def:mutation}) is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$. 
+\section{Outline}
+Database $\Omega$ consists of key-value pairs $\{(k_{i},v_{j}), (k_{k},v_{m}),...\}, k_i\in\mathit{K}, v_i\in\mathit{V}$ stored by cluster of nodes $\{n_1, n_2, ...\}, n_i\in\mathit{N}$.
+Changes to data are represented by \emph{mutations} $\delta(k,v)$ (Definition \ref{def:mutation}). 
 Each mutation is stored in nodes identified by topology $\tau$ (Definition \ref{def:topology}).
-Transaction is set of mutations denoted, as $\Delta(\delta_{1}, \delta_{2}, ...)$.
+Transaction is a set of mutations $\Delta(\delta_{1}, \delta_{2}, ...)$.
 
 \begin{definition}
   \label{def:mutation}
-  \emph{Mutation} denoted, as \mutation{k}{v} is an operation, such as insert, update or removal of key-value pair \kv. 
+  \emph{Mutation} denoted, as \mutation{k}{v} is an operation, such as upsert (insert or update)\footnote{distinction between insert and update would require its own transaction} or removal of key-value pair \kv. 
 \end{definition}
 
 \begin{definition}
 \label{def:topology}
-\emph{Topology} is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N^{RF}}$ which given $k$ returns set of replica nodes of size $\mathit{RF}$. 
+\emph{Topology} is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N}^{\mathbb{RF}}$ which for a given $k$ returns a set of replica nodes of size $\mathbb{RF}$. 
 \end{definition}
 
 
-Client denoted, as $c_{i}, c_{i}\in\mathit{C}$ is an actor, which performs transactions $\Delta_{1}, \Delta_{2}, ...$ and communicates to \nodes via messages $\mathit{M}$ (Definition \ref{def:message}). \client begins a \transaction by sending \beginTransactionMessage to any node in a cluster after which \client receives 
+Client $c_{i}\in\mathit{C}$ is an actor, which performs transactions $\Delta_{1}, \Delta_{2}, ...$ and communicates to a cluster \nodes using messages $\mathit{M}$ (Definition \ref{def:message}). \client begins a transaction \transaction by sending a message \beginTransactionMessage to any node $n\in\mathit{N}$ followed by receiving a message 
 \initialTxStateMessage, which includes 
-initial \emph{transaction state} (Definition \ref{def:transactionStateChapter3}), which reflects all changes done in \transaction.
+initial \emph{transaction state} (Definition \ref{def:transactionStateChapter3}), which will reflect all subsequent changes done in \transaction.
 
 %Transaction id identifies the transaction and is attached to all subsequent requests. Transaction item is a reference to operations done in \transaction.
-Client \client sends messages with different payloads during \transaction grouped into two types: mutations, as in Definition \ref{def:mutation} and selects of keys \selectMessage. 
-All mutations \mutations performed by \client are isolated from other clients and are private to \transaction until \transaction is committed. Mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}, for the duration of the transaction, whereas select operations query against current state of the database, thus transactions provide read-committed isolation level.
+During the transaction \transaction, client \client sends messages of two types:
+ mutations and selects \selectMessage. 
+ All mutations within a transaction \transaction are isolated from other transactions - they are private to the enclosing transaction until it is committed.
+For the duration of the transaction,
+mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}. Select operations query against current state of the database, thus transactions provide read-committed isolation level.
 
-After each mutation message \client receives a message \updateTxStateMessage, which includes a transaction item \txItem referencing the \mutation{k}{v}. Client is responsible for tracing changes performed in \transaction, thus \client has to append all received transaction items to the initial transaction state \txState.
+After each mutation client \client receives a message \updateTxStateMessage, which includes a transaction item \txItem referencing that mutation. A client is responsible for tracking changes performed in a transaction, thus it has to append all the received transaction items to the initial transaction state \txStatei{0}.
 
-\begin{definition}
-\label{def:transactionStateChapter3}
-\emph{Transaction state} defined by $\Lambda(\lambda_{i}, \lambda_{j}, ...)$ reflects changes done in \transaction and is a set of transaction items (Definition \ref{def:transactionItemChapter3}). Transaction state allows to identify nodes $N' \subset N$, which are affected by \transaction and store its \mutations.
-\end{definition}
 
 \begin{definition}
 \label{def:transactionItemChapter3}
-\emph{Transaction item} denoted, as $\lambda$ is a reference to single \mutation{k}{v} of \transaction, which indicates that replica nodes of $k$ store \mutation{k}{v} in \emph{private transaction storage}. Transaction item is equivalent\footnote{transaction item is redefined in Chapter 4} of a key $k$.
+\emph{Transaction item}  $\lambda$ is a reference to a single mutation \mutation{k}{v} of transaction \transaction, which indicates that replica nodes of $k$ store \mutation{k}{v} in \emph{private transaction storage}, thus $\lambda$ tracks a single change to $k$ done in \transaction. Transaction item is equivalent\footnote{transaction item is redefined in Chapter 4} of a key $k$.
+\end{definition}
+
+\begin{definition}
+\label{def:transactionStateChapter3}
+\emph{Transaction state} $\Lambda$ is a set of transaction items (Definition \ref{def:transactionItemChapter3}) $\{\lambda_{i}, \lambda_{j}, ...\}$, which reflects changes done in transaction \transaction. Transaction state allows to identify nodes $N' \subset N$, which are affected by \transaction and store its \mutations.
 \end{definition}
 
 
-When \client finishes its planned operations \transaction can be either committed or rolled back. To perform rollback \client sends \txRollbackMessage including \txState, and then \node{i} sends out rollback messages to other nodes \rollbackMessage, identified using \txItems, which remove private data from their private transaction storage and mark \transaction as rolled back in \emph{transaction log}, which is a local data structure.
 
-In order to commit \transaction \client sends \txCommitMessage with transaction state attached, and subsequently \node{i} becomes the coordinator of the transaction and is responsible for orchestrating distributed consensus among nodes affected by \transaction referenced by transaction items. When consensus is reached each node moves private data of \transaction from private transaction storage to the main storage and marks \transaction, as committed in transaction log. Client receives message \txCommitResonseMessage about successfully committed transaction.
+When client \client finishes its planned operations transaction \transaction can be either committed or rolled back. To perform rollback client sends \txRollbackMessage, and then $n$ sends out rollback messages to other nodes \rollbackMessage, where nodes $\{n_j,...,n_k\}$ are identified by \txItems, which 
+makes them remove private storage for that transaction
+and mark \transaction as rolled back in 
+an another local data structure called \emph{transaction log}.
 
-There are many concurrent transactions and some of them mutate same keys, thus concurrency control is required which gurantees that interfering transactions are not committed at the same time. Commit procedure solves this problem by grouping such transactions and performing distributed consensus round, which selects single transaction that is committed, whereas the rest is rolled back.
-Commit procedure uses another two local data structures \emph{transaction index}, which is responsible for identifing interfering transactions and grouping them into same consenus rounds and \emph{transaction log}, which records committed or rolled back transactions.
+In order to commit transaction \transaction a client \client sends message \txCommitMessage and subsequently \node{i} becomes the proposer of the transaction and is responsible for orchestrating distributed consensus round among nodes affected by transaction \transaction.
+ %referenced by transaction items. 
+When consensus is reached each node moves private data of transaction \transaction from private transaction storage to the main storage and marks \transaction, as committed in the transaction log. The client \client receives message \txCommitResonseMessage about successfully committed transaction.
+
+There can be many concurrent transactions and some of them mutate values associated with the same keys, thus concurrency control guaranteeing that interfering transactions are not committed at the same time is required. Commit procedure solves this problem by grouping such transactions and performing distributed consensus round, which selects a single transaction that is committed and rollbacks the others.
+Commit procedure uses two local data structures \emph{transaction index}, which is responsible for identifing interfering transactions and grouping them into the same consenus rounds and \emph{transaction log}, which records committed or rolled back transactions.
 
 \begin{definition}
 	\label{def:message}
 	\emph{Message} is defined by $\mathit{M}(n_{i}, n_{j}, \psi)$ where 
 	\\ $n_{i}\in\mathit{N}\cup\mathit{C}, n_{j}\in\mathit{N}\cup\mathit{C}$, $\{n_{i}, n_{j}\}\cap\mathit{N}\neq\emptyset$, $n_{i}$ is sender of a message, $n_{j}$ is recipient of a message, $\psi$ is one of payloads listed below:
 	\begin{itemize}	
-	\item $\mathit{begin\_transaction}()$ -- begins transaction \transaction 
-	\item $\mathit{initial\_transaction\_state}(\Lambda)$ -- message in response to $\mathit{begin\_transaction}$ message where $\Lambda$ is initial \emph{transaction state} (Definition \ref{def:transactionStateChapter3}) 
-	\item $\mathit{select(k)}$ -- is a selection of the value corresponding to $k$ 
+	\item $\mathit{begin\_transaction}()$ -- begins a transaction 
+	\item $\mathit{initial\_transaction\_state}(\Lambda_0)$ -- message in response to $\mathit{begin\_transaction}$ message where $\Lambda_0$ is initial \emph{transaction state} (Definition \ref{def:transactionStateChapter3}) 
+	\item $\mathit{select(k)}$ -- is a selection of the value associated with key $k$
 	\item $\mathit{data(k,v)}$ -- is a message in response to $\mathit{select(k)}$ with $v$ associated with $k$, where $k\in\mathit{K}, v\in\mathit{V}$ 
-	\item $\mathit{insert}(\Lambda,k,v)$ -- is an insert of key-value pair 
-	\item $\mathit{update}(\Lambda,k,v)$ -- is an update of key-value pair 
+	\item $\mathit{upsert}(\Lambda,k,v)$ -- is an upsert (insert of update) of key-value pair 
 	\item $\mathit{delete}(\Lambda,k)$ -- is a delete of any $v$ associated with $k$
-	\item $\mathit{ack}(\lambda)$ -- is an acknowledge of insert, update or delete
-	\item $\mathit{failure}(\psi)$ -- denotes failure of $\psi$
-	\item $\mathit{transaction\_commit}(\Lambda)$ -- is a commit of a \transaction, where $\Lambda$ is final transaction state 
-	\item $\mathit{transaction\_commit\_response}(committed)$ -- is a response to commit $\mathit{transaction\_commit}(\Lambda)$ message, where $committed$ is a boolean value which indicates whether \transaction was committed or rolledback
-	\item $\mathit{transaction\_rollback}(\Lambda)$ -- is a rollback of a \transaction, where $\Lambda$ is final transaction state 
+	\item $\mathit{ack}(\lambda)$ -- is an acknowledge of upsert or delete
+	\item $\mathit{failure}(\psi)$ -- denotes failure of payload $\psi$
+	\item $\mathit{transaction\_commit}(\Lambda)$ -- is a commit of a transaction, where $\Lambda$ is final transaction state 
+	\item $\mathit{transaction\_commit\_response}(committed)$ -- is a response to commit $\mathit{transaction\_commit}(\Lambda)$ message, where $committed$ is a boolean value which indicates whether transaction was committed or rolledback
+	\item $\mathit{transaction\_rollback}(\Lambda)$ -- is a rollback of a transaction, where $\Lambda$ is final transaction state 
 	\item $\mathit{setup}(\Lambda)$ -- inititates \emph{setup phase} of \mpt algorithm 
 	\item $\mathit{prepare}(\Lambda, \beta)$ -- initates \emph{prepare phase} of \mpt algorithm; $\Lambda$ is final transaction state, $\beta$ is \paxos ballot 
 	\item $\mathit{promise(promised, log, inProgress_{\Lambda})}$ -- is a response to $\mathit{prepare}$ message, where $\mathit{promised}$ is a boolean, $\mathit{log}$ is state of \emph{transaction log} (see Section \ref{sec:mpp:transactionLog}), $\mathit{inProgress_{\Lambda}}$ is accepted but not yet committed transaction state 

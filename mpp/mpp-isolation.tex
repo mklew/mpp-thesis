@@ -5,25 +5,25 @@ Transactions must run in isolation from each other and provide read-committed is
 
 \subsection{Private transaction storage}
 \label{sec:mpp:privateTxStorage}
-Each \mutation{k}{v} done in \transaction should be stored on replicas responsible for given key keeping it private for that \transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
+Each mutation \mutation{k}{v} done in transaction \transaction should be stored on replicas responsible for given key keeping it private for that \transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
 
-Each mutation message is executed by \node{i}, but instead of operating on current live data of \database, \mutations are put into private storage presented in Definition \ref{def:privateTransactionStorage}. 
+Each mutation message is executed by \node{i}, but instead of operating on current live data of \database, mutations \mutations are put into private storage presented in Definition \ref{def:privateTransactionStorage}. 
 
 \begin{definition}
 \label{def:privateTransactionStorage}
-\emph{Private transaction storage} denoted, as \txStorage is a local data structure on each \node{i} which stores \mutations of \transaction in isolation from other \transactions and live data set of \database and provides operations listed below: 
+\emph{Private transaction storage} \txStorage is a local data structure on each node \node{i} which stores mutations \mutations of transaction \transaction in isolation from other transactions \transactions and live data set of database \database and provides operations listed below: 
   \begin{itemize}
-    \item $\oplus(\text{\txState}, \text{\mutation{k}{v}}) \mapsto \text{\txItemi{k}}$ -- stores \mutation{k}{v} of \transactionj represented by \txState and returns \txItemi{k}. 
-    \item $\mathit{clear}(\text{\txState})$ -- removes all \mutations associated with \transactionj represented by \txState on \node{i}
-    \item $\mathit{get}(\text{\txState}) \mapsto \text{\mutations}$ -- returns set of mutations of  \transactionj represented by \txState stored on replica \node{i} 
+    \item $\oplus(\text{\txState}, \text{\mutation{k}{v}}) \mapsto \text{\txItemi{k}}$ -- stores mutation \mutation{k}{v} of transaction \transactionj represented by transaction state \txState and returns transaction item \txItemi{k}. 
+    \item $\mathit{clear}(\text{\txState})$ -- removes all mutations \mutations associated with transaction \transactionj represented by transaction state \txState on node \node{i}
+    \item $\mathit{get}(\text{\txState}) \mapsto \text{\mutations}$ -- returns set of mutations of transaction \transactionj represented by transaction state \txState stored on replica \node{i} 
   \end{itemize}
 \end{definition}
 
-Definition \ref{def:privateTransactionStorage} abstracts from memory and time, but an implementation of private transaction storage has to $\mathit{clear}(\text{\txState})$ after certain timeout in order to free memory (assuming in-memory storage) and to be resilient to failures of clients, which can fail and abandon \transactionj at any point in time. From perspective of the algorithm it does not matter whether \mutations are stored in memory or in any other way as long as \mutations are accessible during transaction's execution. 
+Definition \ref{def:privateTransactionStorage} abstracts from memory and time, but an implementation of private transaction storage has to $\mathit{clear}(\text{\txState})$ after certain timeout in order to free memory (assuming in-memory storage) and to be resilient to failures of clients, which can fail and abandon transaction \transactionj at any point in time. From perspective of the algorithm it does not matter whether mutations \mutations are stored in memory or in any other way as long as \mutations are accessible during transaction's execution. 
 
 
 \subsection{Quorum requirements}
-Each \mutation{k}{v} of \transactionj should be written to at least quorum of replicas $N^{RF} = \tau(k)$ (see Definition \ref{def:topology}) in order to depend on majority during the commit process. If quorum is not available, then \transactionj needs to be rolled back. 
+Each mutation \mutation{k}{v} of transaction \transactionj should be written to at least quorum of replicas $N^{\mathbb{RF}} = \tau(k)$ (see Definition \ref{def:topology}) in order to depend on majority during the commit process. If quorum is not available, then \transactionj needs to be rolled back. 
 
 \subsection{Isolated operations}
 Algorithm \ref{alg:transactionalInsert} shows how private transaction storage is used in relation to \insertMessage. Note that all other mutation messages are executed in the same way. 
@@ -35,29 +35,29 @@ Algorithm \ref{alg:transactionalInsert} shows how private transaction storage is
    {\textbf{end}}   
 
 \algblockdefx[NAME]{ForEachReplica}{EndForEachReplica}%
-   {\textbf{for each} \emph{n} $\gets$ $\mathit{N^{RF}}$}%
+   {\textbf{for each} \emph{n} $\gets$ $\mathit{N^{\mathbb{RF}}}$}%
    {\textbf{end}}   
 
-  \caption{Transactional insert}
+  \caption{Transactional upsert}
   \label{alg:transactionalInsert}
   \begin{algorithmic}
     \Message[\insertMessage]      
-      \State $\mathit{N^{RF}} \gets \tau(k)$      
+      \State $\mathit{N^{\mathbb{RF}}} \gets \tau(k)$      
       \ForEachReplica
-        \State send $\mathit{M}(n_{i}, n, \mathit{insert}(\text{\txState}, k,v))$
+        \State send $\mathit{M}(n_{i}, n, \mathit{upsert}(\text{\txState}, k,v))$
       \EndForEachReplica
       \State $\mathit{acks} \gets $ await $\mathit{ack}(\lambda_{k})$ messages
       \If {$\mathit{quorum(acks)}$} 
         \State send $\mathit{M}(n_{i}, c, \mathit{update\_transaction\_state}(\lambda_{k}))$        
       \Else
-        \State send $\mathit{M}(n_{i}, c, \mathit{failure}(\mathit{insert}(\text{\txState},k,v)))$        
+        \State send $\mathit{M}(n_{i}, c, \mathit{failure}(\mathit{upsert}(\text{\txState},k,v)))$        
       \EndIf
     \EndMessage
   
   \end{algorithmic}
   
   \begin{algorithmic}
-    \Message[$\mathit{M}(n_{i}, n, \mathit{insert(\text{\txState},k,v)})$]
+    \Message[$\mathit{M}(n_{i}, n, \mathit{upsert(\text{\txState},k,v)})$]
         \State $\lambda_{k} \gets \oplus(\text{\txState}, \text{\mutation{k}{v}})$
         \State send $\mathit{M}(n, n_{i}, \mathit{ack}(\lambda_{k}))$
     \EndMessage

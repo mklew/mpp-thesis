@@ -2,23 +2,23 @@
 
 \subsection{Transaction index}
 \label{sec:mpp:txIndex}
-Transaction index denoted, as \txIndex is a service, local to a node, which provides \mbox{\txState $\mapsto $ \paxosRoundId} function required to reach the same \paxos round for conflicting transactions.
+Transaction index denoted, as \txIndex is a service, local to a node, which provides function \mbox{\txState $\mapsto $ \paxosRoundId} required to reach the same \paxos round for conflicting transactions.
 
-Registration of \txState in \txIndex on each \node{i} $\in$\nodesTx is precondition to the commit procedure of \mpt. 
-Since \txIndex is local, each \transaction receives different \paxosRoundId on different nodes, but the value of \paxosRoundId is never used outside of a node, thus \paxosRoundId does not have to be globally the same. \paxosRoundId is used only to identify \paxos round for \conflictingTxSet at each \node{i}. If \transaction participates in the same \paxos round identified by \paxosRoundId as other conflicting transactions, then only single \transaction is committed after \nodesTx agree on the proposed \txState.
+Registration of transaction state \txState in \txIndex on each \node{i} $\in$\nodesTx is precondition to the commit procedure of \mpt. 
+Since \txIndex is local, each transaction \transaction receives different \paxos round id \paxosRoundId on different nodes, but the value of \paxosRoundId is never used outside of a node, thus \paxosRoundId does not have to be globally the same. \paxosRoundId is used only to identify \paxos round for \conflictingTxSet at each \node{i}. If \transaction participates in the same \paxos round identified by \paxosRoundId as other conflicting transactions, then only single \transaction is committed after \nodesTx agree on the proposed \txState.
 
 % TODO może dodać ten paragraf
 %Providing same paxos round id would require another consensus algorithm of its own which would inherently increase cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
 
 %\paxosRoundId, used to find \paxos State data at each node locally, is a synthetic id and is different at each replica during \mpt round. 
 
-Transaction index stores sets of \conflictingTxSet and assigns \paxosRoundId to each set. When a new \txStateM is registered, \txIndex tries to find a set \conflictingTxSet to which \txStateM can be added by applying \conflictFunction to \txStateM and each \transaction in each set. If there is a conflict, sets can be merged together, thus \txStateM joins \conflictingTxSet and receives the same \paxosRoundId. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
+Transaction index stores sets of conflicting transactions \conflictingTxSet and assigns \paxosRoundId to each set. When a new transaction state \txStateM is registered, \txIndex tries to find a set \conflictingTxSet to which \txStateM can be added by applying conflict function \conflictFunction to \txStateM and each transaction \transaction in each set. If there is a conflict, sets can be merged together, thus \txStateM joins \conflictingTxSet and receives the same \paxosRoundId. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
 
-During the commit procedure of \mpt \transactionFull has to register in each quorum of each replica subset
-$(N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... ) =
+During the commit procedure of \mpt transaction \transactionFull has to register in each quorum of each replica subset
+$(\NRF_{k_1} \cup \NRF_{k_2} \cup ... ) =
 (\tau(k_1) \cup \tau(k_2) \cup ... ) = 
  \text{\nodesTx}\in\mathit{N}$.
-Moreover \transaction cannot be registered in \txIndex when it can obtain more than one \paxosRoundId. These two requirements guarantee that if \txOne and \txTwo are conflicting for some $k$, then there exists \node{i}
+Moreover transaction \transaction cannot be registered in transaction index \txIndex when it can obtain more than one \paxos round id \paxosRoundId. These two requirements guarantee that if transaction \txOne and transaction \txTwo are conflicting for some key $k$, then there exists node \node{i}
 $\in N^{RF}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus both transactions are part of the same \paxos round and eventually only one is committed.
 
 \begin{algorithm}
@@ -26,7 +26,7 @@ $\in N^{RF}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus
    [2]{\textbf{for each} \emph{#1} $ \gets $ \emph{#2}}%
    {\textbf{end}}   
 
-  \caption{Registration of \txState in transaction index}
+  \caption{Registration of transaction state \txState in transaction index}
   \label{alg:indexRegistration}
   \begin{algorithmic}  	
     \State $\mathit{idx} \gets$ set of pairs $(\text{\conflictingTxSet, \paxosRoundId})$ present in the index
@@ -53,7 +53,7 @@ $\in N^{RF}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus
 \end{algorithm}
 
 \subsubsection{Example of registration on single \node{i}}
-Assume we have 
+Assume we have transaction states:
 \txStatei{1}$(\text{\txItemi{1}},\text{\txItemi{2}}, \text{\txItemi{3}})$,
 \txStatei{2}$(\text{\txItemi{2}},\text{\txItemi{4}})$,
 \txStatei{3}$(\text{\txItemi{4}})$.
@@ -73,18 +73,18 @@ Two different orderings yield different outcomes.
  \end{description}
 
 \subsubsection{Example of registration in quorums}
-Assume we have 
+Assume we have transaction states
 \txStatei{1}$(\text{\txItemi{1}},\text{\txItemi{2}}, \text{\txItemi{3}})$,
-\txStatei{2}$(\text{\txItemi{2}},\text{\txItemi{3}})$, \RF{3} and $N=5$. Note that both transactions have \txItemi{2}, thus mutate same key. Given that \txItem is equivalent of a key (Definition \ref{def:transactionItemChapter3}) we can use \topology to find replicas on which transactions have to register. Assume topology \topologyItem{1}{N'} and \topologyItem{2}{N''} where $N^'=(n_1, n_2, n_3)$ and $N^{''}=(n_3,n_4,n_5)$.
+\txStatei{2}$(\text{\txItemi{2}},\text{\txItemi{3}})$, \RF{3} and $N=5$. Note that both transactions have transaction item \txItemi{2}, thus mutate the same key. Given that \txItem is equivalent of a key (Definition \ref{def:transactionItemChapter3}) we can use topology \topology to find replicas on which transactions have to register. Assume topology \topologyItem{1}{N'} and \topologyItem{2}{N''} where $N^'=(n_1, n_2, n_3)$ and $N^{''}=(n_3,n_4,n_5)$.
 
-\txStatei{1} has to register in quorum of $N^'$ and quorum of $N^{''}$; \txStatei{2} has to register in quorum of $N^{''}$.
+Transaction state \txStatei{1} has to register in quorum of $N^'$ and quorum of $N^{''}$; \txStatei{2} has to register in quorum of $N^{''}$.
 $quorum(N^{''})$ is equal to one of $((n_3,n_4),(n_3,n_5),(n_4,n_5))$, therefore $\mathit{quorum(N^{''}}) \cap \mathit{quorum(N^{''}}) \neq \emptyset$, thus exists a $n\in N^{''}$ on which boths transactions are registered.
 \txStatei{1} and \txStatei{2} receive the same \paxosRoundId on $n$, thus if one is committed, the other has to be rolled back.
 
 \subsection{Rolling back concurrent transactions}
-Transaction index knows which \paxosRoundId to assign to which \txState and it knows set \conflictingTxSet to which \txState is assigned. This knowledge is used to rollback conflicting transactions when \paxos round \paxosRoundId is finished at \node{i} and \txStateCommitted is learnt by \node{i}. The node calls $\mathit{clear}(\text{\txState})$ function of private transaction storage for each \mbox{\txState $\in$ $(\text{\conflictingTxSet} - \text{\txStateCommitted})$}.
+Transaction index knows which \paxosRoundId to assign to which transaction state \txState and it knows set \conflictingTxSet to which \txState is assigned. This knowledge is used to rollback conflicting transactions when \paxos round \paxosRoundId is finished at ndoe \node{i} and \txStateCommitted is learnt by \node{i}. The node calls $\mathit{clear}(\text{\txState})$ function of private transaction storage for each \mbox{\txState $\in$ $(\text{\conflictingTxSet} - \text{\txStateCommitted})$}.
 
-If \client wants to rollback \transaction then \client
-sends a message \txRollbackMessage after which \node{i} identifies \nodesTx and broadcasts \rollbackMessage for each \node{j} $\in$ \nodesTx. When \node{j} receives such message it
+If a client \client wants to rollback transaction \transaction then that client
+sends a message \txRollbackMessage after which \node{i} identifies \nodesTx and broadcasts message \rollbackMessage for each \node{j} $\in$ \nodesTx. When \node{j} receives such message it
 uses $\mathit{clear}(\text{\txState})$ function of private transaction storage. \transaction is rolled back after all 
 \mbox{$n\in \text{\nodesTx}$} clear private data.

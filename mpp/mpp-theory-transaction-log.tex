@@ -4,13 +4,13 @@
 \label{sec:mpp:transactionLog}
 \emph{Transaction Log} presented in Defintion \ref{def:transactionLog} is a local data structure present at each \node{i}$\in\text{\nodes}$. Its responsibility is to record committed and rolled back transactions. 
 
-\txIndex changes frequently, because transactions are registered in it and removed on commit and rollback along with their private data. Therefore we need to distinguish between the case when \transaction is missing on \node{i}, because \node{i} did not receive mutation messages and the case when \transaction was present on \node{i}, but was rolled back or committed. In the former case commit procedure of \mpt can try to continue with other replicas, as long as quorum knows about \transaction, whereas in the latter case commit procedure can abort. Information stored in \txLog allows us to distinguish which case it is.
+Transaction index \txIndex changes frequently, because transactions are registered in it and removed on commit and rollback along with their private data. Therefore we need to distinguish between the case when transaction \transaction is missing on node \node{i}, because \node{i} did not receive mutation messages and the case when \transaction was present on \node{i}, but was rolled back or committed. In the former case commit procedure of \mpt can try to continue with other replicas, as long as quorum knows about \transaction, whereas in the latter case commit procedure can abort. Information stored in transaction log \txLog allows us to distinguish which case it is.
 %Since \txIndex is the only way to find \paxosRoundId and transactions are removed from index once are finished, we need a log that has information whether transaction was committed or not. 
 %\txLog has to support the following operations:
 
 \begin{definition}
 \label{def:transactionLog}
-\emph{Transaction Log} denoted, as \txLog records committed and rolledback transactions. It provides the following operations:
+\emph{Transaction Log} \txLog records committed and rolledback transactions. It provides the following operations:
 \begin{itemize}
 \item $\mathit{record\_as\_committed(\text{\txState})}$ -- record a committed transaction
 \item $\mathit{record\_as\_rolled\_back(\text{\txState})}$ -- record a rolled back transaction
