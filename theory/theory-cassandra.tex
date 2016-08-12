@@ -213,7 +213,7 @@ AND (hour, minute)<=(15, 30);
 
 \subsection{Write path}
 Cassandra write path \cite{CassandraWritePath} shown of Figure \ref{fig:writePath} consists of several stages. Writing starts with logging of a write in the \emph{commit log} so that writes are durable and survive permanently even if power fails on a node. 
-Nextly, data is written to the \emph{memtable}, which is in-memory table that stores writes in sorted order.
+Nextly, data are written to the \emph{memtable}, which is in-memory table that stores writes in sorted order.
 If memtable exceeds its limit of memory then data from the memable are flushed to disk to files called \emph{SSTables}. SSTables are immutable after memtable is flushed. A single partition is typically stored across multiple SSTable files, thus read path has multiple files to read (more on read path in Section \ref{sec:readPath}).
 
 When a new SSTable is created, Cassandra creates additional supporting files, which include: \begin{enumerate}
@@ -282,7 +282,9 @@ Compaction is a process of merging SSTables together so that old versions of row
 \label{sec:readPath}
 To read a partition, Cassandra has to combine data from the active memtable and potentially multiple SSTables \cite{CassandraReadPath}. Reading path is optimized in a way that reduces number of SSTables that need to be read. 
 
-Figure \ref{fig:readPath} presents Cassandra's read path. There are several stages on the read path to find where the data is stored. Reading starts from reading the memtable followed by reading from row cache. It then checks bloom filters if SSTable might have the data. If bloom filter is positive then the SSTable might have the data, but does not have to. Cassandra goes directly to the compression offset map if a partition key is found in the partition key cache. Otherwise it checks partition summary followed by partition index and then goes to compression offset map, which allows to locate the data in the SSTable data file. At the end, Cassandra fetches the data from the SSTable on disk. The same process is performed for all SSTables, which have positive bloom filters, thus compaction and reducing number of SSTables is important for read performance.
+Figure \ref{fig:readPath} presents Cassandra's read path. There are several stages on the read path to find where the
+ data are stored. Reading starts from reading the memtable followed by reading from row cache. It then checks bloom
+ filters if SSTable might have the data. If bloom filter is positive then the SSTable might have the data, but does not have to. Cassandra goes directly to the compression offset map if a partition key is found in the partition key cache. Otherwise it checks partition summary followed by partition index and then goes to compression offset map, which allows to locate the data in the SSTable data file. At the end, Cassandra fetches the data from the SSTable on disk. The same process is performed for all SSTables, which have positive bloom filters, thus compaction and reducing number of SSTables is important for read performance.
 
 
 \begin{figure}[H]

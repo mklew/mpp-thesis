@@ -90,25 +90,13 @@ Transitions are:
 
 \input{mpp/mpt-diagram-all-transitions.tex}
 
-%         High level description
-% Algorithm works in phases. Phases are:
-% 1. Pre prepare phase
-% At each node:
-%    1. Transaction has to successfully register in Transaction Index
-%    2. Node has to make transaction’s data consistent and freeze it
-% 1. Prepare phase
-% Send ballot and receive promise
-% 1. Propose phase
-% Propose TransactionState, wait for acceptance
-% 1. Commit phase
-%         Broadcast commit message. Each replica on commit has to
-%    1. Flush transaction’s data from Private Transaction Storage
-%    2. Rollback other round participants
 
 
 
 
-%As a corollary, any operation done in \mpt must be done once per node that is affected by the transaction, thus once per $n1$, $n2$, $n3$, $n4$, $n5$, and $n7$ in order to not repeat operation on same nodes. However the results of these operations must be evaluated in the context of the whole replica group. 
+%As a corollary, any operation done in \mpt must be done once per node that is affected by the transaction, thus once
+ per $n1$, $n2$, $n3$, $n4$, $n5$, and $n7$ in order to not repeat operation on the same nodes. However the results of
+ these operations must be evaluated in the context of the whole replica group.
 
 
 \subsection{Moving forward in phases}
@@ -123,15 +111,18 @@ For example, \proposeTransition depicted on Figure \ref{fig:transitionToPropose}
 
 Replica advances in phase only if conditions are met: \begin{description}
 \item[successful transition] -- its transition is successful and
-\item[same advancement within replica group] -- each replica group to which that node belongs has quorum of nodes with same advancement of phase and
-\item[in sync with other replica groups] -- minimum phase among quorums in all replica groups must have same advancement, for example all replica groups must promise to the leader, before any proposal is sent to any replica, therefore all replica groups must be in \emph{prepared phase}.
+\item[the same advancement within replica group] -- each replica group to which that node belongs has quorum of nodes
+with same advancement of phase and
+\item[in sync with other replica groups] -- minimum phase among quorums in all replica groups must have the same
+advancement, for example all replica groups must promise to the leader, before any proposal is sent to any replica, therefore all replica groups must be in \emph{prepared phase}.
 \end{description}
 
 
 In consequence, all replicas and all replica groups move in sync with each other. None of nodes will do a proposal if there is some replica group for which quorum is not in prepare phase. 
 Similarly, none of nodes will do the commit if there exists at least one replica group which did not get acceptance of the proposal.  
 
-Given contention with other transactions, it might happen that replica groups need to go back in phase and retry operation in order to stay in synchronized phase with other replica groups, then all of them proceed in same phase.
+Given contention with other transactions, it might happen that replica groups need to go back in phase and retry
+operation in order to stay in synchronized phase with other replica groups, then all of them proceed in the same phase.
 
 \section{Replica phases}
 In this section we discuss details of each phase.
@@ -156,7 +147,7 @@ Locking, or other concurrency control mechanism can be used to guarantee that st
 
         
 \subsubsection{Making data consistent}
-Transaction’s data is kept in private transaction storage \txStorage (Subsection \ref{sec:mpp:privateTxStorage}). 
+Transaction’s data are kept in private transaction storage \txStorage (Subsection \ref{sec:mpp:privateTxStorage}).
 Mutations messages are sent and received by quorum of a replica group, thus mutations \mutations exist in private transaction storage \txStorage at least on the quorum of nodes in a replica group. However, between a time transaction \transaction is started and a time it is committed, some nodes $N^{''} \subset \text{\nodesTx}$ could restart and lose mutations \mutations in their \txStorage. Moreover, quorum subsets chosen as target of mutation messages can differ between messages, thus different subsets of replica nodes store different subsets of \mutations, therefore we need the data check procedure, which verifies that all replica groups  $(N^{\RFaloneInMath}_{k_1} \cup N^{\RFaloneInMath}_{k_2} \cup ... \cup N^{\RFaloneInMath}_{k_i} ) = \mathit{N^'} \subset \mathit{N}$ have all required \mutationsFullEnd, thus quorum of $N^{\RFaloneInMath}_{k_1}$ has mutation \mutation{k_1}{v_1} in their \txStorage, quorum of $N^{\RFaloneInMath}_{k_2}$ has \mutation{k_2}{v_2} in their \txStorage up to quorum of replica group $N^{\RFaloneInMath}_{k_i}$, which has mutation \mutation{k_i}{v_i} in their \txStorage.
 
 \subsubsection{Example of inconsistent private transaction storage \txStorage}
@@ -189,38 +180,14 @@ We have to achieve data consistency on each node in order to move mutations from
         % TransactionState - state of transaction, it is source of truth of all modifications that happened during transaction. Originally send by client, further forwarded by leader node to this replica node that has to run setup operation.
 
 
-%         Make data consistent algorithm:        
-% 1. Filter transaction items for which this replica is responsible
-%    1. transaction item has a token
-%    2. This node knows its token range
-%    3. Node can identify which transaction item should have reflection in data being present in private transaction storage
-% 1. Find other replicas for these items
-%    1. Each transaction item has data replicated at other nodes including this one
-%    2. Topology of nodes on token ring allows to precisely identify them
-% 1. Group transaction items by same replica sets -- it can reduce number of round trips
-% 2. For each replica set, read data from their private transaction storage for transaction items
-% 3. Quorum of responses is required for each replica set -- we know for a fact that private write had to happen to at least quorum of nodes
-% 4. Merge received modifications with those at private transaction storage
-% 5. Freeze transaction’s data so it will not allow any further modifications.
 
 
-% \subsubsection{Optimization on number of requests}
-% We could not limit number of requests to only those transaction items which are missing in Private Transaction Storage. Note that, those items include only tokens whereas private data has full information about keys and modifications for these keys. If we check whether we have key in private storage which matches token we can omit further requests to other replicas. 
-% Such optimization can work only under the condition that transaction cannot modify same keys twice. 
 
 
-% For example, given row with key K and columns C1 and C2 we could have updates:
-% 1. Update C1 for K
-% 2. Update C2 for K
-% 3. Update C1 and C2 for K
 
 
-% Each case is valid as long as others do not happen. If we allow 1. and later on 2. we will not have any guarantees to have data for both updates. If one update is lost on the way, replica won’t know whether it has all the updates associated with given key or not. This is because it has only one token and one key. 
-% Without such restriction, replica would think it[k] has consistent data, but in reality is has missing second update.
-% TODO Replika nie mysli, unikac 
 
- % We argue that decision whether such constraints are acceptable or not should be made by users given their use case. For sake of this research, proposed algorithm does not do such optimizations. Note however, such optimization remain opt-in and configurable even per transaction, which could yield best performance for specific cases without restricting other kinds of transactions.
-       
+
 
 \subsection{Rollback phase}
 Replica in a rollback phase, means that transaction was rolled back at the given replica node. 
@@ -342,9 +309,12 @@ $N^'_2=(n_3,n_4,n_5)$. Figure \ref{fig:mptExampleInitState} presents current sta
 \item Nodes start at \emph{idle phase} and first transition has to move them to setup phase.
 
 \item Run transition to setup phase. Assume all nodes do the setup operation successfully. \\
- After the transition, quorums in $N^'_1$, $N^'_2$ are in \emph{setup phase}. Minimum phase among replica groups is \emph{setup phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a setup message does:
+ After the transition, quorums in $N^'_1$, $N^'_2$ are in \emph{setup phase}. Minimum phase among replica groups is
+ \emph{setup phase}, therefore all replica groups have the same advancement in phase and can continue. Each replica
+ upon receiving a setup message does:
  \begin{enumerate}
- 	\item execute data consistency check procedure. $n_5$ detects that \txState has \txItemi{2} and reads data from other replicas: $n_3, n_4$ which answer with \mutation{k_2}{v_2}. $n_5$ adds \mutation{k_2}{v_2} to \txStorage
+ 	\item execute the data consistency check procedure. $n_5$ detects that \txState has \txItemi{2} and reads data from
+ 	other replicas: $n_3, n_4$ which answer with \mutation{k_2}{v_2}. $n_5$ adds \mutation{k_2}{v_2} to \txStorage
  	\item registers \txState in \txIndex, since there are no concurrent transactions, a new \paxosRoundId is created for \transaction on each node. 	
  \end{enumerate}
  Figure \ref{fig:mptExampleSetupState} presents state of nodes after setup transition.
@@ -367,7 +337,9 @@ $N^'_2=(n_3,n_4,n_5)$. Figure \ref{fig:mptExampleInitState} presents current sta
 
 
 \item Run transition to prepare phase. Let us assume successful transition, after which all replica groups are in prepared phase. \\
-  After the transition, quorums in $N^'_1$, $N^'_2$ are in \emph{prepare phase}. Minimum phase among replica groups is \emph{prepare phase}, therefore all replica groups have same advancement in phase and can continue. Each replica upon receiving a message does:
+  After the transition, quorums in $N^'_1$, $N^'_2$ are in \emph{prepare phase}. Minimum phase among replica groups
+  is \emph{prepare phase}, therefore all replica groups have the same advancement in phase and can continue. Each
+  replica upon receiving a message does:
 
   \begin{enumerate}
   	\item finds Paxos state querying \txIndex using \txState from the message and checks whether the ballot is the higher than promised ballot, since it will be the first ballot in this round, all replicas promise successfully and register the ballot in the Paxos state.

@@ -110,7 +110,8 @@ Test could fail if number of committed transactions did not match value of colum
 
 \subsection{Testing of conflicting transactions}
 Scenario has to test whether conflicting transactions are rolled back. 
-There are $5$ executors which receive same set of rows: $i_1, i_2, i_3, i_4, i_5, i_6, i_7$. Each executor increments different column. 
+There are $5$ executors which receive the same set of rows: $i_1, i_2, i_3, i_4, i_5, i_6, i_7$. Each executor
+increments different column.
 
 Figure \ref{fig:exampleConflictingTransactions} presents how rows look at the end of $10$ iterations.
 After iterations, number of committed transactions must match counter values, but it might be different value than number of iterations, since not all transactions should commit. $e_1$ committed $4$ transactions and $4$ must be the value of $in_1$ column of each row: $i_1, i_2, i_3, i_4, i_5, i_6, i_7$. If one row, for example $i_3$ had different value in $in_1$ column then it would mean that transaction was not fully committed.
@@ -255,7 +256,8 @@ Concurrent transactions could cause contention and leadership changes of the \pa
 Moreover, transactions $S'_{\text{\transaction}}$ will store its mutations of $k_p$ on the same replica group $N^{RF}_{k_p}$, and register in the transaction index \txIndex, which increases memory footprint on the nodes in $N^{RF}_{k_p}$.
 
 \subsection{Increase in concurrent independent transactions}
-Independent transactions, which do not mutate same keys, do not cause contention on each other, thus the algorithm scales and its performance is not affected by the increase. Likewise the memory footprint is divided among the cluster, thus there are no single nodes, which would have to handle more data than other nodes.
+Independent transactions, which do not mutate the same keys, do not cause contention on each other, thus the algorithm
+scales and its performance is not affected by the increase. Likewise the memory footprint is divided among the cluster, thus there are no single nodes, which would have to handle more data than other nodes.
 
 % TODO opis teoretyczny od czego zależy wydajność
 % liczba partycji

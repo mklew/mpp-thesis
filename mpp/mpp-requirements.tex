@@ -15,7 +15,9 @@
 Distinction between \paxos rounds in \mpt is troublesome because it is not obvious how to reflect a set of different keys as a single round identifier.
 \label{sec:mpp:requirements:identifyRound}
 
-\lwt is for a single partition, therefore it represents a single operation. As such, operation itself is a \emph{transaction}. Data for that transaction is passed within operation itself, thus data does not have to be stored for the duration of the transaction, because it exists only in memory while \lwt transaction executes. 
+\lwt is for a single partition, therefore it represents a single operation. As such, operation itself is a
+\emph{transaction}. Data for that transaction are passed within operation itself, thus data do not have to be stored
+ for the duration of the transaction, because it exists only in memory while \lwt transaction executes.
 On the other hand, \mpt supports many operations within a transaction. Therefore operations with data have to be stored for the duration of the transaction. Moreover, storage has to be private for the transaction in order to provide isolation.
 
 %Proposed \mpt holds all imposed requirements. Following sections address requirements in context of \mpt.
@@ -25,16 +27,6 @@ On the other hand, \mpt supports many operations within a transaction. Therefore
 %TODO napisac czym sie roznica od LWT - dodatki do prywatne dane - to juz opisalem w The advantage \\
 %TODO napisac czym sa memtable - tylko pytanie gdzie to napisac, to moze byc opisane w innej sekcji \\
 
-
-%1. Run in isolation from other transactions - transactions - their state and data - should be isolated from each other. One transaction cannot see other’s data.
-%2. Serializability - if two transactions modify same piece of data and commit at same time, only one transaction can be committed, as a corollary second has to be rolled back.
-%3. Begin transaction - that how any transaction is started in relational databases. Transaction is begun and then 
-%4. Commit transaction - once transaction’s logic has finished, user commits transaction and sees either successful commit or rollback of transaction. 
-%5. Rollback transaction - rollback whole transaction if needed
-%6. Do an operation within transaction - any data manipulation operation should be possible to execute in context of transaction
-%7. Atomicity
-%8. Durability
-%9. Eventual consistency
 
 
 %        Requirements summary

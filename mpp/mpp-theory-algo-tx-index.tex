@@ -8,7 +8,8 @@ Registration of transaction state \txState in \txIndex on each \node{i} $\in$\no
 Since \txIndex is local, each transaction \transaction receives different \paxos round id \paxosRoundId on different nodes, but the value of \paxosRoundId is never used outside of a node, thus \paxosRoundId does not have to be globally the same. \paxosRoundId is used only to identify \paxos round for \conflictingTxSet at each \node{i}. If \transaction participates in the same \paxos round identified by \paxosRoundId as other conflicting transactions, then only single \transaction is committed after \nodesTx agree on the proposed \txState.
 
 % TODO może dodać ten paragraf
-%Providing same paxos round id would require another consensus algorithm of its own which would inherently increase cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
+%Providing the same paxos round id would require another consensus algorithm of its own which would inherently increase
+cost of the whole algorithm, thus it is suitable to avoid as many round-trip requests as possible.
 
 %\paxosRoundId, used to find \paxos State data at each node locally, is a synthetic id and is different at each replica during \mpt round. 
 

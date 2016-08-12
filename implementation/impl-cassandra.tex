@@ -101,7 +101,7 @@ USING TRANSACTION = <transaction_id>;
 The private transaction storage implementation uses private \emph{memtables} to store transaction's mutations \mutations. It maps transaction id to its data \code{TransactionData}, which stores mutations mapped by keyspace, table and $k$, thus \txStorage has information about which keys are mutated in transaction \transaction. 
 %Each owned transaction item has corresponding entry in transaction data map.
 When new mutation \mutation{k}{v} is done in transaction \transaction, then \mutation{k}{v} is added to \code{TransactionData}. 
-It is either merged with present mutation for same partition key, or it is added as new entry in the map.
+It is either merged with present mutation for the same partition key, or it is added as new entry in the map.
 
 
 \subsection{Applying changes locally}
@@ -126,7 +126,11 @@ The transaction index \txIndex needs to be thread-safe and stay consistent when 
 
 \subsection{Locking of the transaction index}
 In order to register transaction state \txState in the transaction index \txIndex, \txIndex has to be acquired.
-\txIndex is a map from \code{IndexKey} to \code{PaxosParticipants}, in which keys are computed from transaction state’s items replicated by this node. Each transaction item \txItem is mapped into index key by conflict function, which results in set of index keys. Locks are acquired from map of locks accessed by hash value of an index key. In order to avoid deadlock, index keys have to be sorted so that locks are acquired in same order by different transactions and released in reversed order.
+\txIndex is a map from \code{IndexKey} to \code{PaxosParticipants}, in which keys are computed from transaction
+state’s items replicated by this node. Each transaction item \txItem is mapped into index key by conflict function,
+which results in set of index keys. Locks are acquired from map of locks accessed by hash value of an index key. In
+order to avoid deadlock, index keys have to be sorted so that locks are acquired in the same order by different
+transactions and released in reversed order.
 
 \input{implementation/impl-conflict-functions.tex}
 
@@ -174,7 +178,8 @@ We marked transaction state \txState, as read-only \txState by encoding a future
 The Transaction Index \txIndex detects read-only transaction and return \paxos round id \paxosRoundId of first conflicting \txState it finds. There is no need to register read-only transaction in \txIndex, because it has to be invisible to other transactions.
 Read is performed only when the coordinator has became the leader and completed all in-progress transactions. In such case tables have only committed data. Quorum consistency level is used for normal read, because \mpt relies at least quorum being consistent.
 
-% is represented by same Transaction State data structure, we need to convey information that it is indeed read-only transaction. Simple implementation could add another flag which would be worthless for all other use cases. We decided to convey read-only information in the timestamp of transaction by creating a UUID from timestamp far in the future. This way, there is no need for modifications to Transaction State data structure. This special read-only transaction state is only used between cluster nodes so internal details are not visible to the client.
+% is represented by the same Transaction State data structure, we need to convey information that it is indeed read-only
+ transaction. Simple implementation could add another flag which would be worthless for all other use cases. We decided to convey read-only information in the timestamp of transaction by creating a UUID from timestamp far in the future. This way, there is no need for modifications to Transaction State data structure. This special read-only transaction state is only used between cluster nodes so internal details are not visible to the client.
 
 
 % Transactional read algorithm looks as follows:

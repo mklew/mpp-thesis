@@ -14,8 +14,10 @@ Transaction state has deterministic memory footprint, since it stores fixed-leng
 
 
 \subsubsection{Alternative structure}
-Transaction state which stores keys instead of tokens provides same functionality, but varies in memory footprint, hence \mpt is applicable to \emph{key-value} databases in general, but its memory usage might not be as low as with tokens if keys have more complex type than number.
-%Same functionality could be achieved storing real keys in transaction items, but then each key could have arbitrary size and same would apply to transaction state.
+Transaction state which stores keys instead of tokens provides the same functionality, but varies in memory footprint,
+hence \mpt is applicable to \emph{key-value} databases in general, but its memory usage might not be as low as with tokens if keys have more complex type than number.
+%Same functionality could be achieved storing real keys in transaction items, but then each key could have arbitrary
+size and the same would apply to transaction state.
 
 \subsubsection{Unique id only}
 Transaction items identify nodes that own part of transaction's data. Without them we would know only an id of a transaction.
