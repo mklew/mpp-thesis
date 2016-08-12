@@ -17,7 +17,7 @@ Our true value is transaction \transactionFull, however mutations \mutationsFull
 %It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. 
 
 
-\subsection{Reaching the same \paxos round}
+\subsection{Reaching the same Paxos round}
 Conflicting transactions \conflictingTxSet must participate in the same \paxos round identified by \paxos round id \paxosRoundId.
 If there are many transactions \transactions being committed at same time and those \transactions are in conflict with each other, then only single transaction \transaction should get committed and rest of them should be rolled back. Nodes \nodesTx must agree on \paxos value, which is transaction state \txState, thus agree on which \transaction is committed.
 

@@ -47,7 +47,7 @@ Testing schema consists of $2$ keyspaces with multiple incrementation tables in 
 \end{figure}
 
 \subsubsection{Iterations}
-Each test case is done in many iterations i.e. $300$. During each iteration, there are many concurrent transactions which execute at the same time. Each \transaction performs operations on incrementation tables. Most basic operation is to increment column using transactional update.
+Each test case is done in many iterations i.e. $300$. During each iteration, there are many concurrent transactions which execute at the same time. Each transaction \transaction performs operations on incrementation tables. Most basic operation is to increment column using transactional update.
 
 \subsubsection{Increment executors}
 Increment executors run in parallel through all iterations and perform a transaction during each iteration.
@@ -78,10 +78,10 @@ Let us present an example, assume we have $2$ executors: $e_1, e_2$ where $e_1$ 
 %Tests required modification of an implementation.
  During this test, counters from table named \code{stop_after_proposed} are incremented. 
  \mpt was modified to fail after proposal was accepted, thus before commit. It leaves transaction as accepted in-progress proposal that should be finished by the next proposer. 
- Then nontransactional select is used to check that changes were not yet committed by the transaction. If there was no isolation or if some replicas applied mutation before commit, select would return non committed results. Nextly,
- select with \emph{transactional} consistency level is used, which has to run \mpt algorithm until \emph{prepare phase} is reached and any in-progress proposal are detected and committed
-  %is detected during prepare and has to be completed. 
-  Transactional select commits in-progress transaction and returns incremented column. Results of select statement are checked for correctness. This test could fail if transactional select would return results without committing in-progress transaction.
+ Then nontransactional select is used to check that changes were not yet committed by the transaction. If there was no isolation or if some replicas applied mutation before commit, select would return non committed results. 
+
+ To check correctness select with \emph{transactional} consistency level is used, which has to run \mpt algorithm until \emph{prepare phase} is reached and any in-progress proposal are detected and committed.
+Transactional select commits in-progress transaction and returns incremented column. Results of select statement are checked for correctness. This test could fail if transactional select would return results without committing in-progress transaction.
 
 \subsection{Testing of independent transactions}
 Tests employs multiple increment executors which mutate different columns of different rows. 
@@ -103,7 +103,7 @@ Each executor increments one column and commits transaction. Each executor keeps
 \end{figure}
 
 Figure \ref{fig:exampleIndependentTransactions} presents results of $5$ executors after $100$ iterations. 
-Assume that $e_n$ increments $in_n$ of row with id $i_n$, where $n\in [1,5]$, thus each $e_n$ performs transaction on different row.
+Assume that executor $e_n$ increments $in_n$ of row with id $i_n$, where $n\in [1,5]$, thus each $e_n$ performs transaction on different row.
 Note that, number of committed transactions has to be equal to number of iterations, which has to be equal to values in columns.
 
 Test could fail if number of committed transactions did not match value of columns. It would mean that transactions were classified, as conflicting, whereas they were not.
@@ -178,23 +178,23 @@ The algorithm makes progress, as long as quorum in each replica group moves in t
 \end{figure}
 
 \section{Analyzing number of requests}
-Assume \transaction, which modifies keys: $k_{1}, k_{2}, k_{3}$,
-, which might be replicated on one up to three unique replica groups, thus size of \nodesTx spans from minimum of \RFalone to maximum of $PC\cdot\mathbb{RF}$. Number of unique replica groups depends whether replica groups are independent, thus contain different nodes, of if they overlap in nodes.
+Assume transaction \transaction, which modifies keys: $k_{1}, k_{2}, k_{3}$,
+, which might be replicated on one up to three unique replica groups, thus size of \nodesTx spans from minimum of \RFalone to maximum of $PC\cdot\RFaloneInMath$. Number of unique replica groups depends whether replica groups are independent, thus contain different nodes, of if they overlap in nodes.
 
-Starting a transaction requires a single message, thus $1$ message to any node in the cluster, which responds with \txState.
-Each mutation of a key needs to be written to the \txStorage and acknowledged by the quorum from a replica group, thus writes send $[\mathbb{RF},PC\cdot\mathbb{RF}]$ messages.
+Starting a transaction requires a single message, thus $1$ message to any node in the cluster, which responds with transaction state \txState.
+Each mutation of a key needs to be written to the private transaction storage \txStorage and acknowledged by the quorum from a replica group, thus writes send $[\RFaloneInMath,PC\cdot\RFaloneInMath]$ messages.
 Nextly transaction is committed, thus the single commit message $1$ is sent.
 The commit procedure sends most of messages.
-Replicas need to transition to the setup phase, thus leader has to send $[N,\mathbb{RF}\cdot N]$ messages and receive responses.
-Setup phase performs data consistency check, thus each node reads from quorum of replicas, resulting in possible messages count: $[\mathbb{RF} \cdot (\frac{\mathbb{RF}}{2} + 1),PC\cdot\mathbb{RF} \cdot (\frac{\mathbb{RF}}{2} + 1)]$.
-Nextly the leader transitions replicas to prepare phase, which requires $[\mathbb{RF},PC\cdot\mathbb{RF}]$ messages, followed by propose phase and another wave of $[\mathbb{RF},PC\cdot\mathbb{RF}]$ messages, and lastly it runs transition to the commit phase with another batch of $[\mathbb{RF},PC\cdot\mathbb{RF}]$ messages.
+Replicas need to transition to the setup phase, thus leader has to send $[N,\RFaloneInMath\cdot N]$ messages and receive responses.
+Setup phase performs data consistency check, thus each node reads from quorum of replicas, resulting in possible messages count: $[\RFaloneInMath \cdot (\frac{\RFaloneInMath}{2} + 1),PC\cdot\RFaloneInMath \cdot (\frac{\RFaloneInMath}{2} + 1)]$.
+Nextly the leader transitions replicas to prepare phase, which requires $[\RFaloneInMath,PC\cdot\RFaloneInMath]$ messages, followed by propose phase and another wave of $[\RFaloneInMath,PC\cdot\RFaloneInMath]$ messages, and lastly it runs transition to the commit phase with another batch of $[\RFaloneInMath,PC\cdot\RFaloneInMath]$ messages.
 
 The total number of messages, assuming the optimistic path without contention and no failures, 
-is: $[2 + 5 \cdot \mathbb{RF} + \mathbb{RF} \cdot (\frac{\mathbb{RF}}{2} + 1), 2 + 5 \cdot PC\cdot\mathbb{RF} + PC \cdot \mathbb{RF} \cdot (\frac{\mathbb{RF}}{2} + 1)]$,
-which generalises to $2 + 5 \cdot PC\cdot\mathbb{RF} + PC \cdot \mathbb{RF} \cdot (\frac{RF}{2} + 1)$ where $PC \in [1, \mathbb{RF}]$.
+is: $[2 + 5 \cdot \RFaloneInMath + \RFaloneInMath \cdot (\frac{\RFaloneInMath}{2} + 1), 2 + 5 \cdot PC\cdot\RFaloneInMath + PC \cdot \RFaloneInMath \cdot (\frac{\RFaloneInMath}{2} + 1)]$,
+which generalises to $2 + 5 \cdot PC\cdot\RFaloneInMath + PC \cdot \RFaloneInMath \cdot (\frac{\RFaloneInMath}{2} + 1)$ where $PC \in [1, \RFaloneInMath]$.
 
-Number of messages could be limited if at each step only quorums were considered, thus replacing single $\mathbb{RF}$ in formula by $\frac{\mathbb{RF}}{2} + 1$, which would result in the formula: 
-$2 + 5 \cdot PC \cdot (\frac{\mathbb{RF}}{2} + 1) + PC \cdot (\frac{\mathbb{RF}}{2} + 1) \cdot (\frac{\mathbb{RF}}{2} + 1)$ where $PC \in [1, \mathbb{RF}]$.
+Number of messages could be limited if at each step only quorums were considered, thus replacing single $\RFaloneInMath$ in formula by $\frac{\RFaloneInMath}{2} + 1$, which would result in the formula: 
+$2 + 5 \cdot PC \cdot (\frac{\RFaloneInMath}{2} + 1) + PC \cdot (\frac{\RFaloneInMath}{2} + 1) \cdot (\frac{\RFaloneInMath}{2} + 1)$ where $PC \in [1, \RFaloneInMath]$.
 Figure \ref{fig:tests:requestsCount} depicts numbers of messages in both cases.
 
 

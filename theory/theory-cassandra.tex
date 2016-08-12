@@ -64,7 +64,7 @@ Cassandra's cluster consists of nodes placed on the token ring. Figure \ref{fig:
 Partitioning in Cassandra is implemented by assigning tokens, which are numbers computed by a some function (usually hash function), to keys and storing data in a node for which token is in its token range. 
 
 \subsection{Replication}
-Cassandra supports configurable \emph{replication factor} \ref{def:replicationFactor} defined per \emph{keyspace} \ref{sec:theory:cassandra:datamodel}. Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
+Cassandra supports configurable \emph{replication factor} (see Definition \ref{def:replicationFactor}) defined per \emph{keyspace} (Section \ref{sec:theory:cassandra:datamodel}). Figure \ref{fig:replicationRing} shows a replication of the token $91$ in the cluster with $4$ nodes and the token ring with tokens ranging from $0$ to $99$. 
 Each node is the \emph{primary replica} for the token range placed counter clock-wise to it, thus node $1$ is the primary replica for range $75-0$, node $2$ for $51-75$, node $3$ for $26-50$, and node $4$ for $1-25$. 
 Token value $91$ belongs to the node $1$, and since \RF{3}, then the value is replicated on $2$ more nodes, which are on counter wise positions, thus on node $4$ and node $3$, which are \emph{secondary replicas} of the token. Tokens define the units of replication -- the smallest segments of data that can be replicated. 
 

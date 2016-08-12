@@ -83,7 +83,7 @@ In case of the coordinator failure, a recovery node takes over the protocol and 
 
 \paxos works within an asynchronous, non-Byzantine communications model, in which nodes can fail, but if they do not fail then they must operate according to \paxos protocol.
 
-Actors in \paxos have one of more of the following roles: \begin{enumerate*}[label=\alph*)]
+Actors in \paxos have one or more of the following roles: \begin{enumerate*}[label=\alph*)]
 \item proposer - actor which proposes a new value,
 \item acceptor - actor which is supposed to accept or decline a proposal,
 \item learner - actor which learns accepted proposal.
@@ -113,7 +113,9 @@ A proposer notifies learners about an accepted new value. Note that, actors\foot
 
 % \paragraph{Example of Paxos round}
 
-Figure \ref{fig:paxosBasic} and Figure \ref{fig:paxosBasicPart2} show complete \paxos round and exchanged messages between $2$ proposers and acceptors. The proposer $p_1$ has to propose a new value $v_1$, therefore it begins next \paxos round represented by a higher ballot \ballot.
+Figure \ref{fig:paxosBasic} and Figure \ref{fig:paxosBasicPart2} show complete \paxos round and exchanged messages between $2$ proposers and acceptors.
+During that round, propopser $p_1$ starts its proposal, but it then overtaken by $p_2$, which finishes in-progress proposal of $p_1$.
+ The proposer $p_1$ has to propose a new value $v_1$, therefore it begins next \paxos round represented by a higher ballot \ballot.
 % In this case acceptors are also learners.
 % Nodes which learn that new value are called \emph{acceptors}\footnote{nodes have 2 roles: acceptor, learner}
 
@@ -126,6 +128,8 @@ Figure \ref{fig:paxosBasicPart2} continues with the example, in which
  $p_2$ established leadership among majority of acceptors, thus proceeds to propose phase. $p_2$ received proposal value $v_1$, which is proposed instead of $v_2$, therefore $p_2$ sends proposals with $\beta_2,v_1$, which are accepted by all acceptors.
 
  In the next phase $p_2$ notifies learners about value $v_1$ by sending commit message, which is acknowledeged by each learner. Note that, in this example acceptors and learners are the same actors.
+
+ Next action, not shown on Figures, would be $p_2$ performing another proposal with $\beta_3$ for its $v_2$, which could run uninterrupted. 
 
  \paragraph{Fault tolerance} A proposer proceeds to next phase, as long as majority requirement is met, thus \paxos tolerates failures of 
  $(\frac{n}{2}-1)$ acceptors and learners.

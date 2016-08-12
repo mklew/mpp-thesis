@@ -17,9 +17,9 @@ Transaction index stores sets of conflicting transactions \conflictingTxSet and 
 During the commit procedure of \mpt transaction \transactionFull has to register in each quorum of each replica subset
 $(\NRF_{k_1} \cup \NRF_{k_2} \cup ... ) =
 (\tau(k_1) \cup \tau(k_2) \cup ... ) = 
- \text{\nodesTx}\in\mathit{N}$.
+ \text{\nodesTx}\subset\mathit{N}$.
 Moreover transaction \transaction cannot be registered in transaction index \txIndex when it can obtain more than one \paxos round id \paxosRoundId. These two requirements guarantee that if transaction \txOne and transaction \txTwo are conflicting for some key $k$, then there exists node \node{i}
-$\in N^{RF}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus both transactions are part of the same \paxos round and eventually only one is committed.
+$\in N^{\RFaloneInMath}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus both transactions are part of the same \paxos round and eventually only one is committed.
 
 \begin{algorithm}
 \algblockdefx[NAME]{ForEach}{EndForEach}%
@@ -64,7 +64,7 @@ Two different orderings yield different outcomes.
  \item[Order $\text{\txStatei{1}} \rightarrow \text{\txStatei{2}} \rightarrow \text{\txStatei{3}}$] \hfill \\
  	\txStatei{1} registers in \txIndex and obtains \paxosRoundIdi{1} \\
  	\txStatei{2} registers in \txIndex and obtains \paxosRoundIdi{1} from conflicting transaction \txStatei{1} \\
- 	\txStatei{3} registers in \txIndex and obtains \paxosRoundIdi{1} from conflicting transactions: \txStatei{1}, \txStatei{2} All transactions participate in the same \paxos round and only single transaction is committed. 
+ 	\txStatei{3} registers in \txIndex and obtains \paxosRoundIdi{1} from conflicting transactions: \txStatei{1}, \txStatei{2} All transactions participate in the same \paxos round and only a single transaction is committed. 
  \item[Order $\text{\txStatei{1}} \rightarrow \text{\txStatei{3}} \rightarrow \text{\txStatei{2}}$] \hfill \\
  	\txStatei{1} registers in \txIndex and obtains \paxosRoundIdi{1} \\
  	\txStatei{3} registers in \txIndex, there are no conflicts, thus obtains \paxosRoundIdi{3}\\
@@ -82,9 +82,9 @@ $quorum(N^{''})$ is equal to one of $((n_3,n_4),(n_3,n_5),(n_4,n_5))$, therefore
 \txStatei{1} and \txStatei{2} receive the same \paxosRoundId on $n$, thus if one is committed, the other has to be rolled back.
 
 \subsection{Rolling back concurrent transactions}
-Transaction index knows which \paxosRoundId to assign to which transaction state \txState and it knows set \conflictingTxSet to which \txState is assigned. This knowledge is used to rollback conflicting transactions when \paxos round \paxosRoundId is finished at ndoe \node{i} and \txStateCommitted is learnt by \node{i}. The node calls $\mathit{clear}(\text{\txState})$ function of private transaction storage for each \mbox{\txState $\in$ $(\text{\conflictingTxSet} - \text{\txStateCommitted})$}.
+Transaction index knows which \paxos round id \paxosRoundId to assign to which transaction state \txState and it knows conflicting transactions set \conflictingTxSet to which \txState is assigned. This knowledge is used to rollback conflicting transactions when \paxos round \paxosRoundId is finished at node \node{i} and \txStateCommitted is learnt by \node{i}. The node calls $\mathit{clear}(\text{\txState})$ function of private transaction storage for each \mbox{\txState $\in$ $(\text{\conflictingTxSet} - \text{\txStateCommitted})$}.
 
 If a client \client wants to rollback transaction \transaction then that client
 sends a message \txRollbackMessage after which \node{i} identifies \nodesTx and broadcasts message \rollbackMessage for each \node{j} $\in$ \nodesTx. When \node{j} receives such message it
-uses $\mathit{clear}(\text{\txState})$ function of private transaction storage. \transaction is rolled back after all 
+uses $\mathit{clear}(\text{\txState})$ function of private transaction storage. Transaction \transaction is rolled back after all 
 \mbox{$n\in \text{\nodesTx}$} clear private data.

@@ -42,8 +42,8 @@
       \begin{tabular}{|p{3cm}|p{9cm}|}
         \toprule
         label & description \\ \midrule
-        query items() & if \node{j} does not have whole subset of \mutations in its \txStorage then \node{j} sends messages to other replica nodes, which reply with mutations stored in their \txStorage \\
-        setup & \node{i} sends \setupMessage \\ 
+        query items() & if \node{j} does not have whole subset of mutations \mutations in its private transaction storage \txStorage then \node{j} sends messages to other replica nodes, which reply with mutations stored in their \txStorage \\
+        setup & \node{i} sends message \setupMessage \\ 
         transition() & \node{i} sends transition messages to $n\in \text{\nodesTx}$ \\ 
         setup response & \node{j} responds with setup results in message \setupResponseMessage \\ \bottomrule
       \end{tabular}

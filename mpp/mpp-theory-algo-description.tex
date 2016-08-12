@@ -11,10 +11,10 @@ in which transaction state \txState is accepted by majority in each replica grou
 
 \subsection{Replica groups}
 \label{sec:mpp:replicaGroups}
-\lwt supports a single key $k$, thus it communicates with single replica group $\tau(k) = N^{RF}_{k} \in \mathit{N}$, whereas \mpt is designed for mutations of multiple keys, thus there are multiple replica groups 
-$(\tau(k_1) \cup \tau(k_2) \cup ... \cup \tau(k_i) ) = (N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... \cup N^{RF}_{k_i} ) = \mathit{N^'} \in \mathit{N}$, where $(N^{RF}_{k_1} \cap N^{RF}_{k_2} \cap ... \cap N^{RF}_{k_i})$ can be non empty set, due to the fact that a node is a replica for different keys.
+\lwt supports a single key $k$, thus it communicates with single replica group $\tau(k) = N^{\RFaloneInMath}_{k} \subset \mathit{N}$, whereas \mpt is designed for mutations of multiple keys, thus there are multiple replica groups 
+$(\tau(k_1) \cup \tau(k_2) \cup ... \cup \tau(k_i) ) = (N^{\RFaloneInMath}_{k_1} \cup N^{\RFaloneInMath}_{k_2} \cup ... \cup N^{\RFaloneInMath}_{k_i} ) = \mathit{N^'} \subset \mathit{N}$, where $(N^{\RFaloneInMath}_{k_1} \cap N^{\RFaloneInMath}_{k_2} \cap ... \cap N^{\RFaloneInMath}_{k_i})$ can be non empty set, due to the fact that a node is a replica for different keys.
 
-Assume we have transaction state $\text{\txState}(\text{\txItemi{1}, \txItemi{2}})$, \RF{3} and $N=5$. Let $\mathit{N^{RF}_{k_1}} = \tau(\text{\txItemi{1}}), \mathit{N^{RF}_{k_2}} = \tau(\text{\txItemi{2}})$, where $\mathit{N^{RF}_{k_1}} = (n_1,n_2,n_3), \mathit{N^{RF}_{k_2}} = (n_2,n_3,n_5)$ thus $\mathit{N}^' = (N^{RF}_{k_1} \cup N^{RF}_{k_2}) = (n_1, n_2, n_3, n_5)$.
+Assume we have transaction state $\text{\txState}(\text{\txItemi{1}, \txItemi{2}})$, \RF{3} and $N=5$. Let $\mathit{N^{\RFaloneInMath}_{k_1}} = \tau(\text{\txItemi{1}}), \mathit{N^{\RFaloneInMath}_{k_2}} = \tau(\text{\txItemi{2}})$, where $\mathit{N^{\RFaloneInMath}_{k_1}} = (n_1,n_2,n_3), \mathit{N^{\RFaloneInMath}_{k_2}} = (n_2,n_3,n_5)$ thus $\mathit{N}^' = (N^{\RFaloneInMath}_{k_1} \cup N^{\RFaloneInMath}_{k_2}) = (n_1, n_2, n_3, n_5)$.
 In this example transaction has mutations on $4$ nodes and has
 $2$ replica groups, which have nodes $n_2, n_3$ in common.  
 
@@ -31,7 +31,7 @@ The algorithm execution occurs in \emph{phases}, which are the following:
 \item rolled back phase (end phase).
 \end{enumerate*}
 
-Replicas advance in phase after successful \emph{transitions}. The algorithm is done when quorum of each replica group is in an end phase or when a timeout occurs, in which case commit procedure is aborted. Figure \ref{fig:phasesBasicPath} presents the transitions from idle phase to committed phase assuming successful transitions of each $n\in \text{\nodesTx}$.
+Replicas advance in phase after successful \emph{transitions}. The algorithm is done when quorum of each replica group is in an end phase or when a timeout occurs, in which case commit procedure is aborted. Figure \ref{fig:phasesBasicPath} presents the transitions from idle phase to committed phase assuming successful transitions of each $n\in \text{\nodesTx}$. 
 
 %Three phases: prepare, propose and commit, might be already recognizable, since they are parts of the \paxos algorithm. 
 
@@ -50,29 +50,30 @@ Transitions are:
 \begin{itemize}
 \item \setupTransition presented on Figure \ref{fig:transitionToSetup}, which can transition to:
 	\begin{itemize}
-		\item setup phase, when \node{i} fails
-		\item committed phase, when transaction state \txState is recorded as committed in \txLog  
-		\item rolled back phase, when transaction state \txState is recorded as rolled back in \txLog
-		\item idle phase, when \node{i} does not respond to the transition to setup message
+		\item setup phase, when node \node{i} fails
+		\item committed phase, when transaction state \txState is recorded as committed in transaction log \txLog  
+		\item rolled back phase, when transaction state \txState is recorded as rolled back in transaction log \txLog
+		\item idle phase, when node \node{i} does not respond to the transition to setup message
 	\end{itemize}
 \item \prepareTransition shown on Figure \ref{fig:transitionToPrepare} which can transition to:
 	\begin{itemize}
-		\item committed phase, when transaction state \txState is recorded as committed in \txLog  
-		\item rolled back phase, when transaction state \txState is recorded as rolled back in \txLog\item setup phase, when \node{i} can not promise
-		\item repair phase, when \node{i} promises and replies with in-progress \txState
-		\item prepare phase, when \node{i} promises and does not have in-progress \txState 
+		\item committed phase, when transaction state \txState is recorded as committed in transaction log \txLog  
+		\item rolled back phase, when transaction state \txState is recorded as rolled back in transaction log \txLog
+		\item setup phase, when node \node{i} can not promise
+		\item repair phase, when node \node{i} promises and replies with in-progress \txState
+		\item prepare phase, when node \node{i} promises and does not have in-progress transaction state \txState 
 	\end{itemize}
 \item \repairingTransition presented on Figure \ref{fig:transitionRepairing}, which can transition to:
 	\begin{itemize}
 		\item repairing phase, when repair of in-progress transaction is not done,
 		\item transition to prepared phase, when repair is done
-		\item transition to setup phase, when repair is done, but \node{i} did not receive promise
+		\item transition to setup phase, when repair is done, but node \node{i} did not receive promise
 	\end{itemize}
 \item \proposeTransition depicted on Figure \ref{fig:transitionToPropose}, which can transition to:
 	\begin{itemize}
 		\item accepted phase, when proposal is accepted by \node{i}
-		\item rolled back phase, when \node{i} refuses the proposal and notifies that \txState was rolled back
-		\item setup phase, when \node{i} refuses the proposal
+		\item rolled back phase, when node \node{i} refuses the proposal and notifies that transaction state \txState was rolled back
+		\item setup phase, when node \node{i} refuses the proposal
 	\end{itemize}
 \item \commitTransition presented on Figure \ref{fig:transitionToCommitted}, which transitions to committed phase
 \end{itemize}
@@ -141,14 +142,14 @@ Idle phase is a technical representation of starting phase.
 \subsection{Setup phase}
 Setup phase provides a foundation for further phases and provides guarantees that if a replica is in the phase, then it is eligible to participate in a \paxos round and its private data are ready to be committed. Two main steps in this phase are: \begin{enumerate*}[label=\alph*)]
 \item transaction \transaction registers in transaction index \txIndex on each $n\in \text{\nodesTx}$, in order to participate in a paxos round,
-\item transaction \transaction performs mutations consistency check, in order for \node{i} to have full subset of \mutations in its private transaction storage \txStorage.
+\item transaction \transaction performs mutations consistency check, in order for \node{i} to have full subset of mutations \mutations in its private transaction storage \txStorage.
 \end{enumerate*}
 
 
 \subsubsection{Registration in transaction index}
 When transaction \transaction registers in the transaction index \txIndex (Subsection \ref{sec:mpp:txIndex}), from that moment on \transaction participates in a \paxos round.
 It might participate alone or with other concurrent transactions that are known to be conflicting. 
-\transaction is vulnerable to rollback by other \transactionj, as soon as it has registered itself in the index.
+\transaction is vulnerable to rollback by other transaction \transactionj, as soon as it has registered itself in the index.
 Since \txIndex is accessed by multiple concurrent \transactions, it has to be exclusively acquired by \transaction before any operation that changes its state takes place. 
 Locking, or other concurrency control mechanism can be used to guarantee that state of \txIndex stays consistent.
 
@@ -156,9 +157,9 @@ Locking, or other concurrency control mechanism can be used to guarantee that st
         
 \subsubsection{Making data consistent}
 Transaction’s data is kept in private transaction storage \txStorage (Subsection \ref{sec:mpp:privateTxStorage}). 
-Mutations messages are sent and received by quorum of a replica group, thus \mutations exist in \txStorage at least on the quorum of nodes in a replica group. However, between a time transaction \transaction is started and a time it is committed, some nodes $N^{''} \subset \text{\nodesTx}$ could restart and lose mutations \mutations in their \txStorage. Moreover, quorum subsets chosen as target of mutation messages can differ between messages, thus different subsets of replica nodes store different subsets of \mutations, therefore we need the data check procedure, which verifies that all replica groups  $(N^{RF}_{k_1} \cup N^{RF}_{k_2} \cup ... \cup N^{RF}_{k_i} ) = \mathit{N^'} \in \mathit{N}$ have all required \mutationsFullEnd, thus quorum of $N^{RF}_{k_1}$ has mutation \mutation{k_1}{v_1} in their \txStorage, quorum of $N^{RF}_{k_2}$ has \mutation{k_2}{v_2} in their \txStorage up to quorum of replica group $N^{RF}_{k_i}$, which has \mutation{k_i}{v_i} in its \txStorage.
+Mutations messages are sent and received by quorum of a replica group, thus mutations \mutations exist in private transaction storage \txStorage at least on the quorum of nodes in a replica group. However, between a time transaction \transaction is started and a time it is committed, some nodes $N^{''} \subset \text{\nodesTx}$ could restart and lose mutations \mutations in their \txStorage. Moreover, quorum subsets chosen as target of mutation messages can differ between messages, thus different subsets of replica nodes store different subsets of \mutations, therefore we need the data check procedure, which verifies that all replica groups  $(N^{\RFaloneInMath}_{k_1} \cup N^{\RFaloneInMath}_{k_2} \cup ... \cup N^{\RFaloneInMath}_{k_i} ) = \mathit{N^'} \subset \mathit{N}$ have all required \mutationsFullEnd, thus quorum of $N^{\RFaloneInMath}_{k_1}$ has mutation \mutation{k_1}{v_1} in their \txStorage, quorum of $N^{\RFaloneInMath}_{k_2}$ has \mutation{k_2}{v_2} in their \txStorage up to quorum of replica group $N^{\RFaloneInMath}_{k_i}$, which has mutation \mutation{k_i}{v_i} in their \txStorage.
 
-\subsubsection{Example of inconsistent \txStorage}
+\subsubsection{Example of inconsistent private transaction storage \txStorage}
 We would like to present an example which argues why consistency checking is inevitable.
 Assume \RF{3}, \N{7}, transaction
 $\text{\transaction}(\text{\mutation{k_1}{v_1}}, \text{\mutation{k_2}{v_2}}, \text{\mutation{k_3}{v_3}})$, its transaction state
@@ -238,17 +239,17 @@ If replica has to move to rollback phase upon decision of all replica groups and
 \subsection{Prepare phase}
 During prepare each replica receives a ballot, which is just a name for a timeuuid\footnote{which is universal unique identifier with encoded timestamp}. Replica needs to check Paxos State to see if ballot is the highest it has seen and only then replica can reply with promise. However, Paxos State is identified by \paxosRoundId which is stored in transaction index \txIndex. To find \paxos round id \paxosRoundId, we need to look up \txIndex using transaction state \txState. That requires that ballot is passed along with \txState, which is used only to find \paxosRoundId and to compare ballots.
 
-In order to find \paxosRoundId using \txState, \txIndex is exclusively acquired and queried. Assumption is that transaction \transaction has successfully registered in \txIndex beforehand. Therefore if it is not found in \txIndex it can mean one of:
+In order to find \paxosRoundId using transaction state \txState, \txIndex is exclusively acquired and queried. Assumption is that transaction \transaction has successfully registered in \txIndex beforehand. Therefore if it is not found in \txIndex it can mean one of:
 \begin{enumerate*}[label=\alph*)]
-\item \transaction was rolled back by concurrent \transactionj,
+\item \transaction was rolled back by concurrent transaction \transactionj,
 \item \transaction was committed by other leader which repaired in-progress transaction - this is the case, when replicas go back in phase but at least one of them has successfully proposed \txState,
 \item this replica was down during setup phase and did not get the message. It could happen due to network partition or hardware failure.
 \end{enumerate*}
 
 
-In order to check which case it is \txLog can be queried. If \txState exists in \txLog, then it was either committed or rolled back. In that case replica can answer that it can not promise anything, but it knows that \transaction was committed or rolled back.
+In order to check which case it is transaction log \txLog can be queried. If \txState exists in \txLog, then it was either committed or rolled back. In that case replica can answer that it can not promise anything, but it knows that \transaction was committed or rolled back.
 
-In other case, when \txState is neither in \txIndex nor in \txLog we can assume that this replica missed setup phase. In this situation replica cannot promise, because it doesn’t know what Paxos State is. Other replicas can continue without it. Replica might answer without a promise, but also that it doesn’t know what state of transaction is. Response looks exactly the same, as in the case when ballot is not the highest.
+In other case, when \txState is neither in transaction index \txIndex nor in transaction log \txLog we can assume that this replica missed setup phase. In this situation replica cannot promise, because it doesn’t know what Paxos State is. Other replicas can continue without it. Replica might answer without a promise, but also that it doesn’t know what state of transaction is. Response looks exactly the same, as in the case when ballot is not the highest.
 Figure \ref{fig:preparePayload} presents payload of $\mathit{prepare\_response}$.
 
 \begin{figure}
@@ -257,7 +258,7 @@ Figure \ref{fig:preparePayload} presents payload of $\mathit{prepare\_response}$
         \toprule
         name & type & description \\ \midrule
         $\mathit{promised}$ & boolean & whether this replica promises to listen to leader \\ 
-        $\mathit{present\_in\_index}$ & boolean & if \txState was present in the \txIndex at this node \\ 
+        $\mathit{present\_in\_index}$ & boolean & if transaction state \txState was present in the transaction index \txIndex at this node \\ 
         $\mathit{log\_state}$ & $\mathit{log\_state}$ & value of $\mathit{find(\text{\txState})}$ from \txLog at this node \\ 
         \txStatei{in-progress} & \txState & if replica has already accepted other transaction state and this transaction interrupted its execution becoming new leader then the in-progress proposal - some other \txStatei{in-progress} - is returned to the leader. In that case leader will have to repair \mpt round. Replica will transition into repairing phase. \\ \bottomrule
       \end{tabular}     
