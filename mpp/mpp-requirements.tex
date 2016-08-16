@@ -1,13 +1,7 @@
 %!TEX root = ../thesis.tex
 
 \section{Multiple partitions}\label{sec:mpp:requirements}
-%TODO Note: tytul zmieniony z The requirements na Multiple partitions
-% TODO rozwinąć wymagania na algorytm, wykrywanie instacji. Z tego przejść do wymagań Paxosa. Następnien pisać na jakich wymaganiach trzeba się skupić, bo one nie będą proste do spełnienia.
 
-
-% TODO wspomnieć o tym, że LWT używa wielu instacji paxosa które ze sobą nie kolidują bo dotyczą różnych partycji, a u mnie jest inaczej ponieważ transakcja może dotyczyć wiele partycji i dodatkowo mogą się pokrywać.
-% TODO w LWT żeby poznać instacje paxosa  wystarczy klucz partycji.
-% TODO MPP jest to problem bo jest wiele partycji
 \lwt supports many instances of paxos protocol at any given time, which do not interfere with each other, unless the same partition keys are considered. \lwt instances for different keys do not overlap nor stall each other.
 \mpt supports many instances as well, but a single instance of \mpt might overlap with different instance of \mpt, in which case such instances are considered conflicting. 
 
@@ -20,16 +14,5 @@ Distinction between \paxos rounds in \mpt is troublesome because it is not obvio
  for the duration of the transaction, because it exists only in memory while \lwt transaction executes.
 On the other hand, \mpt supports many operations within a transaction. Therefore operations with data have to be stored for the duration of the transaction. Moreover, storage has to be private for the transaction in order to provide isolation.
 
-%Proposed \mpt holds all imposed requirements. Following sections address requirements in context of \mpt.
-
-%Transactions should have following functionality:
-
-%TODO napisac czym sie roznica od LWT - dodatki do prywatne dane - to juz opisalem w The advantage \\
-%TODO napisac czym sa memtable - tylko pytanie gdzie to napisac, to moze byc opisane w innej sekcji \\
-
-
-
-%        Requirements summary
-%All of requirements above were addressed in algorithm. There is an solution to each requirement in next sections followed by summary of whole algorithm.
 
 

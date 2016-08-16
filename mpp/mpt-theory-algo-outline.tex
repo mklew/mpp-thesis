@@ -1,8 +1,5 @@
 %!TEX root = ../thesis.tex
 
-%\section{The algebra}
-%Database consists of key-value pairs $\Omega((k_{i},v_{j}), (k_{k},v_{m}),...)$ where $k\in\mathit{K}, v\in\mathit{V}$ stored by cluster of nodes $\mathit{N}$. Node is defined, as $n_{i}\in\mathit{N}$ where $\mathit{N}$. Client of a cluster is an actor, which communicates to a cluster, denoted by $c_{i}\in\mathit{C}$. Changes to data are represented by \emph{mutations}, where mutation is defined by $\delta(k,v)$ where $k \in \mathit{K}, v \in \mathit{V}$.
-%A set of mutations is a transaction denoted, as $\Theta(\delta_{1}, \delta_{2}, ...)$. Topology is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N^{RF}}$ which given $k$ returns set of replica nodes. 
 
 \section{Outline}
 Database $\Omega$ consists of key-value pairs $\{(k_{i},v_{j}), (k_{k},v_{m}),...\}, k_i\in\mathit{K}, v_i\in\mathit{V}$ stored by cluster of nodes $\{n_1, n_2, ...\}, n_i\in\mathit{N}$.
@@ -25,7 +22,6 @@ Client $c_{i}\in\mathit{C}$ is an actor, which performs transactions $\Delta_{1}
 \initialTxStateMessage, which includes 
 initial \emph{transaction state} (Definition \ref{def:transactionStateChapter3}), which will reflect all subsequent changes done in \transaction.
 
-%Transaction id identifies the transaction and is attached to all subsequent requests. Transaction item is a reference to operations done in \transaction.
 During the transaction \transaction, client \client sends messages of two types:
  mutations and selects \selectMessage. 
  All mutations within a transaction \transaction are isolated from other transactions - they are private to the enclosing transaction until it is committed.

@@ -4,7 +4,6 @@
 
 This chapter is focused on explaining theory behind testing of \mpt algorithm and its components. Many tests were performed on different levels that had to verify if implementation is correct and what is more important whether new \mpt algorithm provides multi-partition read-committed transactions. 
 \mpt algorithm developed during this research was proven to work in practice for all considered scenarios. 
-%Writing a formal proof is a complex task which would require further research and is out of scope of this work.
 
 \section{Unit testing}
 Components such as \emph{Transaction Index}, \emph{Transaction Log}, \emph{Private Transaction Storage} were  tested for their expected behaviour. Tests also covered parts of \mpt which were not cluster dependent such as \emph{phase} transitions. Unit tests are not enough to check for correctness especially when testing distributed algorithms which can be affected by network latencies, concurrency issues like deadlocks and other problems in the distributed environment. 
@@ -77,7 +76,7 @@ Let us present an example, assume we have $2$ executors: $e_1, e_2$ where $e_1$ 
 \subsection{Testing of repair of in-progress proposal}
 %Tests required modification of an implementation.
  During this test, counters from table named \code{stop_after_proposed} are incremented. 
- \mpt was modified to fail after proposal was accepted, thus before commit. It leaves transaction as accepted in-progress proposal that should be finished by the next proposer. 
+ \mpt was modified to fail after proposal was accepted, thus before commit. It left transaction as accepted in-progress proposal that should be finished by the next proposer. 
  Then nontransactional select is used to check that changes were not yet committed by the transaction. If there was no isolation or if some replicas applied mutation before commit, select would return non committed results. 
 
  To check correctness select with \emph{transactional} consistency level is used, which has to run \mpt algorithm until \emph{prepare phase} is reached and any in-progress proposal are detected and committed.
@@ -138,15 +137,12 @@ Rows may have different values in columns, but all rows must have the same value
 \subsection{Testing of partially conflicting transactions}
 Test runs the same way, as scenario for conflicting transactions, but executors receive additional disjoint sets of counters, so each executor has the same subset of rows plus additional ones exclusive for an executor. 
 
-This scenario checks whether replicas on which there is no conflict do not commit trnasaction that has to be rolled back, due to conflict on other replicas. Assertions and logic is the same, as in the previous scenario. If values in columns across modified rows were different then it would mean that part of transaction was committed, which should not happen.
-
-% \subsubsection{Different conflict functions}
-% Testing schema has counter tables with different conflict functions set. \mpt has to work for any conflict functions. Testing scenario remains the same. Expected results are also the same.
+This scenario checks whether replicas on which there is no conflict do not commit transaction that has to be rolled back, due to conflict on other replicas. Assertions and logic is the same, as in the previous scenario. If values in columns across modified rows were different then it would mean that part of transaction was committed, which should not happen.
 
 \subsection{Testing correctness of commit and rollback}
 Testing correctness of rollback and commit is the most crucial test, because tests with increments are dependent on truth about rollback and commit responses. 
 
-This scenario checks whether roll back happened not based on the response from a node, but from the state of rows. We want to check whether rollback and commit responses return valid information and whether transactions are indeed rolled back.
+This scenario checks whether rollback happened not because of the response from a node, but from the state of rows. We want to check whether rollback and commit responses return valid information and whether transactions are indeed rolled back.
 
 In this scenario there are $2$ different executors. Both of them receive the same set of rows with even number of rows. Size of the set is double number of iterations. 
 
@@ -169,7 +165,7 @@ The algorithm makes progress, as long as quorum in each replica group moves in t
     \renewcommand{\tabcolsep}{0.1cm}
     \resizebox{\textwidth}{!}{\begin{tabular}{c|c|c}
       \toprule
-      case & k & conclusion \\ \midrule
+      case & k (no. of nodes) & conclusion \\ \midrule
       best case & $RGs * (N - (\frac{N}{2} + 1)$ & replica groups are disjoint  \\
       worst case & $N - (\frac{N}{2} + 1)$  & all replica groups intersect  \\  \bottomrule      
     \end{tabular}}
@@ -258,19 +254,4 @@ Moreover, transactions $S'_{\text{\transaction}}$ will store its mutations of $k
 \subsection{Increase in concurrent independent transactions}
 Independent transactions, which do not mutate the same keys, do not cause contention on each other, thus the algorithm
 scales and its performance is not affected by the increase. Likewise the memory footprint is divided among the cluster, thus there are no single nodes, which would have to handle more data than other nodes.
-
-% TODO opis teoretyczny od czego zależy wydajność
-% liczba partycji
-% liczba nodów
-% liczba replik
-% liczba współbieżnych transakcji 
-
-% głównie tekst + tabelki i diagramy
-
-% Opisać różne przypadki, jak MPP zachowuje się przy wzroście nodów, replik, ilości konfliktujących transkacji
-
-% TODO każdy czynnik rozważyć osobno (pół strony ) i uzasadnić dlaczego się tak zachowuje.
-
-% TODO, co tu opisac?
-
 

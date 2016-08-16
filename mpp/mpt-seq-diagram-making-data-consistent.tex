@@ -1,8 +1,9 @@
 %!TEX root = ../thesis.tex
 \newcommand{\setupMessage}{$\mathit{M}(n_{i},n_{j}, \mathit{setup\_transition}(\Lambda))$\xspace}
 \newcommand{\setupResponseMessage}{$\mathit{M}(n_{j},n_{i}, \mathit{setup\_transition\_result}(success, log))$\xspace}
-
-\begin{figure}[H]
+\afterpage{
+	\thispagestyle{empty}
+	\begin{figure}[H]
   \centering
 	\subfloat[The commit procedure]{%
       \setlength{\unitlength}{0.8cm}
@@ -51,3 +52,4 @@
   \caption{The setup transition}
   \label{fig:seqSetupTransition}
 \end{figure}
+}

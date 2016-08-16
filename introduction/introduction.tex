@@ -5,22 +5,20 @@
 \section{Preface}\label{sec:introduction:preface}
 \emph{Big Data} is the term used for describing sets of increasing volumes of data, which do not fit in a single machine. There are many sources of Big Data, such as system logs, user website clicks, financial transactions, weather measurements, data from Internet of Things, and many others. 
 
-NoSql databases were created to support Big Data and provide means to analyze it. Databases differ in a ways they represent the data, but the key principle stays the same: store the data for future analysis.
+NoSql databases were created to support storing Big Data and provide means to analyze it. Databases differ in a ways they represent the data, but the key principle stays the same: store the data for future analysis.
 
-NoSql databases span over hundreds, even thousands servers located in different data centers placed around the world connected with internet cable. Number of servers and unreliable network connection presents a problem -- hardware and network failures.
+NoSql databases span over hundreds, even thousands servers located in different data centers placed around the world connected with internet cable. Number of servers and unreliable network connection present a problem -- hardware and network failures.
 NoSql databases are designed to work under presence of such failures, but it comes with a cost.
 
 \section{Motivation}\label{sec:introduction:motivation}
 
 
-Properties of relational databases, such as ACID compliant transactions were sacrificed for availability, scalability and fault tolerance. Multi-partition transactions facilitate the work of developers, since they provide clear reasoning about sets of modifications to the data. These transactions do not exist in Cassandra, but also other NoSql databases lack proper transactions support.
+Properties of relational databases, such as ACID compliant transactions were sacrificed for availability, scalability and fault tolerance. Multi-partition transactions facilitate the work of developers, since they provide clear reasoning about sets of modifications of the data. These transactions do not exist in Cassandra, but also other NoSql databases lack proper transactions support.
 Our motivation is to deliver clear reasoning about the data changes. To this end, we created a new algorithm.
 
-% TODO czemu transakcje są potrzebne
-%Transactions are important for performing operations on different entities and ensuring consistency among them, as well as for other reasons. They simplify making changes to the model, and provide guarantees on top of which applications are built. Without transactions, all guarantees disappear, and suddenly developers have to take care of things which were taken for granted.
 
 \subsection{Current state of transactions in Cassandra}	
-Cassandra is a distributed database with availability guarantees, which makes it troublesome to implement full ACID transactions while preserving its performance, however it supports Lightweight Transactions (\lwt).
+Cassandra is a distributed database with availability guarantees, which makes it troublesome to implement full ACID transactions while preserving its performance. However it supports Lightweight Transactions (\lwt).
 
 Listing \ref{lst:intro:lwtInsert} presents \lwt, which inserts some user called \emph{John} only if it is not already present in the database. \lwt  guarantees that if another client inserts another user to the same row at the same time, then only one operation will succeed. In other words, \lwt ensures that steps of a single operation\footnote{(1) checking if row exists, (2) applying an update} are not interleaved with steps of another operation against the same row, when both operations are running around the same time. Therefore \emph{John} is inserted only once, by one or the other transaction.
 

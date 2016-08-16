@@ -2,7 +2,6 @@
 
 \section{Consensus by Paxos}
 We use \paxos to reach consensus among nodes \nodesTx, which select a single transaction \transaction to commit out of set of concurrent \emph{conflicting} transactions \transactions (Definition \ref{def:conflictingTransactionsSet}). \paxos provides consensus on a single value among many values proposed during the same \paxos round, therefore in order to commit a single transaction \transaction, all conflicting \transactions must participate in the same \paxos round, which is not trivial considering many mutations \mutationsFull, as there is no longer single key $k$, which would identify \paxos round, as it is in \lwt.
-%In order to meet those requirements we have to take a deeper look at how MPP algorithm uses paxos.
 
 \begin{definition}
 \label{def:conflictingTransactionsSet}
@@ -11,13 +10,9 @@ We use \paxos to reach consensus among nodes \nodesTx, which select a single tra
 
 \subsection{Proposed transaction state}
 Our true value is transaction \transactionFull, however mutations \mutationsFull are distributed over nodes
-\nodesOfMutations, thus it is impossible to propose \transaction itself, but it is possible to propose transaction
+\nodesOfMutations. As a result of that it is impossible to propose \transaction itself, but it is possible to propose transaction
 state \txState, which references mutations \mutations, thus proposed \paxos \emph{value} in \mpt is \txState. Any
 node \node{i} can try to commit \transaction given \txState, because \node{i} can check which nodes participate in \transaction and where are private data stored.
-
-%This fact is used to satisfy requirement, as to proposing highest value \ref{sec:mpp:requirements:finishInProgress}.
-%Transaction state always is an entry point to algorithm.
-%It also relates to finishing in progress proposal. Other leader has to be able to finish in progress round having only proposed value. Since transaction state allows to find everything related to transaction then proposed value must be transaction state. 
 
 
 \subsection{Reaching the same Paxos round}
@@ -25,14 +20,7 @@ Conflicting transactions \conflictingTxSet must participate in the same \paxos r
 If there are many transactions \transactions being committed at the same time and those \transactions are in conflict
 with each other, then only single transaction \transaction should get committed and rest of them should be rolled back. Nodes \nodesTx must agree on \paxos value, which is transaction state \txState, thus agree on which \transaction is committed.
 
-%If there are many transactions being committed at the same time, and those transactions are in conflict with each
-other, then only one transaction should get committed and rest of them should be rolled back.
-%That’s serializability property which we need. How to guarantee it? Let’s look at it differently.
-
-%If there are many values being proposed at the same time, only one value should be accepted and nodes should consensus
-about what that value is. In case of transactions, other values are concurrent conflicting transactions that should be rolled back.
-
-Rest of transactions $(\mathcal{C}\text{\txStates} - \text{\txState})$ can be rolledback, as long as they participate in the same \paxos round \paxosRoundId. In case of \lwt \paxosRoundId is determined by \emph{k}, however \mpt supports more than one key, therefore we need a function which maps \txState $\mapsto $ \paxosRoundId with properties: 
+Rest of transactions $(\mathcal{C}\text{\txStates} - \text{\txState})$ can be rolled back, as long as they participate in the same \paxos round \paxosRoundId. In case of \lwt \paxosRoundId is determined by \emph{k}, however \mpt supports more than one key, therefore we need a function which maps \txState $\mapsto $ \paxosRoundId with properties: 
 \begin{enumerate*}[label=\alph*)]
 \item it maps conflicting transactions to the same \paxosRoundId,
 \item it maps non-conflicting transactions to different $\iota'$.

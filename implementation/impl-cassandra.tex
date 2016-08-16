@@ -25,8 +25,7 @@ New transactional consistency levels are \code{TRANSACTIONAL, LOCAL_TRANSACTIONA
 
 \section{Redefined Transaction state}
 We redefine structure of transaction state \txState (introduced in Definition \ref{def:transactionStateChapter3}), as well as transaction items \txItems (presented in Definition \ref{def:transactionItemChapter3}) for implementation purposes, due to structure of $k$ in Cassandra, which is presented in Definition \ref{def:keyCassandra}. Definition \ref{def:transactionStateChapter4} presents new \txState with a unique transaction id. Definition \ref{def:transactionItemChapter4} shows new structure of transaction item \txItem, which we previously defined, as equivalent of key $k$ and we said that \txItem is a reference to the mutation \mutation{k}{v}. Cassandra allows us to have a reference to the \mutation{k}{v} without the need to know the exact $k$, as long as token value of $k$ is known. \txItem and topology \topology determine $N^'$, where private transaction storage \txStorage of each node $n$ can be checked for private data of transaction \transaction and then information from \txItem allows us to find \mutation{k}{v}.
-% Names of keyspace and table are required
- % Cassandra organizes tables in \emph{keyspaces}, thus transaction items need additional information about keyspace to locate data at a node. Transaction item in Cassandra becomes:
+
 
 
 \begin{definition}
@@ -59,19 +58,6 @@ We redefine structure of transaction state \txState (introduced in Definition \r
 \end{definition}
 
 
-% \begin{lstlisting}[language=Java,style=outcode,label={lst:txState},caption={Transaction item in Cassandra}]
-
-% class TransactionItem
-% {
-%    long token
-%    String keyspaceName;
-%    String tableName;
-% }
-% \end{lstlisting}
-
-% Keyspace and table name are always required. Type of a token is just \emph{long} type. Type of transaction id is \emph{UUID with encoded timestamp} \cite{CassandraUUID}.
-
-
 \section{Extending CQL}
 Cassandra Query Language was extended to support new functionality and new statements. Adding any new feature to CQL requires a change to its syntax. We wanted to reuse, as much of functionality, as possible, therefore we modified syntax of: insert, update and delete statements and extended \emph{USING} clause to represent modification in a transaction. Listing \ref{lst:insertUsingTx} presents insert\footnote{which still is the same operation, as update} done in a transaction. Extended \code{using} clause supports \code{transaction} keyword and accepts transaction id. Normal modifications do not have any results in the response. However in case of transactional modification, response has results set with transaction item that must be added to transaction state by the client. Moreover, additional \emph{CQL} syntax is added to: start, commit and rollback transaction \transaction.
 
@@ -81,12 +67,10 @@ Statement starts transaction and has response with result set with a single row,
 
 \paragraph{Commit transaction statement} \code{COMMIT TRANSACTION AS JSON <\txState as json>;}
 Begins the commit procedure of \mpt algorithm. A client has to serialize transaction state \txState into json and attach it to the statement.
-%Client has to serialize Transaction State into json and execute commit statement. Only client has transaction state with all transaction items existing in the cluster for that transaction.
 
 
 \paragraph{Rollback transaction statement} \code{ROLLBACK TRANSACTION AS JSON <\txState as json>;}
 Performs the rollback of a transaction. 
-%Transaction State is also required in order to send rollback messages only to nodes which have some data associated with transaction.
 
 
 \begin{lstlisting}[style=outcode,label={lst:insertUsingTx},caption={Insert statement with using transactional clause}]
@@ -99,7 +83,6 @@ USING TRANSACTION = <transaction_id>;
 
 \section{Private Transaction Storage}
 The private transaction storage implementation uses private \emph{memtables} to store transaction's mutations \mutations. It maps transaction id to its data \code{TransactionData}, which stores mutations mapped by keyspace, table and $k$, thus \txStorage has information about which keys are mutated in transaction \transaction. 
-%Each owned transaction item has corresponding entry in transaction data map.
 When new mutation \mutation{k}{v} is done in transaction \transaction, then \mutation{k}{v} is added to \code{TransactionData}. 
 It is either merged with present mutation for the same partition key, or it is added as new entry in the map.
 
@@ -108,16 +91,12 @@ It is either merged with present mutation for the same partition key, or it is a
 When transaction \transaction is committed at node \node{i}, its mutations are applied to target tables.
 Cassandra uses timestamps to detect most recent writes, therefore all partition updates -- stored in mutations -- 
 which were added to \txStorage at arbitrary time during execution of \transaction, have to be applied to target tables with timestamp that comes from \paxos ballot.
-%have to be written with timestamp that comes from Paxos ballot, therefore timestamps of partition updates have to be modified and  Since mutations were added at arbitrary time during execution of transaction, their timestamps have to be updated to ballot's timestmap.,
 
-% thus binary trees with data stored in \code{PartitionUpdates} have to be transformed into new binary trees with all timestamps updated to ballot's timestamp. Fortunately, Cassandra provides a method to rewrite binary trees with updated timestamps.
 
 
 \subsection{In memory data}
 Implementation of private transaction storage \txStorage stores mutations \mutations only in-memory, thus there is a risk that given many transactions Cassandra runs out of memory. However transactions are supposed to be short lived, thus memory should not be an issue.
-%Number of concurrent transactions can be even controlled by client of the cluster. 
 Another issue can be raised that \mutations are lost when node shuts down and comes back immediately. 
-%In that case transaction’s mutations is at this node. 
 However mutations are saved to quorum of replicas and we expect at least quorum of nodes to stay alive during transaction’s life span, thus in-memory storage is sufficient for transactions.
 
 
@@ -178,38 +157,4 @@ We marked transaction state \txState, as read-only \txState by encoding a future
 The Transaction Index \txIndex detects read-only transaction and return \paxos round id \paxosRoundId of first conflicting \txState it finds. There is no need to register read-only transaction in \txIndex, because it has to be invisible to other transactions.
 Read is performed only when the coordinator has became the leader and completed all in-progress transactions. In such case tables have only committed data. Quorum consistency level is used for normal read, because \mpt relies at least quorum being consistent.
 
-% is represented by the same Transaction State data structure, we need to convey information that it is indeed read-only
- transaction. Simple implementation could add another flag which would be worthless for all other use cases. We decided to convey read-only information in the timestamp of transaction by creating a UUID from timestamp far in the future. This way, there is no need for modifications to Transaction State data structure. This special read-only transaction state is only used between cluster nodes so internal details are not visible to the client.
-
-
-% Transactional read algorithm looks as follows:
-% 1. Select query for key K with transactional CL
-% 2. Create read-only transaction state
-%    1. It has single transaction item with token from K, keyspace and table as in query
-% 1. Run MPP round starting with replicas in pre prepared phase
-% 2. Execute MPP until it has successfully transitioned into prepare phase
-%    1. If there is in progress proposal with transaction, try to complete it
-% 1. Perform normal read with CL=Quorum
-
-
-% \section{Replica Groups Phases Executor}
-% Replica groups phases executor is the implementation of the state machine that performs transitions on replicas and moves them from phase to phase according to the specification.
-
-% Phases need to be compared with each other for their advancement. Enums with proper ordering of enum values is suitable for java implementation.
-
-% \begin{lstlisting}[style=outcode,label={lst:phaseEnum},caption={Phase enum}]
-% public enum Phase
-% {
-%    NO_PHASE,
-%    ROLLBACK_PHASE,
-%    PRE_PREPARE_PHASE,
-%    BEGIN_AND_REPAIR_PHASE,
-%    PREPARE_PHASE,
-%    PROPOSE_PHASE,
-%    COMMIT_PHASE,
-%    AFTER_COMMIT_PHASE;
-% }
-% \end{lstlisting}
-
-% It is important that, begin and repair phase (repairing phase) is less advanced than prepare phase. Otherwise some replicas could try to propose a new value instead of waiting until all replica groups are at least in the prepared phase.
 

@@ -5,7 +5,7 @@ Transactions must run in isolation from each other and provide read-committed is
 
 \subsection{Private transaction storage}
 \label{sec:mpp:privateTxStorage}
-Each mutation \mutation{k}{v} done in transaction \transaction should be stored on replicas responsible for given key keeping it private for that \transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
+Each mutation \mutation{k}{v} done in transaction \transaction should be stored on replicas responsible for given key keeping it private for that \transaction. Each mutation should be isolated from transactions other than \transaction and accessible only by \transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
 
 Each mutation message is executed by \node{i}, but instead of operating on current live data of \database, mutations \mutations are put into private storage presented in Definition \ref{def:privateTransactionStorage}. 
 

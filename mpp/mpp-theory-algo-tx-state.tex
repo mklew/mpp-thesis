@@ -1,13 +1,6 @@
 %!TEX root = ../thesis.tex
 
 \section{Representation of a transaction}
-%Transaction state consists of \emph{unique id} (UUID\footnote{universal unique identifier}) and 
-%A transaction state includes a \emph{unique id} (UUID\footnote{universal unique identifier}) along with 
-%all the operations and data done within \transaction, thus set of \mutation{k}{v} denoted as \mutations.
-
-%Each modification refers to \kv, where \key defines partition, thus \mutation{k}{v} is performed for a single partition. There can be many modifications done within transaction. 
-
-%\subsection{Transaction state}
 Transaction state (Definition \ref{def:transactionStateChapter3}) is used to identify transaction \transaction and to
  track mutations (Definition \ref{def:mutation}) done in \transaction, where each mutation is represented by
  \emph{transaction item} \txItem (Definition \ref{def:transactionItemChapter3}) received in a response to a mutation message. A client \client begins transaction by sending \beginTransactionMessage and receives empty transaction state \txState in a message  \initialTxStateMessage.
@@ -16,7 +9,6 @@ $N^{\mathbb{RF}}(n_{i},n{j},...)\subset \mathit{N}$ by topology function \topolo
 
 \subsubsection{Tracking updates}
 Transaction state \txState changes as transaction \transaction progresses and its set of transaction items has to be updated with new transaction items after each mutation message. 
-%Moreover, each operation should return new transaction item which can be appended to transaction state. 
 
 \begin{algorithm}
   \caption{Updating transaction state after two mutations}
@@ -36,6 +28,6 @@ Transaction state \txState changes as transaction \transaction progresses and it
 \end{algorithm}
 
 
-Appending transaction items is the crucial step of Algorithm \ref{alg:updateTxState}, because a client is responsible for keeping track of all performed operations within transaction. Transaction state is assumed to be source of truth about transaction, which means that is has valid information about which replicas are affected by the transaction.
-Note that, client i.e. database driver has to keep track of transaction items and append them to the transaction state, but an end user of the driver is potentially unaware of transaction items.
+Appending transaction items is the crucial step of Algorithm \ref{alg:updateTxState}, because a client is responsible for keeping track of all performed operations within transaction. Transaction state is assumed to be source of knowledge about transaction, which means that is has valid information about which replicas are affected by the transaction.
+Note that, client i.e. database driver has to keep track of transaction items and append them to the transaction state, but the end user of the driver is potentially unaware of transaction items.
 

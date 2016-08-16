@@ -24,7 +24,7 @@ The algorithm execution occurs in \emph{phases}, which are the following:
 \begin{enumerate*}[label=\alph*)]
 \item idle phase (start phase),
 \item setup phase,
-\item repairng phase (optional),
+\item repair phase (optional),
 \item prepared phase,
 \item accepted phase,
 \item committed phase (end phase),
@@ -32,10 +32,6 @@ The algorithm execution occurs in \emph{phases}, which are the following:
 \end{enumerate*}
 
 Replicas advance in phase after successful \emph{transitions}. The algorithm is done when quorum of each replica group is in an end phase or when a timeout occurs, in which case commit procedure is aborted. Figure \ref{fig:phasesBasicPath} presents the transitions from idle phase to committed phase assuming successful transitions of each $n\in \text{\nodesTx}$. 
-
-%Three phases: prepare, propose and commit, might be already recognizable, since they are parts of the \paxos algorithm. 
-
-%One of phases, specific to \mpt, is a \emph{rollback phase}. Replicas can transition to rollback phase at anytime after setup phase. When replica is in such phase it means that transaction was rolled back by other concurrent transaction at that replica. 
 
 \newcommand{\setupTransition}{$\mathit{setup\_transition()}$\xspace}
 \newcommand{\prepareTransition}{$\mathit{prepare\_transition()}$\xspace}
@@ -48,34 +44,34 @@ Replicas advance in phase after successful \emph{transitions}. The algorithm is 
 \subsubsection{Transitions between phases}
 Transitions are:
 \begin{itemize}
-\item \setupTransition presented on Figure \ref{fig:transitionToSetup}, which can transition to:
+\item \setupTransition presented on Figure \ref{fig:transitionToSetup}, which can lead to:
 	\begin{itemize}
 		\item setup phase, when node \node{i} fails
 		\item committed phase, when transaction state \txState is recorded as committed in transaction log \txLog  
 		\item rolled back phase, when transaction state \txState is recorded as rolled back in transaction log \txLog
 		\item idle phase, when node \node{i} does not respond to the transition to setup message
 	\end{itemize}
-\item \prepareTransition shown on Figure \ref{fig:transitionToPrepare} which can transition to:
+\item \prepareTransition shown on Figure \ref{fig:transitionToPrepare} which can lead to:
 	\begin{itemize}
 		\item committed phase, when transaction state \txState is recorded as committed in transaction log \txLog  
 		\item rolled back phase, when transaction state \txState is recorded as rolled back in transaction log \txLog
-		\item setup phase, when node \node{i} can not promise
+		\item setup phase, when node \node{i} cannot promise
 		\item repair phase, when node \node{i} promises and replies with in-progress \txState
 		\item prepare phase, when node \node{i} promises and does not have in-progress transaction state \txState 
 	\end{itemize}
-\item \repairingTransition presented on Figure \ref{fig:transitionRepairing}, which can transition to:
+\item \repairingTransition presented on Figure \ref{fig:transitionRepairing}, which can lead to:
 	\begin{itemize}
 		\item repairing phase, when repair of in-progress transaction is not done,
 		\item transition to prepared phase, when repair is done
 		\item transition to setup phase, when repair is done, but node \node{i} did not receive promise
 	\end{itemize}
-\item \proposeTransition depicted on Figure \ref{fig:transitionToPropose}, which can transition to:
+\item \proposeTransition depicted on Figure \ref{fig:transitionToPropose}, which can lead to:
 	\begin{itemize}
 		\item accepted phase, when proposal is accepted by \node{i}
 		\item rolled back phase, when node \node{i} refuses the proposal and notifies that transaction state \txState was rolled back
 		\item setup phase, when node \node{i} refuses the proposal
 	\end{itemize}
-\item \commitTransition presented on Figure \ref{fig:transitionToCommitted}, which transitions to committed phase
+\item \commitTransition presented on Figure \ref{fig:transitionToCommitted}, which leads to committed phase
 \end{itemize}
 
 \input{mpp/mpt-diagram-setup-transition.tex}
@@ -104,9 +100,6 @@ Replicas start in \emph{idle phase}, which is a starting phase for all replicas,
 
 Each replica is in one of phases and moves between phases, as a result of phase transitions, which can be either successful transitions or not, in which case replica goes back in phase. 
 For example, \proposeTransition depicted on Figure \ref{fig:transitionToPropose}, can fail if replica refuses to accept a proposal, in which case replica goes back to setup phase and then has to transition again into prepare phase. Figure \ref{fig:allTransitions} presents outcomes of all transitions.
-
-% The most basic optimistic phase transition sequence is: \begin{enumerate*}[label=\alph*)] \item idle phase, \item setup phase, \item prepared phase, \item proposed phase, \item committed phase, \end{enumerate*} after which the transaction is committed. Phase transition sequence, during normal operations, might be different due to concurrent, conflicting transactions and network issues.
-%Its transitions however depend on results of transitions of other replicas and other replica groups.
 
 
 Replica advances in phase only if conditions are met: \begin{description}
@@ -164,7 +157,7 @@ thus $k_1, k_2$ have the same replica group \nodesTx.
 
 Assume that mutation \mutation{k_1}{v_1} was sent to $\mathit{quorum}(\text{\nodesTx})=(n_1, n_2)$, \mutation{k_2}{v_2} was sent to $\mathit{quorum}(\text{\nodesTx})=(n_2, n_3)$ and
 \mutation{k_3}{v_3} was sent to $\mathit{quorum}(\mathit{N^{''}})=(n_6, n_7)$.
- After mutations were added to \txStorage of each $n$, a client \client sends message \txCommitMessage, but before the commit procedure begins, $n_2$ becomes unavailable, in which case \node{i} can proceed, as there are available quorums of each replica group 
+ After mutations were added to \txStorage of each $n$, a client \client sends message \txCommitMessage. However before the commit procedure begins, $n_2$ becomes unavailable, in which case \node{i} can proceed, as there are available quorums of each replica group 
  $\mathit{quorum}(\text{\nodesTx})=(n_1,n_3), \mathit{quorum}(\mathit{N^{''}})=(n_6,n_7)$, 
  but $n_1$ in its \txStorage stores \mutation{k_1}{v_1} and $n_3$ in its \txStorage stores \mutation{k_2}{v_2}. Therefore state of each of their \txStorage is inconsistent, because replicas do not store whole subset of mutations for that replica group: $\text{\mutation{k_1}{v_1}}, \text{\mutation{k_2}{v_2}}$.
 
@@ -174,29 +167,11 @@ We have to achieve data consistency on each node in order to move mutations from
 
 \input{mpp/mpt-seq-diagram-making-data-consistent.tex}
 
-% TODO dodać diagram
-
-% Inputs:
-        % TransactionState - state of transaction, it is source of truth of all modifications that happened during transaction. Originally send by client, further forwarded by leader node to this replica node that has to run setup operation.
-
-
-
-
-
-
-
-
-
 
 
 \subsection{Rollback phase}
 Replica in a rollback phase, means that transaction was rolled back at the given replica node. 
 This phase is special, because even if one replica group decides to move to rollback phase, then all the other replicas have to move to rollback phase. Secondly, there is no transition out of rollback phase. \mpt algorithm ends and yields result that transaction was rolled back.
-% Any replica affected by transaction can transition to rollback  from the following phases: \begin{enumerate*}[label=\alph*)]
-% \item prepare phase,
-% \item propose phase,
-% \item repairing phase.
-% \end{enumerate*}
 
 \transaction cannot be rolled back once its proposal was accepted by all quorums of all replica groups. \paxos guarantees that once proposal is accepted, current or other leader will finish proposal in-progress in that round and effectively transaction will be committed. Process of repairing in-progress transaction is described in repairing phase.
 
@@ -269,14 +244,7 @@ When the leader receives acknowledgments from all replica groups, it can safely 
 It might happen that during prepare leader receives in-progress proposal which means that it has interrupted some other leader which was executing his transaction. As required by \paxos algorithm, in-progress proposal has to be completed before proposer proposes his own value. When replica group sees that it has in-progress proposal, this replica group has to transition to repairing phase. 
 Other replica groups are also affected because they cannot advance in phase until in-progress transaction is repaired. Repaired means that \mpt round is run on in-progress transaction until it finishes with commit or rollback. 
 After repair main transaction might continue. If it turns out that repaired transaction was rolled back, first transaction has a chance to be committed. If however repaired transaction is committed, main transaction will see that it was rolled back and will stop.
-%This means that another \mpt round is nested in main \mpt round.
-%It is slightly different because it can start from more advanced phase.
-%TODO przepisać do końca akapitu
-%If other transaction managed to proposed itself it means that is was in prepared phase hence in setupd phase also. Therefore repairing in progress transaction can start with replicas in setup phase. First transition run on replicas is transition to prepare phase skipping registration in index and making transactions data consistent as it was already done by previous leader.
 
-
-%\subsubsection{Moving in phases and repair phase}
-%Since all replicas have to wait with further transitions until in-progress transactions are repaired for all replica groups, repair phase has to be less advanced than prepare phase, but more advanced than setup phase since without being in setup none of replicas would notice any in-progress transaction. This is an example where replicas have to move back in phase in order to stay in sync with all replicas executing transaction.
 
 
 \subsection{The example of \mpt}
@@ -368,31 +336,3 @@ $N^'_2=(n_3,n_4,n_5)$. Figure \ref{fig:mptExampleInitState} presents current sta
 
 \end{enumerate}
 
-%TODO wczesniej byl tutaj bardziej skomplikowany przyklad, ale wydaje mi sie, że jego opis nie wyjasni za wiele.
-%Moze jako nastepny przyklad? Na pewno musze miec ten prosty bazowy przyklad zeby bylo wiadomo o co chodzi.
-
-% 8. Next transition will do proposal in order to move to proposed phase, however in the meantime other transaction did prepare on node3 and node5 and received promise. Now things should get complicated. 
-% 9. Node 1 gets proposal and accepts it. Replica 1 wants to transition to Proposed phase
-% 10. Node 2 gets proposal and accepts it. Replica 2 wants to transition to Proposed phase
-% 11. Node 3 receives proposal, but it promised to accept higher ballot therefore it responds with refusal. Replica 3 has failed to transition, it is no longer prepared, because it sees that proposal was refused. It knows that it is at most in setupd phase. 
-% 12. Node 4 gets proposal and accepts it. Replica 4 wants to transition to Proposed phase
-% 13. Node 5 does exactly same as Node 3.
-% 14. Phases of replicas in RG1 were { node 1 -> prepared, node 2 -> prepared, node 3 -> prepared } and in RG2 { node 3 -> prepared, node 4 -> prepared, node 5 -> prepared }
-%         After transition replica groups look as following:
-
-
-% RG1 { node 1 -> proposed, node 2 -> proposed, node 3 -> setupd }
-% RG2 { node 3 -> setupd, node 4 -> proposed, node 5 -> setupd }
-
-
-% Quorum of replicas in RG1 is in proposed phase.
-% Quorum of replicas in RG2 is in setupd phase.
-% Minimum phase among replica groups is setup phase.
-%         Therefore replicas cannot advance further than setupd phase. However node 1 for example has already advanced to proposed phase. It will be forced to go back in phase in order to stay in sync with all replica groups. It does not necessarily mean that it has repeat operation. Actual transition performed on replica depends on current phase for all replica groups and current phase of replica. Replica can just do nothing and wait till rest of replicas catch up in phase.
-% 1. Phase of all replica groups is setupd phase.
-% 2. Next transition has to transition replica from its phase to prepared phase.
-% 3. Node 1, node 2, node 4 can do a no-operation and just wait.
-% 4. Node 3, node 5 have to do actual prepare request with new high ballot
-% 5. Phases after transitions are evaluated and algorithm continues.
-        
-% Above example shows how different \mpt is from LWT. Example shows how phase depends on all replica groups which depend on replicas and all the other replica groups. All of that is required to simply have replicas that stay in sync and where each replica group has satisfied quorum. That is requirement which comes from paxos and all these dependencies relations make it possible.

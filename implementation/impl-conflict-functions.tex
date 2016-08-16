@@ -1,16 +1,11 @@
 %!TEX root = ../thesis.tex
 
 \subsection{Conflicting transactions}\label{sec:impl:conflictFunctions}
-In order for node \node{i} to know whether two transactions are conflicting it requires to compare their mutations and check whether they mutate the same keys, however keys are unknown to transaction items \txItems, thus
-given transaction states \txStateOne and \txStateTwo such check requires network messages to replicas, which compare mutations in private transaction storage of \txStateOne and \txStateTwo. 
+In order for node \node{i} to know whether two transactions are conflicting it requires a comparison of their mutations and a check whether they mutate the same keys. However keys are unknown to transaction items \txItems, thus
+given transaction states \txStateOne and \txStateTwo such check requires sending network messages to replicas, which compare mutations in private transaction storage of \txStateOne and \txStateTwo. 
 Distributed algorithms should minimize round trips, because they cost resources and decrease performance \cite{rotem2006fallacies}.
 
-Local conflict functions, which use only transaction state \txState, as it is without accessing mutations \mutations on all replica nodes affected by transaction \nodesTx do not require network, but as a tradeoff have false positives, are presented in Figure \ref{fig:conflictFunctions}. 
-
-% TODO tabelka plus definicje
-% Przepisać początek (zrobione). Transakcje konflikutją jeśli coś tam coś tam. Dalej rozwinąć kiedy rozwinąć i jakie są opcje i jakie są konsekwencje tych opcji. Mogą być funkcje takie które robią Round tripy i takie które ich nie robią.
-
-% TODO wdrozyc poprawki z review i zaznaczonych fragmentow
+Local conflict functions, which use only transaction state \txState as it is (without accessing mutations \mutations on all replica nodes affected by transaction \nodesTx) do not require network messaging, but as a tradeoff may raise false positives, as presented in Figure \ref{fig:conflictFunctions}. 
 
 \begin{figure}
 \centering
@@ -37,7 +32,6 @@ If transactions \transactioni{1}, \transactioni{2} modify a row with key $k_{1}$
 
 Conflict functions presented in Figure \ref{fig:conflictFunctions} eliminate network messages and put bounds on number of concurrent transactions, but with a cost of false positives. In principle the transaction index \txIndex can use any conflict function, which satifies its properties, thus it is possible to develop a new function, which may use network messages to detect conflicts, but such function would decrease performance of the solution. 
 
-%We presented functions which do not use network messages, but alternatives exist and could be implemented.
 
 
 \subsection{Configurable conflict functions}

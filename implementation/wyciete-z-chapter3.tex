@@ -68,41 +68,6 @@ PrivateTransactionStorage {
 Private transaction storage satisfies requirement of performing many operations within \transactionj. Each \mutation{k}{v} is stored in the private storage and mapped to a \txItem.
 
 
-% To było zakomentowane już po przepisaniu na formę algorytmu.
-%\subsection{Algorithm for adding operations to private transaction storage}
-
-% \begin{figure}[hbt]
-%   \begin{center}
-%   \setlength{\unitlength}{0.7cm}
-%   \subfloat[Client's request.]{
-%     INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
-%   }\qquad
-%   \subfloat[Coordinator's algorithm.]{
-%     Request is received by some node in cluster that becomes coordinator C for that request
-%   }\qquad
-%   \subfloat[Replica's algorithm.]{
-    
-%   }
-%   \end{center}
-%   \caption{Adding operations to private transaction storage}
-%   \label{fig:addToPrivateMemtable}
-% \end{figure}
-
-% 1. Clients send a request INSERT INTO users (user_id, name) VALUES (1, ‘John’) within transaction id = txId
-% 2. Request is received by some node in cluster that becomes coordinator C for that request
-% 3. C identifies replicas responsible
-%    1. C sees that users table has key column user_id. 
-%    2. It received user_id=1
-%    3. C computes token using key value = 1 
-%    4. C checks in topology which replicas are responsible for that token
-%    5. C finds replicas
-% 1. C routes request to replica nodes
-% At each replica:
-%    1. Modification is added to private transaction storage of transaction with id 1001
-%    2. Replica replies with success
-% 1. C waits until quorum responds with success
-% 2. C responds to client with transaction item
-% 3. Client receives transaction item and merges it to its current transaction state
 
 % Transaction Log
 The log stores information off memory, in dedicated table, in order to preserve information about transaction after it is removed from \emph{Transaction Index}.

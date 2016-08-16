@@ -37,20 +37,18 @@ If the database remains consistent, then it cannot accept writes, which would br
 
 \subsection{Partitioning}
 Partitioning is a technique of distributing data between servers. 
-It divides the whole dataset into independent subsets and assigns these subsets to nodes. 
-Moreover, partitioning provides efficient look up of data, because it knows the assignment. In order to perform any operation, the partition needs to be located first. 
+It relies on dividing the whole dataset into independent subsets and assigns these subsets to nodes. 
+Moreover, partitioning provides efficient look up of data, since assignment rules are known. In order to perform any operation, the partition needs to be located first. 
 
 Partitioning increases data processing capabilities and total capacity of a database, since different nodes are responsible for different chunks of data. 
 
 \subsection{Replication}
-Replication is another technique, commonly used with partitioning to copy data to one or more different nodes in order to increase fault tolerance. If data are available only on a single node, then SPOF exists, but if data are available on two nodes or more, then data are accessible even if a node fails. 
+Replication is another technique, commonly used with partitioning to copy data to one or more different nodes in order to increase fault tolerance. If data are available only on a single node, then SPOF exists. On the other hand if data are available on two nodes or more, then data are accessible even if a node fails. 
 
-Replication provides means of achieving scalability, performance, and fault tolerance, but it also is the root of the problems with the consistency, since data are present on different nodes, then any consistent modification requires communication with different nodes, and that communication, as well as the nodes, might be unreliable, and might fail. 
+Replication provides means of achieving scalability, performance, and fault tolerance, but it also is the root of the problems with the consistency, since data are present on different nodes, any consistent modification requires communication with different nodes. That communication, as well as the nodes, might be unreliable, and occasionally fail. 
 
 \begin{definition}
   \label{def:replicationFactor}
   \emph{Replication factor} \emph{RF} is the number of data copies stored in the cluster on different nodes.
 \end{definition}
-
-%A replication factor of $3$ means that three copies of the data exist across the cluster on $3$ different nodes.
 

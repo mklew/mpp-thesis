@@ -8,15 +8,6 @@ As we mentioned before, the only transactions supported by Cassandra are LWT.
 \lwt is limited to a single partition, thus \lwt cannot be used for atomic updates of many partitions, thereby this paper presents a new algorithm, which overcomes limitations of \lwt providing multi partition transactions.
 Table \ref{fig:mppVsLwt} presents comparison of the proposed algorithm to \lwt.
 
-% \begin{figure}[hbt]
-%   %\centering
-%   \setlength{\unitlength}{1.3cm}  
-%   \subfloat{
-%     \renewcommand{\tabcolsep}{0.1cm}
-%     \resizebox{\textwidth}{!}{}
-%   }
-  
-% \end{figure}
 \begin{table}
 \begin{tabular}{c||c|c}
       \toprule
@@ -42,10 +33,7 @@ Deadlocks might happen, but are detected by the database, and are dealt with by 
 
 MarkLogic's transactions rely on the locks that provide pesimistic concurrency control. Holding locks causes contention and blocks other transasctions. 
 The algorithm proposed in this paper is lock-free.
-% By principle, the solution with locks provides less performance, due to contention and waiting on the locks, than the lock-free solution proposed in this paper, which uses \paxos algorithm.
 
-% Bazy które wspierają jakieś transakcje
-% ACID transactions
 
 \subsection{FoundationDB}
 FoundationDB is a NoSql database with ACID compliant transactions, strong scalability and SQL querying capabilities, that chooses \emph{CP} in terms of \emph{CAP} theorem.
