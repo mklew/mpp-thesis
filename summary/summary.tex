@@ -4,9 +4,9 @@
 
 \section{Summary}
 Objective of this work was to design an algorithm for multi-partition transactions with read-committed isolation. The algorithm was meant to be scalable and should have no single point of failure. Objective of this work was achieved. We presented \mpt algorithm, which can be applied in any distributed key-value storage that supports replication.
-We chose Cassandra for the implementation of \mpt, since it already supports transactions for a single partition. Our tests determined that our algorithm and its implementation are correct. We used \paxos algorithm, as part of the solution, which provided us with the distributed consensus, which we used to select single transaction among all conflicting transactions that can be committed. Moreover, we used private tables for storing operations done in a  transaction, which allowed us to provide isolation from other transactions, as well as from main tables. We introduced conflict functions and transactions index, which group conflicting transactions, thus forcing them to participate in the same \paxos round which guarantees that only one of them can be committed.
+We choose Cassandra for the implementation of \mpt, since it already supports transactions for a single partition. Our tests proved that our algorithm and its implementation are correct. We used \paxos algorithm, as part of the solution, which provided us with the distributed consensus, which we used to select a single transaction among all conflicting transactions that can be committed. Moreover, we used private tables for storing operations done in a  transaction, which allowed us to provide isolation from other transactions and from original tables. We introduced conflict functions and transactions index, which group conflicting transactions forcing them to participate in the same \paxos round which guarantees that only one of them can be committed.
 
-Hence we developed the new algorithm, which expands state of transactions in NoSql databases and 
+Hence we developed the new algorithm, which expands the state of transactions in NoSql databases and 
 removes the need to manually maintain consistency during multi-partition operations 
 while preserving fault tolerance and scalability. 
 
@@ -15,12 +15,12 @@ while preserving fault tolerance and scalability.
 The research described in this work presents the following directions:
 
 \paragraph{Serializable isolation level}
-The goal of the algorithm was to provide multi-partition transactions with read-committed isolation level. However it is possible to achieve more strict, serializable isolation, in which transaction would be rolled back if other conflicting transaction was committed after the former transaction started. 
+The goal of the algorithm was to provide multi-partition transactions with read-committed isolation level. However it is possible to achieve more strict, serializable isolation, in which a transaction would be rolled back if another conflicting transaction was committed after the former transaction started. 
 
 Current implementation assigns transaction id to each transaction, which is unique and encodes a timestamp, thus it is known when a transaction was started. All values stored in Cassandra have metadata with timestamp of last modification, thus during the commit procedure we could check whether keys modified by a transaction have timestamps which are after timestamp of the transaction, in which case the transaction would be rolled back.
 
 \paragraph{Reducing exchange of messages}
-The commit procedure of \mpt algorithm requires sending multiple transition messages to each node in each replica group. Exchange of messages could be reduced if we merged setup phase with prepare phase. However that would increase contention among leader nodes, because subset of replicas could setup and promise to the new leader, whereas other subset of replicas could not setup.  In that case the leader could not continue with the commit procedure, but some nodes already promised to the leader and would refuse proposal of other leader, thus cause additional round of messages. 
+The commit procedure of \mpt algorithm requires sending multiple transition messages to each node in each replica group. Exchange of messages could be reduced if we merged setup phase with prepare phase. However that would increase contention among leader nodes, because subset of replicas could setup and promise to the new leader, whereas other subset of replicas could not setup.  In that case the leader could not continue with the commit procedure, but some nodes already promised to the leader and would refuse proposal of another leader, thus cause additional round of messages. 
 
 Therefore there is a tradeoff between reduced message exchange and higher risk of contention with other proposers. Further work would be required to test and analyze results of such merge and conclude whether it is correct optimization.
 

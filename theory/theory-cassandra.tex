@@ -211,7 +211,7 @@ Compaction is a process of merging SSTables together so that old versions of row
 
 \node[database,text height=1.5cm] (commitLog) at (0,0) {Commit log};
 
-\draw[thick, dashed, line width=1mm, black] (-5,5) node[below] {Memory} node[above] {Disk} -- ++(15,0);
+\draw[thick, dashed, line width=1mm, black] (-5,5) node[below] {Disk} node[above] {Memory} -- ++(15,0);
 
 
 \node[draw=blue,line width=5mm, align=center,thick,text height=2cm, rounded corners=0.55cm, text width=3cm,inner sep=2pt] (memtable) at (4,8) {Memtable}; 
@@ -270,9 +270,9 @@ Figure \ref{fig:readPath} presents Cassandra's read path. There are several stag
 
 \node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=0.8cm, text width=2cm,inner sep=2pt] (partitionSummary) at (-4,3) {Partition summary};
 
-\node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=3cm, text width=0.5cm,inner sep=2pt] (compressionOffsets) at (-9,3) {Compression offsets};
+\node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=3cm, text width=2cm,inner sep=2pt] (compressionOffsets) at (-9,3) {\small{Compression offsets}};
 
-\node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=2cm, text width=2cm,inner sep=2pt] (partitionIndex) at (-6,-4) {Partition index};
+\node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=2cm, text width=2cm,inner sep=2pt] (partitionIndex) at (-4,-4) {Partition index};
 
 \node[draw=blue,line width=5mm, rounded corners=0.1cm,align=center,thick,text height=4cm, text width=2cm,inner sep=2pt] (data) at (-11,-4) {Data};
 
@@ -281,7 +281,7 @@ Figure \ref{fig:readPath} presents Cassandra's read path. There are several stag
 \draw[thick,black] (bloomFilter) -- ++(0,1) node[bloomPositive] {};
 \draw[thick,black] (bloomFilter) -- ++(0,-1) node[bloomNegative] {};
 
-\draw[thick, dashed, line width=1mm, black] (-12,0) node[below] {Memory} node[above] {Disk} -- ++(13,0);
+\draw[thick, dashed, line width=1mm, black] (-12,0) node[below] {Disk} node[above] {Memory} -- ++(13,0);
 
 
 \draw[thick,black, ->] (bloomFilter) -- ++(5,0) -- (partitionKeyCache);
@@ -290,7 +290,7 @@ Figure \ref{fig:readPath} presents Cassandra's read path. There are several stag
 
  \draw[thick,black, ->] (partitionKeyCache) -- ++(0,-9) -- ++(-9,0) -- (compressionOffsets);
 
- \draw[thick,black, ->] (partitionSummary) -- ++(0,-7) -- (partitionIndex);
+ \draw[thick,black, ->] (partitionSummary) -- (partitionIndex);
 
 \draw[thick,black, ->] (partitionIndex) -- ++(-2,0) -- ++(0,7) -- (compressionOffsets);
 

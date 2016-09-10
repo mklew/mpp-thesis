@@ -38,7 +38,7 @@ Conflict functions presented in Figure \ref{fig:conflictFunctions} eliminate net
 The implementation provides configuration of conflict functions per column family, thus supporting different choice of conflict functions for different tables depending on intended workload.
 
 Per table configuration is an additional feature to the algorithm implemented using column family metadata, which can be changed dynamically at runtime of the cluster by executing \code{ALTER TABLE} commands. Listing \ref{lst:configureConflictFunctions} shows how the conflict function is set to resolve conflict on the same token range slice number, which puts bounds on number of concurrent transactions in table \code{sliced_counters} to $2000$ transactions. 
-
+\pagebreak
 \begin{lstlisting}[style=outcode,label={lst:configureConflictFunctions},caption={Configuring conflict function on Cassandra table}]
 CREATE TABLE counters.sliced_counters(
   id uuid, counter1 int, counter2 int, 

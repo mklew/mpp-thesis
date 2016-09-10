@@ -1,13 +1,13 @@
 %!TEX root = thesis.tex
 \newpage
 \paragraph{Abstract} 
-Transactions in non-relational databases, are a rare feature, but a useful and desirable one if present, such as Light Weight Transactions (\lwt) in Cassandra.
+Transactions in non-relational databases, are a rare feature, but a useful and desirable one, such as Light Weight Transactions (\lwt) in Cassandra.
 The problem with \lwt is lack of a multi partition operations, which limits the practical applications, and puts the burden of maintaining the data consistency in other ways on the users.
 The proposed multi-partition transactions algorithm supports transactions spanning many rows with read-committed isolation, and has a scalable design without a single point of failure.
 We achieved this by using \paxos algorithm for the distributed consensus, private memtables for isolation, and other techniques, which reduce memory footprint, and increase scalability.
 We implemented proof of concept in Cassandra, tested it in a cluster, and confirmed correctness of the algorithm.
 
-\paragraph{Keywords:} paxos, distributed transactions, cassandra, multi-partition transactions
+\paragraph{Keywords:} paxos, distributed transactions, cassandra, database, NoSql
 
 \begin{center}
 %\vspace*{\baselineskip}
@@ -15,12 +15,12 @@ We implemented proof of concept in Cassandra, tested it in a cluster, and confir
       Transakcje dla wielu partycji w Cassandrze  \\
 \end{center}
 \paragraph{Streszczenie} 
-Transakcje w nie relacyjnych bazach danych występują rzadko, ale są przydatne i porządne przykładem czego są \emph{Lekkie transakcje} (\lwt) \mbox{w Cassandrze.}
-Problem w \lwt to brak wsparcia operacji dla wielu partycji, który ograniczna praktyczne zastosowania i przenosi odpowiedzialność za dbanie \mbox{o spójność} danych na końcowych użytkowników.
+Transakcje w nierelacyjnych bazach danych występują rzadko, ale są przydatne i porządane przykładem czego są \emph{Lekkie transakcje} (\lwt) \mbox{w Cassandrze.}
+Problem w \lwt to brak wsparcia operacji dla wielu partycji, który ogranicza praktyczne zastosowania i przenosi odpowiedzialność za dbanie \mbox{o spójność} danych na końcowych użytkowników.
 Proponowany algorytm wspiera operacje dla wielu partycji zapewniając izolację na poziomie \emph{read-committed} jak również skalowalność systemu oraz brak pojedynczego punktu awarii.
-Osiągneliśmy te właściwości używając algorytmu Paxos do rozproszonego konsensusu, prywatnych tabel dla izolacji i innych metod, które obniżają zużycie pamięci i zwiększają skalowalność.
+Osiągnęliśmy te właściwości używając algorytmu Paxos do rozproszonego konsensusu, prywatnych tabel dla izolacji i innych metod, które obniżają zużycie pamięci i zwiększają skalowalność.
 Zaimplementowaliśmy algorytm \mbox{w Cassandrze}, przetestowaliśmy go w klastrze i potwierdziliśmy jego poprawność.
 
-\paragraph{Słowa kluczowe:} paxos, rozproszone transakcje, cassandra, transakcje dla wielu partycji
+\paragraph{Słowa kluczowe:} paxos, rozproszone transakcje, cassandra, baza danych, NoSql
 
 \pagenumbering{gobble}
