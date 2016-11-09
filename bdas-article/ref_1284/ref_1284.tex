@@ -68,11 +68,23 @@ located in different various physical locations and are designed to overcome ind
 failures and network partitions. They provide guarantees for certain behaviour in face of such
 problems which usually means they eventually achieve the consistency of data at some point.
 
-Properties of relational databases, such as ACID compliant transactions are usually sacrificed 
-for availability, scalability and fault tolerance. Multi-partition transactions facilitate 
-the work of developers, since they provide clear reasoning about sets of modifications of the data. 
-These transactions do not exist in Cassandra, but also other NoSql databases lack proper 
-transactions support. 
+To this end, the ensemble of data is cut into groups of records which are called partitions. 
+Partitions are data replication and sharding units, which means that they are distributed across 
+the cluster in one or more copies so that the load can be balanced among different server nodes,
+and the availability of a distinct chunk of data is increased.
+
+Properties of relational databases, such as ACID compliant transactions are usually sacrificed in
+NoSQL-like solutions in favour of high availability, fault tolerance and scalability. Though, 
+there exist some solutions which can help to overcome such deficiencies. Unfortunately they come
+with either functional or performance limitations which makes them difficult to adopt. 
+The functional limitations include constraining a transaction to a single partition of data
+or the lack of certain isolation levels. The performance problems are usually related to the 
+use of pessimistic locks to achieve a certain level of consistency.
+
+We overcame those problems by modifying Cassandra database. Cassandra is proven to be performant 
+and provide some basic transaction support known as LWT. Although the usability of LWT is limited,
+the model of storing data makes it a perfect platform for building transaction support extension
+which features good performance and rich functionality.
 
 % TODO - jacek
 
