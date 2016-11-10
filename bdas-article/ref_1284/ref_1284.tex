@@ -21,8 +21,112 @@
 \usepackage{amssymb}
 \setcounter{tocdepth}{3}
 \usepackage{graphicx}
+\usepackage{xspace}
 
 \usepackage{url}
+\usepackage[inline]{enumitem}
+
+
+\usepackage{mathtools}
+
+
+% Nowe oznaczenia w Outline
+\newcommand{\nodes}{$\mathit{N}$\xspace}
+\newcommand{\nodesTx}{$\mathit{N'}$\xspace}
+\newcommand{\transaction}{$\Delta$\xspace}
+\newcommand{\transactionOne}{$\Delta_1$\xspace}
+\newcommand{\txOne}{$\Delta_{1}$\xspace}
+\newcommand{\txTwo}{$\Delta_{2}$\xspace}
+\newcommand{\transactionj}{$\Delta_{j}$\xspace}
+\newcommand{\transactionm}{$\Delta_{m}$\xspace}
+\newcommand{\transactioni}[1]{$\Delta_{#1}$\xspace}
+\newcommand{\txStateM}{$\Lambda_{new}$\xspace}
+\newcommand{\transactions}{$\{\Delta_{i}, \Delta_{j}, ...\}$\xspace}
+\newcommand{\txStates}{$\{\Lambda_{i}, \Lambda_{j}, ...\}$\xspace}
+\newcommand{\conflictFunction}{$\zeta (\text{\txStateOne, \txStateTwo}) \mapsto ( \mathcal{C}_1, \mathcal{C}_2)$\xspace}
+
+\newcommand{\txLog}{$\mathcal{L}$\xspace}
+\newcommand{\conflictingTxSet}{$\mathcal{C}\text{\txStates}$\xspace}
+% messages
+\newcommand{\beginTransactionMessage}{$\mathit{M}(c, n, \mathit{begin\_transaction}())$\xspace}
+\newcommand{\initialTxStateMessage}{$\mathit{M}(n, c, \mathit{initial\_transaction\_state}(\Lambda_{0}))$\xspace}
+\newcommand{\selectMessage}{$\mathit{M}(c,n,select(k))$\xspace}
+\newcommand{\updateTxStateMessage}{$\mathit{M}(c, n, \mathit{update\_transaction\_state}(\lambda))$\xspace}
+\newcommand{\txRollbackMessage}{$\mathit{M}(c,n,\mathit{transaction\_rollback}(\Lambda))$\xspace}
+\newcommand{\rollbackMessage}{$\mathit{M}(n_{i}, n_{j}, \mathit{rollback}(\Lambda))$\xspace}
+\newcommand{\nodesOfMutations}{$(\tau(k_1) \cup \tau(k_2) \cup ... ) =  \text{\nodesTx}\in\mathit{N}$\xspace}
+
+\newcommand{\txCommitMessage}{$\mathit{M}(c,n, \mathit{transaction\_commit}(\Lambda))$\xspace}
+\newcommand{\txCommitResonseMessage}{$\mathit{M}(n_{i},c,\mathit{transaction\_commit\_response}(committed))$\xspace}
+
+\newcommand{\insertMessage}{$\mathit{M}(c, n, \mathit{upsert(\text{\txState}, k,v)})$\xspace}
+\newcommand{\NRF}{\mathit{N^{\mathbb{RF}}}}
+\newcommand{\database}{$\Omega$\xspace}
+\newcommand{\mutation}[2]{$\delta(#1, #2)$\xspace}
+\newcommand{\mutations}{$\{\delta_{1}, \delta_{2}, ...\}$\xspace}
+\newcommand{\topology}{$\tau$\xspace}
+
+\newcommand{\topologyItem}[2]{$\tau(\text{\txItemi{#1}})) \mapsto \mathit{#2}$}
+
+
+\newcommand{\paxosRoundId}{$\iota$\xspace}
+\newcommand{\paxosRoundIdi}[1]{$\iota_{#1}$\xspace}
+\newcommand{\mutationsFull}{$\{\delta_{1}(k_1, v_1), \delta_{2}(k_2, v_2), ...\}$\xspace}
+\newcommand{\mutationsFullEnd}{$\{\delta_{1}(k_1, v_1), \delta_{2}(k_2, v_2), ..., \delta_{i}(k_i, v_i)\}$\xspace}
+
+\newcommand{\transactionFull}{$\Delta(\delta_{1}, \delta_{2}, ...)$\xspace}
+
+
+
+\newcommand{\txItem}{$\lambda$\xspace}
+\newcommand{\txItems}{$\{\lambda_{1}, \lambda_{2}, ...\}$\xspace}
+\newcommand{\txItemi}[1]{$\lambda_{#1}$\xspace}
+\newcommand{\txState}{$\Lambda$\xspace}
+\newcommand{\txStatei}[1]{$\Lambda_{#1}$\xspace}
+\newcommand{\txStateOne}{$\Lambda_1$\xspace}
+\newcommand{\txStateTwo}{$\Lambda_2$\xspace}
+\newcommand{\txStateCommitted}{$\Lambda_{learnt}$\xspace}
+
+\newcommand{\txIndex}{$\chi$\xspace}
+\newcommand{\txStorage}{$\omega$\xspace}
+% Shortcuts
+\newcommand{\paxos}{\emph{Paxos}\xspace}
+\newcommand{\mpt}{\emph{MPT}\xspace}
+\newcommand{\lwt}{\emph{LWT}\xspace}
+\newcommand{\RF}[1]{\emph{$\mathbb{RF}=#1$}\xspace}
+\newcommand{\RFalone}{$\mathbb{RF}$\xspace}
+\newcommand{\RFaloneInMath}{\mathbb{RF}}
+\newcommand{\RFalonePrim}{$\mathbb{RF'}$\xspace}
+
+\newcommand{\ballot}{$\beta$\xspace}
+\newcommand{\coordinator}{$C$\xspace}
+\newcommand{\paxosValue}{$v$\xspace}
+
+\newcommand{\client}{$c$\xspace}
+
+
+\newcommand{\tx}[1]{$t_{#1}$\xspace}
+
+\newcommand{\node}[1]{$n_{#1}$\xspace}
+
+\newcommand{\N}[1]{$N=#1$\xspace}
+\newcommand{\mptrequest}[2]{$r_{#1\mapsto#2}$\xspace}
+
+\newcommand{\clientReq}[1]{$req_{c\mapsto n_{#1}}$\xspace}
+\newcommand{\nodeReqResponse}[1]{$resp_{n_{#1}\mapsto c}$\xspace}
+\newcommand{\nodeMessage}[2]{$m_{n_{#1} \mapsto n_{#2}}$\xspace}
+
+\newcommand{\key}{$k$\xspace}
+\newcommand{\keyi}[1]{$k_{#1}$\xspace}
+\newcommand{\kvalue}{$v$\xspace}
+\newcommand{\kvaluei}[1]{$v_{#1}$\xspace}
+\newcommand{\kv}{$(k, v)$\xspace}
+\newcommand{\kvi}[2]{$(k_{#1}, v_{#2})$\xspace}
+\newcommand{\mutationsi}[1]{$\Delta(t_{#1})$\xspace}
+
+%\newcommand{\topology}[1]{$\tau(T, H, k) \mapsto \{ \text{#1} \}$}
+\newcommand{\topologyTk}[1]{$\tau(T, tk) \mapsto \{\text{ #1 }\}$}
+
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
 \noindent\keywordname\enspace\ignorespaces#1}
 
@@ -99,6 +203,320 @@ which features good performance and rich functionality.
 % LWT
 
 \section{Multi partition transactions algorithm}
+
+\subsection{Outline}
+Database $\Omega$ consists of key-value pairs $\{(k_{i},v_{j}), (k_{k},v_{m}),...\}, k_i\in\mathit{K}, v_i\in\mathit{V}$ stored by cluster of nodes $\{n_1, n_2, ...\}, n_i\in\mathit{N}$.
+Changes to data are represented by \emph{mutations} $\delta(k,v)$ (Definition \ref{def:mutation}). 
+Each mutation is stored in nodes identified by topology $\tau$ (Definition \ref{def:topology}).
+Transaction is a set of mutations $\Delta(\delta_{1}, \delta_{2}, ...)$.
+
+\begin{definition}
+  \label{def:mutation}
+  \emph{Mutation} denoted, as \mutation{k}{v} is an operation, such as upsert (insert or update)\footnote{distinction between insert and update would require its own transaction} or removal of key-value pair \kv. 
+\end{definition}
+
+\begin{definition}
+\label{def:topology}
+\emph{Topology} is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N}^{\mathbb{RF}}$ which for a given $k$ returns a set of replica nodes of size $\mathbb{RF}$. 
+\end{definition}
+
+
+Client $c_{i}\in\mathit{C}$ is an actor, which performs transactions $\Delta_{1}, \Delta_{2}, ...$ and communicates to a cluster \nodes using messages $\mathit{M}$. Client \client begins a transaction \transaction by sending a message \beginTransactionMessage to any node $n\in\mathit{N}$ followed by receiving a message 
+\initialTxStateMessage, which includes 
+initial \emph{transaction state} (Definition \ref{def:transactionStateChapter4}), which will reflect all subsequent changes done in \transaction.
+
+During the transaction \transaction, client \client sends messages of two types:
+ mutations and selects \selectMessage. 
+ All mutations within a transaction \transaction are isolated from other transactions - they are private to the enclosing transaction until it is committed.
+For the duration of the transaction,
+mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}. Select operations query against current state of the database, thus transactions provide read-committed isolation level.
+
+After each mutation client \client receives a message \updateTxStateMessage, which includes a transaction item \txItem referencing that mutation. A client is responsible for tracking changes performed in a transaction, thus it has to append all the received transaction items to the initial transaction state \txStatei{0}.
+
+Cassandra allows us to have a reference to the \mutation{k}{v} without the need to know the exact $k$, as long as token value of $k$ is known. \txItem and topology \topology determine $N'$, where private transaction storage \txStorage of each node $n$ can be checked for private data of transaction \transaction and then information from \txItem allows us to find \mutation{k}{v}.
+
+\begin{definition}
+\label{def:keyCassandra}
+\emph{Key} -- key in Cassandra $k(k_p,k_c)$ consists of two keys: 
+\begin{enumerate*}[label=\alph*)]
+\item $k_p$ is a partitioning key, which is used by topology \topology to determine $\mathit{N}^{RF}_k$,
+\item $k_c$ is a clustering key, which determines column in wide rows.
+\end{enumerate*}
+\end{definition}
+
+
+\begin{definition}
+\label{def:tokenChapter4}
+\emph{Token} is a value computed by hash function from key $k_p$, which is used by topology \topology to determine replicas $\NRF_k$.
+\end{definition}
+
+\begin{definition}
+\label{def:transactionItemChapter4}
+\emph{Transaction item} $\lambda(\mathit{keyspace}, \mathit{table}, \mathit{token})$ 
+is a reference to a single mutation \mutation{k}{v} of transaction \transaction, which indicates that replica nodes of $k$ store \mutation{k}{v} in \emph{private transaction storage}.  
+It is a triple with \begin{enumerate*}[label=\alph*)]
+\item $\mathit{keyspace}$ -- name of keyspace,
+\item $\mathit{table}$ -- name of table,
+\item $\mathit{token}$ -- value of token (Definition \ref{def:tokenChapter4}) computed for a Cassandra key (Definition \ref{def:keyCassandra}).
+\end{enumerate*}
+\end{definition}
+
+\begin{definition}
+\label{def:transactionStateChapter4}
+\emph{Transaction state} $\Lambda(\mathit{id}, \{\lambda_{i}, \lambda_{j}, ...\})$ reflects changes done in transaction \transaction. Transaction state allows to identify nodes $N' \subset N$, which are affected by \transaction and store its \mutations. It is a pair of unique id of type \emph{timeuuid}, which is UUID with encoded timestamp \cite{CassandraUUID} and a set of transaction items (Definition \ref{def:transactionItemChapter4}).
+\end{definition}
+
+
+When client \client finishes its planned operations transaction \transaction can be either committed or rolled back. To perform rollback client sends \txRollbackMessage, and then $n$ sends out rollback messages to other nodes \rollbackMessage, where nodes $\{n_j,...,n_k\}$ are identified by \txItems, which 
+makes them remove private storage for that transaction
+and mark \transaction as rolled back in 
+an another local data structure called \emph{transaction log}.
+
+In order to commit transaction \transaction a client \client sends message \txCommitMessage and subsequently \node{i} becomes the proposer of the transaction and is responsible for orchestrating distributed consensus round among nodes affected by transaction \transaction.
+ %referenced by transaction items. 
+When consensus is reached each node moves private data of transaction \transaction from private transaction storage to the main storage and marks \transaction, as committed in the transaction log. The client \client receives message \txCommitResonseMessage about successfully committed transaction.
+
+There can be many concurrent transactions and some of them mutate values associated with the same keys, thus concurrency control guaranteeing that interfering transactions are not committed at the same time is required. Commit procedure solves this problem by grouping such transactions and performing distributed consensus round, which selects a single transaction that is committed and rollbacks the others.
+Commit procedure uses two local data structures \emph{transaction index}, which is responsible for identifing interfering transactions and grouping them into the same consenus rounds and \emph{transaction log}, which records committed or rolled back transactions.
+
+
+\subsection{Representation of a transaction}
+Transaction state (Definition \ref{def:transactionStateChapter4}) is used to identify transaction \transaction and to
+ track mutations (Definition \ref{def:mutation}) done in \transaction, where each mutation is represented by
+ \emph{transaction item} \txItem (Definition \ref{def:transactionItemChapter4}) received in a response to a mutation message. A client \client begins transaction by sending \beginTransactionMessage and receives empty transaction state \txState in a message  \initialTxStateMessage.
+Values of \mutationsFull tracked by transaction items \txItems are unknown to \txItems, but each value $v$ can be found at replica nodes
+$N^{\mathbb{RF}}(n_{i},n{j},...)\subset \mathit{N}$ by topology function \topology applied to each \txItem.
+
+\subsubsection{Tracking updates}
+Transaction state \txState changes as transaction \transaction progresses and its set of transaction items has to be updated with new transaction items after each mutation message. 
+
+% \begin{algorithm}
+%   \caption{Updating transaction state after two mutations}
+%   \label{alg:updateTxState}
+%   \begin{algorithmic}       
+%     \State \beginTransactionMessage
+%     \State \initialTxStateMessage
+%     \State $\mathit{M}(c, n_{i}, \mathit{upsert(k_{1},v_{1})})$
+%     \State $\mathit{M}(n_{i}, c, \mathit{update\_transaction\_state}(\lambda_{1}))$
+%     \State $\Lambda() \gets \Lambda() \oplus \lambda_{1}$
+%     \State $\mathit{M}(c, n_{i}, \mathit{upsert(k_{2},v_{2})})$
+%     \State $\mathit{M}(n_{i}, c, \mathit{update\_transaction\_state}(\lambda_{2}))$
+%     \State $\Lambda(\lambda_{1}) \gets \Lambda(\lambda_{1}) \oplus \lambda_{2}$
+%     \State $\mathit{M}(c, n_{i}, \mathit{transaction\_commit}(\Lambda(\lambda_{1}, \lambda_{2})))$
+%     \State $\mathit{M}(n_{i}, c, \mathit{transaction\_commit\_response}(committed))$    
+%   \end{algorithmic}
+% \end{algorithm}
+
+
+Client is responsible for keeping track of all performed operations within a transaction. Transaction state is assumed to be source of knowledge about a transaction, which means that is has valid information about which replicas are affected by a transaction.
+Note that, client i.e. database driver has to keep track of transaction items and append them to the transaction state after each transactional mutation, but the end user of the driver is potentially unaware of transaction items.
+
+\subsection{Isolation from other transactions}
+Transactions must run in isolation from each other and provide read-committed isolation level, thus transactions cannot see each other, nor anyone else can see effects of transactions before it completes with commit or rollback. Expected read-committed isolation is different than the one known from RDBMS, because in RDBMS such isolation holds write-locks for the duration of transaction, therefore if transaction writes then subsequent reads return written values. We want to avoid distributed locks, which decrease performance and cause deadlocks, therefore read-committed isolation in \mpt algorithm does not hold any locks, thus each \selectMessage receives current $v$, as it is in \database.
+
+\subsubsection{Private transaction storage}
+\label{sec:mpp:privateTxStorage}
+Each mutation \mutation{k}{v} done in transaction \transaction should be stored on replicas responsible for given key keeping it private for that \transaction. Each mutation should be isolated from transactions other than \transaction and accessible only by \transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
+
+Each mutation message is executed by \node{i}, but instead of operating on current live data of \database, mutations \mutations are put into private storage presented in Definition \ref{def:privateTransactionStorage}. 
+
+\begin{definition}
+\label{def:privateTransactionStorage}
+\emph{Private transaction storage} \txStorage is a local data structure on each node \node{i} which stores mutations \mutations of transaction \transaction in isolation from other transactions \transactions and live data set of database \database and provides operations listed below: 
+  \begin{itemize}
+    \item $\oplus(\text{\txState}, \text{\mutation{k}{v}}) \mapsto \text{\txItemi{k}}$ -- stores mutation \mutation{k}{v} of transaction \transactionj represented by transaction state \txState and returns transaction item \txItemi{k}. 
+    \item $\mathit{clear}(\text{\txState})$ -- removes all mutations \mutations associated with transaction \transactionj represented by transaction state \txState on node \node{i}
+    \item $\mathit{get}(\text{\txState}) \mapsto \text{\mutations}$ -- returns set of mutations of transaction \transactionj represented by transaction state \txState stored on replica \node{i} 
+  \end{itemize}
+\end{definition}
+
+Definition \ref{def:privateTransactionStorage} abstracts from memory and time, but an implementation of private transaction storage has to $\mathit{clear}(\text{\txState})$ after certain timeout in order to free memory (assuming in-memory storage) and to be resilient to failures of clients, which can fail and abandon transaction \transactionj at any point in time. From perspective of the algorithm it does not matter whether mutations \mutations are stored in memory or in any other way as long as \mutations are accessible during transaction's execution. 
+
+
+\subsubsection{Quorum requirements}
+Each mutation \mutation{k}{v} of transaction \transactionj should be written to at least quorum of replicas $N^{\mathbb{RF}} = \tau(k)$ (see Definition \ref{def:topology}) in order to depend on majority during the commit process. If quorum is not available, then \transactionj needs to be rolled back. 
+
+% \subsubsection{Isolated operations}
+% Algorithm \ref{alg:transactionalInsert} shows how private transaction storage is used in relation to \insertMessage. Note that all other mutation messages are executed in the same way. 
+
+% \begin{algorithm}
+
+% \algblockdefx[NAME]{Message}{EndMessage}%
+%    [1][Unknown]{\textbf{Receive} \emph{#1} \textbf{message}}%
+%    {\textbf{end}}   
+
+% \algblockdefx[NAME]{ForEachReplica}{EndForEachReplica}%
+%    {\textbf{for each} \emph{n} $\gets$ $\mathit{N^{\mathbb{RF}}}$}%
+%    {\textbf{end}}   
+
+%   \caption{Transactional upsert}
+%   \label{alg:transactionalInsert}
+%   \begin{algorithmic}
+%     \Message[\insertMessage]      
+%       \State $\mathit{N^{\mathbb{RF}}} \gets \tau(k)$      
+%       \ForEachReplica
+%         \State send $\mathit{M}(n_{i}, n, \mathit{upsert}(\text{\txState}, k,v))$
+%       \EndForEachReplica
+%       \State $\mathit{acks} \gets $ await $\mathit{ack}(\lambda_{k})$ messages
+%       \If {$\mathit{quorum(acks)}$} 
+%         \State send $\mathit{M}(n_{i}, c, \mathit{update\_transaction\_state}(\lambda_{k}))$        
+%       \Else
+%         \State send $\mathit{M}(n_{i}, c, \mathit{failure}(\mathit{upsert}(\text{\txState},k,v)))$        
+%       \EndIf
+%     \EndMessage
+  
+%   \end{algorithmic}
+  
+%   \begin{algorithmic}
+%     \Message[$\mathit{M}(n_{i}, n, \mathit{upsert(\text{\txState},k,v)})$]
+%         \State $\lambda_{k} \gets \oplus(\text{\txState}, \text{\mutation{k}{v}})$
+%         \State send $\mathit{M}(n, n_{i}, \mathit{ack}(\lambda_{k}))$
+%     \EndMessage
+%   \end{algorithmic}
+% \end{algorithm}
+
+\subsection{Consensus by Paxos}
+We use \paxos to reach consensus among nodes \nodesTx, which select a single transaction \transaction to commit out of set of concurrent \emph{conflicting} transactions \transactions (Definition \ref{def:conflictingTransactionsSet}). \paxos provides consensus on a single value among many values proposed during the same \paxos round, therefore in order to commit a single transaction \transaction, all conflicting \transactions must participate in the same \paxos round, which is not trivial considering many mutations \mutationsFull, as there is no longer single key $k$, which would identify \paxos round, as it is in \lwt.
+
+\begin{definition}
+\label{def:conflictingTransactionsSet}
+\emph{Conflicting transactions set} - denoted by \conflictingTxSet is a set of transactions where all \transactions include at least single common mutation $\delta(k)$, which mutates value associated with the same key $k$.
+\end{definition}
+
+\subsubsection{Proposed transaction state}
+Our true value is transaction \transactionFull, however mutations \mutationsFull are distributed over nodes
+\nodesOfMutations. As a result of that it is impossible to propose \transaction itself, but it is possible to propose transaction
+state \txState, which references mutations \mutations, thus proposed \paxos \emph{value} in \mpt is \txState. Any
+node \node{i} can try to commit \transaction given \txState, because \node{i} can check which nodes participate in \transaction and where are private data stored.
+
+
+\subsubsection{Reaching the same Paxos round}
+Conflicting transactions \conflictingTxSet must participate in the same \paxos round identified by \paxos round id \paxosRoundId.
+If there are many transactions \transactions being committed at the same time and those \transactions are in conflict
+with each other, then only single transaction \transaction should get committed and rest of them should be rolled back. Nodes \nodesTx must agree on \paxos value, which is transaction state \txState, thus agree on which \transaction is committed.
+
+Rest of transactions $(\mathcal{C}\text{\txStates} - \text{\txState})$ can be rolled back, as long as they participate in the same \paxos round \paxosRoundId. In case of \lwt \paxosRoundId is determined by \emph{k}, however \mpt supports more than one key, therefore we need a function which maps \txState $\mapsto $ \paxosRoundId with properties: 
+\begin{enumerate*}[label=\alph*)]
+\item it maps conflicting transactions to the same \paxosRoundId,
+\item it maps non-conflicting transactions to different $\iota'$.
+\end{enumerate*}
+
+\subsubsection{Conflict function}
+Function \txState $\mapsto $ \paxosRoundId can be a composition of two functions: \mbox{\txState $\mapsto $ \conflictingTxSet} and \mbox{\conflictingTxSet $\mapsto$ \paxosRoundId}, where the former groups transactions into conflicting sets and the latter assigns \paxos round id \paxosRoundId to each set.
+In order to group conflicting transactions we need a function, which compares transaction states \txStateOne and \txStateTwo in pairs and detects whether
+\txStateOne and \txStateTwo are in conflict. Definition \ref{def:conflictFunction} presents such function.
+
+\begin{definition}
+\label{def:conflictFunction}
+\emph{Conflict function} denoted, as $\zeta (\text{\txStateOne, \txStateTwo}) \mapsto ( \mathcal{C}_1, \mathcal{C}_2)$, where $\mathcal{C}_1 = \mathcal{C}(\text{\txStateOne, \txStateTwo}) \wedge \mathcal{C}_2 = \emptyset $ or $\mathcal{C}_1 = \mathcal{C}(\text{\txStateOne}) \wedge \mathcal{C}_2=\mathcal{C}(\text{\txStateTwo})$, the former case is when transactions are in conflict and contain at least single $\delta$ for the same $k$, the latter otherwise.
+\end{definition}
+ 
+\subsection{Transaction index}
+Transaction index denoted, as \txIndex is a service, local to a node, which provides function \mbox{\txState $\mapsto $ \paxosRoundId} required to reach the same \paxos round for conflicting transactions.
+
+Registration of transaction state \txState in \txIndex on each \node{i} $\in$\nodesTx is precondition to the commit procedure of \mpt. 
+Since \txIndex is local, each transaction \transaction receives different \paxos round id \paxosRoundId on different nodes, but the value of \paxosRoundId is never used outside of a node, thus \paxosRoundId does not have to be globally the same. \paxosRoundId is used only to identify \paxos round for \conflictingTxSet at each \node{i}. If \transaction participates in the same \paxos round identified by \paxosRoundId as other conflicting transactions, then only single \transaction is committed after \nodesTx agree on the proposed \txState.
+
+
+Transaction index stores sets of conflicting transactions \conflictingTxSet and assigns \paxosRoundId to each set. When a new transaction state \txStateM is registered, \txIndex tries to find a set \conflictingTxSet to which \txStateM can be added by applying conflict function \conflictFunction to \txStateM and each transaction \transaction in each set. If there is a conflict, sets can be merged together, thus \txStateM joins \conflictingTxSet and receives the same \paxosRoundId. Registration algorithm is depicted in Algorithm \ref{alg:indexRegistration}.
+
+During the commit procedure of \mpt transaction \transactionFull has to register in each quorum for each replica subset
+$(\NRF_{k_1} \cup \NRF_{k_2} \cup ... ) =
+(\tau(k_1) \cup \tau(k_2) \cup ... ) = 
+ \text{\nodesTx}\subset\mathit{N}$.
+Moreover transaction \transaction cannot be registered in transaction index \txIndex when it can obtain more than one \paxos round id \paxosRoundId. These two requirements guarantee that if transaction \txOne and transaction \txTwo are conflicting for some key $k$, then there exists node \node{i}
+$\in N^{\RFaloneInMath}_{k}$ on which \txOne and \txTwo receive the same \paxosRoundId, thus both transactions are part of the same \paxos round and eventually only one is committed.
+
+% \begin{algorithm}
+% \algblockdefx[NAME]{ForEach}{EndForEach}%
+%    [2]{\textbf{for each} \emph{#1} $ \gets $ \emph{#2}}%
+%    {\textbf{end}}   
+
+%   \caption{Registration of transaction state \txState in transaction index}
+%   \label{alg:indexRegistration}
+%   \begin{algorithmic}  	
+%     \State $\mathit{idx} \gets$ set of pairs $(\text{\conflictingTxSet, \paxosRoundId})$ present in the index
+%   	\State $\mathit{cc} \gets \emptyset$  \Comment{set of conflicting sets}  
+%   	\ForEach{ $(\mathcal{C}(\text{\txStatei{1}, \txStatei{2}, ...}),\text{\paxosRoundId})$ }{$\mathit{idx}$}
+%   		\ForEach{\txStatei{i}}{$\mathcal{C}(\text{\txStatei{1}, \txStatei{2}, ...})$}
+%       \State $( \mathcal{C}_1, \mathcal{C}_2) \gets \zeta (\text{\txState, \txStatei{i}})$ \Comment{apply confict function}
+%   		\If {$ (\text{\txState, \txStatei{i}}) \subset \mathcal{C}_1 $}  
+%         	\State $\mathit{cc} \gets \mathit{cc} \cup (\mathcal{C},\text{\paxosRoundId})$ 
+%       \EndIf	
+%       \EndForEach
+%   	\EndForEach      	
+%   	\If {$\mathit{cc} \equiv \emptyset$} \Comment{start a new set}
+%       \State \paxosRoundId $\gets \mathit{random\_id()}$ 
+%       \State $\mathcal{C}_{new} \gets \mathcal{C}(\text{\txState})$ 
+%   		\State $\mathit{idx} \gets \mathit{idx} \cup (\mathcal{C}_{new}, \text{\paxosRoundId})$ 
+%   	\ElsIf {$\mathit{cc} \equiv ((\mathcal{C},\text{\paxosRoundId}))$}
+%   		\State $\mathcal{C} \gets \mathcal{C} \cup \text{\txState}$  \Comment{add to the set}
+%   	\Else
+%   		\State \txState cannot be registered in index
+%   	\EndIf
+%   \end{algorithmic}
+   
+% \end{algorithm}
+
+% \subsubsection{Example of registration on single \node{i}}
+% Assume we have transaction states:
+% \txStatei{1}$(\text{\txItemi{1}},\text{\txItemi{2}}, \text{\txItemi{3}})$,
+% \txStatei{2}$(\text{\txItemi{2}},\text{\txItemi{4}})$,
+% \txStatei{3}$(\text{\txItemi{4}})$.
+% Registration in index is done according to Algorithm \ref{alg:indexRegistration}. 
+% Two different orderings yield different outcomes. 
+
+%  \begin{description}
+%  \item[Order $\text{\txStatei{1}} \rightarrow \text{\txStatei{2}} \rightarrow \text{\txStatei{3}}$] \hfill \\
+%  	\txStatei{1} registers in \txIndex and obtains \paxosRoundIdi{1} \\
+%  	\txStatei{2} registers in \txIndex and obtains \paxosRoundIdi{1} from conflicting transaction \txStatei{1} \\
+%  	\txStatei{3} registers in \txIndex and obtains \paxosRoundIdi{1} from conflicting transactions: \txStatei{1}, \txStatei{2} All transactions participate in the same \paxos round and only a single transaction is committed. 
+%  \item[Order $\text{\txStatei{1}} \rightarrow \text{\txStatei{3}} \rightarrow \text{\txStatei{2}}$] \hfill \\
+%  	\txStatei{1} registers in \txIndex and obtains \paxosRoundIdi{1} \\
+%  	\txStatei{3} registers in \txIndex, there are no conflicts, thus obtains \paxosRoundIdi{3}\\
+%  	\txStatei{2} registers in \txIndex and it has $2$ conflicting transactions participating in different paxos rounds with ids: \paxosRoundIdi{1}, \paxosRoundIdi{3}. It is illegal to register \txStatei{2}, because if \txStatei{2} is registered in both rounds it can be committed in round \paxosRoundIdi{1}, but rolledback in round \paxosRoundIdi{3} which is a contradiction.
+
+%  \end{description}
+
+% \subsubsection{Example of registration in quorums}
+\subsubsection{Example of registration}
+Assume we have transaction states
+\txStatei{1}$(\text{\txItemi{1}},\text{\txItemi{2}}, \text{\txItemi{3}})$,
+\txStatei{2}$(\text{\txItemi{2}},\text{\txItemi{3}})$, \RF{3} and $N=5$. Note that both transactions have transaction item \txItemi{2}, thus mutate the same key. Given that \txItem is equivalent of a key (Definition \ref{def:transactionItemChapter3}) we can use topology \topology to find replicas on which transactions have to register. Assume topology \topologyItem{1}{N'} and \topologyItem{2}{N''} where $N'=(n_1, n_2, n_3)$ and $N''=(n_3,n_4,n_5)$.
+
+Transaction state \txStatei{1} has to register in quorum of $N'$ and quorum of $N''$; \txStatei{2} has to register in quorum of $N''$.
+$quorum(N'')$ is equal to one of $((n_3,n_4),(n_3,n_5),(n_4,n_5))$, therefore $\mathit{quorum(N''}) \cap \mathit{quorum(N''}) \neq \emptyset$, thus exists a $n\in N''$ on which boths transactions are registered.
+\txStatei{1} and \txStatei{2} receive the same \paxosRoundId on $n$, thus if one is committed, the other has to be rolled back.
+
+\subsubsection{Rolling back concurrent transactions}
+Transaction index knows which \paxos round id \paxosRoundId to assign to which transaction state \txState and it knows conflicting transactions set \conflictingTxSet to which \txState is assigned. This knowledge is used to rollback conflicting transactions when \paxos round \paxosRoundId is finished at node \node{i} and \txStateCommitted is learnt by \node{i}. The node calls $\mathit{clear}(\text{\txState})$ function of private transaction storage for each \mbox{\txState $\in$ $(\text{\conflictingTxSet} - \text{\txStateCommitted})$}.
+
+If a client \client wants to rollback transaction \transaction then that client
+sends a message \txRollbackMessage after which \node{i} identifies \nodesTx and broadcasts message \rollbackMessage for each \node{j} $\in$ \nodesTx. When \node{j} receives such message it
+uses $\mathit{clear}(\text{\txState})$ function of private transaction storage. Transaction \transaction is rolled back after all 
+\mbox{$n\in \text{\nodesTx}$} clear private data.
+
+\subsection{Transaction Log}
+\label{sec:mpp:transactionLog}
+\emph{Transaction Log} presented in Defintion \ref{def:transactionLog} is a local data structure present at each \node{i}$\in\text{\nodes}$. Its responsibility is to record committed and rolled back transactions. 
+
+% Transaction index \txIndex changes frequently, because transactions are registered in it and removed on commit and rollback along with their private data. Therefore we need to distinguish between the case when transaction \transaction is missing on node \node{i}, because \node{i} did not receive mutation messages and the case when \transaction was present on \node{i}, but was rolled back or committed. In the former case commit procedure of \mpt can try to continue with other replicas, as long as quorum knows about \transaction, whereas in the latter case commit procedure can abort. Information stored in transaction log \txLog allows us to distinguish which case it is.
+
+
+\begin{definition}
+\label{def:transactionLog}
+\emph{Transaction Log} \txLog records committed and rolledback transactions. It provides the following operations:
+\begin{itemize}
+\item $\mathit{record\_as\_committed(\text{\txState})}$ -- record a committed transaction
+\item $\mathit{record\_as\_rolled\_back(\text{\txState})}$ -- record a rolled back transaction
+\item $\mathit{find(\text{\txState})} \mapsto \mathit{log\_state}$ -- finds information concerning a transaction. Returns $\mathit{log\_state}$ which can be one of: \begin{enumerate*}[label=\alph*)]
+		\item $\mathit{committed}$ -- when transaction was committed,
+		\item $\mathit{rolled\_back}$ -- when transaction was rolled back,
+		\item $\mathit{unknown}$ -- when transaction is missing in the log
+		\end{enumerate*} 
+\end{itemize}
+
+\end{definition}
 
 \section{Implementation of the algorithm in Cassandra}
 
