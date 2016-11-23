@@ -9,12 +9,511 @@
 % BibTeX Entries
 % edit the file and add your bibliography 
 
+# Paxos made live
 
+@inproceedings{chandra2007PaxosMadeLive,
+ author = {Chandra, Tushar D. and Griesemer, Robert and Redstone, Joshua},
+ title = {Paxos Made Live: An Engineering Perspective},
+ booktitle = {Proceedings of the Twenty-sixth Annual ACM Symposium on Principles of Distributed Computing},
+ series = {PODC '07},
+ year = {2007},
+ isbn = {978-1-59593-616-5},
+ location = {Portland, Oregon, USA},
+ pages = {398--407},
+ numpages = {10},
+ url = {http://doi.acm.org/10.1145/1281100.1281103},
+ doi = {10.1145/1281100.1281103},
+ acmid = {1281103},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Paxos, experiences, fault-tolerance, implementation},
+} 
+
+
+# Paxos made simple
+@article{lamport2001paxosMadeSimple,
+  title={Paxos made simple},
+  author={Lamport, Leslie and others},
+  journal={ACM Sigact News},
+  volume={32},
+  number={4},
+  pages={18--25},
+  year={2001}
+}
+
+@article{StonebrakerSqlVsNosql,
+ author = {Stonebraker, Michael},
+ title = {SQL Databases V. NoSQL Databases},
+ journal = {Commun. ACM},
+ issue_date = {April 2010},
+ volume = {53},
+ number = {4},
+ month = apr,
+ year = {2010},
+ issn = {0001-0782},
+ pages = {10--11},
+ numpages = {2},
+ url = {http://doi.acm.org/10.1145/1721654.1721659},
+ doi = {10.1145/1721654.1721659},
+ acmid = {1721659},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+
+
+
+# Oryginalny opis paxosa z dowodami jego poprawności - można cytować przy tym jak wspominam o formalnym dowodzie
+@article{Lamport1998partTimeParliment,
+ author = {Lamport, Leslie},
+ title = {The Part-time Parliament},
+ journal = {ACM Trans. Comput. Syst.},
+ issue_date = {May 1998},
+ volume = {16},
+ number = {2},
+ month = may,
+ year = {1998},
+ issn = {0734-2071},
+ pages = {133--169},
+ numpages = {37},
+ url = {http://doi.acm.org/10.1145/279227.279229},
+ doi = {10.1145/279227.279229},
+ acmid = {279229},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {state machines, three-phase commit, voting},
+} 
+
+# Dwie optymalizacje Paxosa - można wspomnieć w opisie algorytmu o tym że istnieją jego optymalizacje
+
+# 4. Cheap Paxos
+
+@inproceedings{lamport2004cheap,
+  title={Cheap paxos},
+  author={Lamport, Leslie and Massa, Mike},
+  booktitle={Dependable Systems and Networks, 2004 International Conference on},
+  pages={307--314},
+  year={2004},
+  organization={IEEE}
+}
+
+
+# 5. Fast paxos
+@article{lamport2006fast,
+  title={Fast paxos},
+  author={Lamport, Leslie},
+  journal={Distributed Computing},
+  volume={19},
+  number={2},
+  pages={79--103},
+  year={2006}, 
+  publisher={Springer}
+}
+
+# Przy opisie 2-phase commit można napisać, że Paxos jest jego ulepszeniem, bo 2PC nie toleruje failueres
+# 6.  Consensus on Transaction Commit
+
+@article{gray2006consensus,
+  title={Consensus on transaction commit},
+  author={Gray, Jim and Lamport, Leslie},
+  journal={ACM Transactions on Database Systems (TODS)},
+  volume={31},
+  number={1},
+  pages={133--160},
+  year={2006},
+  publisher={ACM}
+}
+
+#7. How To Build a Highly Available System Using Consensus
+#Można o tym wspomnieć po opisie Paxosa, tak że został użyty do implementacji, następnie można podać różne implementacje #używające Paxosa
+
+#Butler Lampson demonstrates how to employ Paxon consensus as part of a larger system. This paper was partly responsible for ensuring the success of Paxos by popularising it within the distributed systems community.
+
+
+@incollection{lampson1996build,
+  title={How to build a highly available system using consensus},
+  author={Lampson, Butler W},
+  booktitle={Distributed Algorithms},
+  pages={1--17},
+  year={1996},
+  publisher={Springer}
+}
+
+
+
+# 8. The Chubby Lock Service for Loosely-Coupled Distributed Systems
+# Przypadek użycia Paxosa
+
+@inproceedings{burrows2006chubby,
+  title={The Chubby lock service for loosely-coupled distributed systems},
+  author={Burrows, Mike},
+  booktitle={Proceedings of the 7th symposium on Operating systems design and implementation},
+  pages={335--350},
+  year={2006},
+  organization={USENIX Association}
+}
+
+# TODO więcej przypadków użycia Paxos
+
+# 9. The Byzantine generals problem
+# Dodać to w miejscu w którym opisuje jaki fault-tolerance posiada algorytm. 
+# Nie dopuszczamy failu typu Byzantine, tylko takie fail-recover, które są wykrywane przez Gossip algorithm
+
+# Opis z fail recover: http://the-paper-trail.org/blog/consensus-protocols-paxos/
+
+# 3PC works very well when nodes may crash and come to a halt – leaving the protocol permanently when they encounter a fault. This is called the fail-stop fault model, and certainly describes a number of failures that we see every day. However, especially in networked systems, this isn’t the only way in which nodes crash. They may instead, upon encountering a fault, crash and then recover from the fault, to begin executing happily from the point that they left off (remember that, with stable storage that persists between crashes, there’s no reason that a restarted node couldn’t simply pick up the protocol from where it crashed). This is the fail-recover fault model, which is more general than fail-stop, and therefore a bit more tricky to deal with.
+
+# Failure modes blog post: http://videlalvaro.github.io/2013/12/failure-modes-in-distributed-systems.html
+
+ @article{lamport1982byzantine,
+  title={The Byzantine generals problem},
+  author={Lamport, Leslie and Shostak, Robert and Pease, Marshall},
+  journal={ACM Transactions on Programming Languages and Systems (TOPLAS)},
+  volume={4},
+  number={3},
+  pages={382--401},
+  year={1982},
+  publisher={ACM}
+}
+
+# 10.  Dynamo paper
+# Nawiązać przy opisie Cassandry: http://www.planetcassandra.org/blog/cassandra-daughter-of-dynamo-and-bigtable/
+
+@inproceedings{decandia2007dynamo,
+  title={Dynamo: amazon's highly available key-value store},
+  author={DeCandia, Giuseppe and Hastorun, Deniz and Jampani, Madan and Kakulapati, Gunavardhan and Lakshman, Avinash and Pilchin, Alex and Sivasubramanian, Swaminathan and Vosshall, Peter and Vogels, Werner},
+  booktitle={ACM SIGOPS Operating Systems Review},
+  volume={41},
+  number={6},
+  pages={205--220},
+  year={2007},
+  organization={ACM}
+}
+
+# 11. Big table: A distributed storage system for structured data
+# Nawiązać przy opisie Cassandry:
+
+@article{chang2008bigtable,
+  title={Bigtable: A distributed storage system for structured data},
+  author={Chang, Fay and Dean, Jeffrey and Ghemawat, Sanjay and Hsieh, Wilson C and Wallach, Deborah A and Burrows, Mike and Chandra, Tushar and Fikes, Andrew and Gruber, Robert E},
+  journal={ACM Transactions on Computer Systems (TOCS)},
+  volume={26},
+  number={2},
+  pages={4},
+  year={2008},
+  publisher={ACM}
+}
+
+# 12. Note on distributed computing
+	# Remote calls are expensive
+	# Nawiązać przy wstępnym opisie algorytmu oraz tam gdzie piszę o minimalizowaniu round-trip requests
+
+	@TECHREPORT{Waldo94anote,
+    author = {Jim Waldo and Jim Waldo and Geoff Wyant and Geoff Wyant and Ann Wollrath and Ann Wollrath and Sam Kendall and Sam Kendall},
+    title = {A Note on Distributed Computing},
+    institution = {IEEE Micro},
+    year = {1994}
+}
+
+# 13. Fallacies of distributed computing explained
+# 	Również cytować przy minimalizowaniu round-trip requests
+@article{rotem2006fallacies,
+  title={Fallacies of distributed computing explained},
+  author={Rotem-Gal-Oz, Arnon},
+  journal={URL http://www. rgoarchitects. com/Files/fallacies. pdf},
+  volume={20},
+  year={2006}
+}
+
+
+
+# 14. Welcome to Apache Cassandra - dostęp online
+# http://cassandra.apache.org/
+
+@misc{CassandraApacheDocs,
+  title = {{Welcome to Apache Cassandra}},
+  howpublished = {\url{http://cassandra.apache.org/}},
+  note = {Accessed: 2016-04-23}
+}
+
+@misc{ACID,
+  title = {{ACID}},
+  howpublished = {\url{https://en.wikipedia.org/wiki/ACID}},
+  note = {Accessed: 2016-05-22}
+}
+
+@misc{Murmur3,
+  title = {{Murmur3 author's wiki}},
+  howpublished = {\url{https://github.com/aappleby/smhasher/wiki}},
+  note = {Accessed: 2016-05-22}
+}
+https://github.com/aappleby/smhasher/wiki
+
+# 15. About Apache Cassandra - dostep online
+# http://docs.datastax.com/en/cassandra/2.1/cassandra/gettingStartedCassandraIntro.html
+
+@misc{CassandraDataStaxDocs,
+  title = {{Welcome to Apache Cassandra}},
+  howpublished = {\url{http://docs.datastax.com/en/cassandra/2.1/cassandra/gettingStartedCassandraIntro.html}},
+  note = {Accessed: 2016-04-23}
+}
+
+@misc{ccm,
+  title = {{Cassandra Cluster Manager}},
+  howpublished = {\url{https://github.com/pcmanus/ccm}},
+  note = {Accessed: 2016-04-23}  
+}
+
+# 16. Cassandra: a decentralized structured storage system
+# Przy opisie Cassandry
+
+@article{lakshman2010cassandra,
+  title={Cassandra: a decentralized structured storage system},
+  author={Lakshman, Avinash and Malik, Prashant},
+  journal={ACM SIGOPS Operating Systems Review},
+  volume={44},
+  number={2},
+  pages={35--40},
+  year={2010},
+  publisher={ACM}
+}
+
+# 17. Cassandra write path - dostęp online
+# The write path to compaction
+# https://docs.datastax.com/en/cassandra/2.0/cassandra/dml/dml_write_path_c.html
+
+@misc{CassandraWritePath,
+  title = {{Cassandra write path}},
+  howpublished = {\url{https://docs.datastax.com/en/cassandra/2.0/cassandra/dml/dml_write_path_c.html}},
+  note = {Accessed: 2015-09-25}
+}
+
+@misc{CassandraReadRepair,
+  title = {{Cassandra read repair}},
+  howpublished = {\url{https://docs.datastax.com/en/cassandra_win/3.0/cassandra/operations/opsRepairNodesReadRepair.html}},
+  note = {Accessed: 2016-06-02}
+}
+
+@misc{CassandraHintedHandoff,
+  title = {{Cassandra Hinted Handoff}},
+  howpublished = {\url{https://docs.datastax.com/en/cassandra_win/3.0/cassandra/operations/opsRepairNodesHintedHandoff.html}},
+  note = {Accessed: 2016-06-02}
+}
+
+@misc{ApacheSpark,
+  title = {{Apache Spark}},
+  howpublished = {\url{http://spark.apache.org/}},
+  note = {Accessed: 2016-06-02}
+}
+
+@misc{drda,
+  title = {{Distributed Relational Database Architecture}},
+  howpublished = {\url{http://www.craigsmullins.com/drda.htm}},
+  note = {Accessed: 2016-06-03}
+}
+
+@misc{timestamp64wiki,
+
+title = {{Year 2038 problem}},
+  howpublished = {\url{https://en.wikipedia.org/wiki/Year_2038_problem}},
+  note = {Accessed: 2016-06-03}
+}
+
+@misc{datomic,
+title = {{Datomic -- rationale}},
+  howpublished = {\url{http://www.datomic.com/rationale.html}},
+  note = {Accessed: 2016-06-03}
+}
+
+# 18. Cassandra read path - dostęp online
+# About reads
+# https://docs.datastax.com/en/cassandra/2.0/cassandra/dml/dml_about_reads_c.html
+
+@misc{CassandraReadPath,
+  title = {{Cassandra read path}},
+  howpublished = {\url{https://docs.datastax.com/en/cassandra/2.0/cassandra/dml/dml_about_reads_c.html}},
+  note = {Accessed: 2015-09-25}
+}
+
+# 19. UUID and timeuuid types - dostęp online
 
 @misc{CassandraUUID,
   title = {{UUID and timeuuid types}},
   howpublished = {\url{https://docs.datastax.com/en/cql/3.3/cql/cql_reference/uuid_type_r.html}},
   note = {Accessed: 2016-04-15}
+}
+# https://docs.datastax.com/en/cql/3.3/cql/cql_reference/uuid_type_r.html
+
+
+# 20. Distributed systems for fun and profit - dostęp online
+
+@misc{DistributeSystemsForFunAndProfit,
+  title = {{Distributed systems for fun and profit}},
+  howpublished = {\url{http://book.mixu.net/distsys/single-page.html}},
+  note = {Accessed: 2015-03-10}
+}
+
+
+# Wstęp teoretyczny:
+#	2 phase commit
+#	3 phase commit
+#	Reszta referencji do paxosa
+
+# 2 phase commit
+
+# 21. Consensus Protocols: Two-Phase Commit
+# http://the-paper-trail.org/blog/consensus-protocols-two-phase-commit/
+
+@article{2phaseC,
+ author = {Reed, David P.},
+ title = {Implementing Atomic Actions on Decentralized Data},
+ journal = {ACM Trans. Comput. Syst.},
+ issue_date = {Feb. 1983},
+ volume = {1},
+ number = {1},
+ month = feb,
+ year = {1983},
+ issn = {0734-2071},
+ pages = {3--23},
+ numpages = {21},
+ url = {http://doi.acm.org/10.1145/357353.357355},
+ doi = {10.1145/357353.357355},
+ acmid = {357355},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {nested atomic actions, stable storage, time-domain addressing, two-phase commit},
+}
+# Referencja także na DistributeSystemsForFunAndProfit
+
+
+# 3 phase commit
+
+@misc{3phaseC,
+  title = {{Consensus Protocols: Three-Phase Commit}},
+  howpublished = {\url{http://the-paper-trail.org/blog/consensus-protocols-three-phase-commit/}},
+  note = {Accessed: 2015-03-11}
+}
+
+@misc{raftVisual,
+  title = {{Visualizations - Raft: Understandable Distributed Consensus}},
+  howpublished = {\url{http://thesecretlivesofdata.com/raft/}},
+  note = {Accessed: 2015-03-20}
+}
+
+@misc{markLogicDataModel,
+  title = {{MarkLogic - Flexible data model}},
+  howpublished = {\url{http://www.marklogic.com/what-is-marklogic/features/flexible-data-model/}},
+  note = {Accessed: 2016-06-02}
+}
+
+@misc{markLogicAcid,
+  title = {{MarkLogic - ACID transactions}},
+  howpublished = {\url{http://www.marklogic.com/what-is-marklogic/features/acid-transactions/}},
+  note = {Accessed: 2016-06-02}
+}
+@misc{markLogicUnderstandingTransactions,
+  title = {{MarkLogic - Understanding Transactions in MarkLogic Server}},
+  howpublished = {\url{http://docs.marklogic.com/guide/app-dev/transactions#chapter}},
+  note = {Accessed: 2016-06-02}
+}
+
+@misc{foundationDbAcquired,
+  title = {{Apple Acquires Durable Database Company FoundationDB}},
+  howpublished = {\url{http://techcrunch.com/2015/03/24/apple-acquires-durable-database-company-foundationdb/}},
+  note = {Accessed: 2016-06-02}
+}
+
+
+
+
+
+# Paxos 
+# Opis paxosa i linki 
+
+# 22. In search of an understandable consensus algorithm
+
+# Raft - wspomnieć o nim po opisie Paxosa jako inny algorytm, który ma takie same gwarancje jak Paxos.
+
+@inproceedings{ongaro2014search,
+  title={In search of an understandable consensus algorithm},
+  author={Ongaro, Diego and Ousterhout, John},
+  booktitle={2014 USENIX Annual Technical Conference (USENIX ATC 14)},
+  pages={305--319},
+  year={2014}
+}
+
+# 23. FLP immpossiblity result
+# Dodać przy ogólnym opisie teoretycznym, że trzeba znać takie ograniczenia jak FLP i CAP.
+
+@article{fischer1985impossibility,
+  title={Impossibility of distributed consensus with one faulty process},
+  author={Fischer, Michael J and Lynch, Nancy A and Paterson, Michael S},
+  journal={Journal of the ACM (JACM)},
+  volume={32},
+  number={2},
+  pages={374--382},
+  year={1985},
+  publisher={ACM}
+}
+
+# 24, 25, 26 Cap theorem 
+# Initial paper
+
+@inproceedings{brewer2000towards,
+  title={Towards robust distributed systems},
+  author={Brewer, Eric A},
+  booktitle={PODC},
+  volume={7},
+  year={2000}
+}
+
+# Two years later, Seth Gilbert and Professor Nancy Lynch - researchers in distributed systems at MIT - formalised and proved the conjecture in their paper “Brewer's conjecture and the feasibility of consistent, available, partition-tolerant web services” [2].
+
+@article{gilbert2002brewer,
+  title={Brewer's conjecture and the feasibility of consistent, available, partition-tolerant web services},
+  author={Gilbert, Seth and Lynch, Nancy},
+  journal={ACM SIGACT News},
+  volume={33},
+  number={2},
+  pages={51--59},
+  year={2002},
+  publisher={ACM}
+}
+
+# Next article about CAP with clarifications of common misunderstanding of CAP by original author
+
+@article{Brewer:2012ba,
+author = {Brewer, E},
+title = {{CAP twelve years later: How the ,,rules" have changed}},
+journal = {Computer},
+year = {2012},
+volume = {45},
+number = {2},
+pages = {23--29}
+}
+
+@inproceedings{Bailis:2014,
+ author = {Bailis, Peter and Fekete, Alan and Hellerstein, Joseph M. and Ghodsi, Ali and Stoica, Ion},
+ title = {Scalable Atomic Visibility with RAMP Transactions},
+ booktitle = {Proceedings of the 2014 ACM SIGMOD International Conference on Management of Data},
+ series = {SIGMOD '14},
+ year = {2014},
+ isbn = {978-1-4503-2376-5},
+ location = {Snowbird, Utah, USA},
+ pages = {27--38},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2588555.2588562},
+ doi = {10.1145/2588555.2588562},
+ acmid = {2588562},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {atomic visibility, atomicity, non-blocking, performance, read atomic, scalability, transactions},
+} 
+
+
+@misc{NoSqlDatabasesOrg,
+  title = {{NoSQL}},
+  howpublished = {\url{http://nosql-database.org}},
+  note = {Accessed: 2016-11-09}
 }
 
 % IMPORTANT NOTE
@@ -70,3 +569,88 @@
  volume               = {59},
  year                 = {2009},
  }
+
+
+ @book{Bernstein:1987,
+ author = {Bernstein, Philip A. and Hadzilacos, Vassco and Goodman, Nathan},
+ title = {Concurrency Control and Recovery in Database Systems},
+ year = {1987},
+ isbn = {0-201-10715-5},
+ publisher = {Addison-Wesley Longman Publishing Co., Inc.},
+ address = {Boston, MA, USA},
+} 
+
+@inproceedings{Perelman:2010,
+ author = {Perelman, Dmitri and Fan, Rui and Keidar, Idit},
+ title = {On Maintaining Multiple Versions in STM},
+ booktitle = {Proceedings of the 29th ACM SIGACT-SIGOPS Symposium on Principles of Distributed Computing},
+ series = {PODC '10},
+ year = {2010},
+ isbn = {978-1-60558-888-9},
+ location = {Zurich, Switzerland},
+ pages = {16--25},
+ numpages = {10},
+ url = {http://doi.acm.org/10.1145/1835698.1835704},
+ doi = {10.1145/1835698.1835704},
+ acmid = {1835704},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {transactional memory},
+}
+
+@inproceedings{Halici:1991,
+ author = {Halici, Ugur and Dogac, Asuman},
+ title = {Concurrency Control for Distributed Multiversion Databases Through Time Intervals},
+ booktitle = {Proceedings of the 19th Annual Conference on Computer Science},
+ series = {CSC '91},
+ year = {1991},
+ isbn = {0-89791-382-5},
+ location = {San Antonio, Texas, USA},
+ pages = {365--374},
+ numpages = {10},
+ url = {http://doi.acm.org.doi.eczyt.bg.pw.edu.pl/10.1145/327164.327297},
+ doi = {10.1145/327164.327297},
+ acmid = {327297},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {concurrency control, distributed database systems, multiversion data, serializability, time intervals, timestamps},
+} 
+
+@article{Bernstein:1983,
+ author = {Bernstein, Philip A. and Goodman, Nathan},
+ title = {Multiversion Concurrency Control\&Mdash;Theory and Algorithms},
+ journal = {ACM Trans. Database Syst.},
+ issue_date = {Dec. 1983},
+ volume = {8},
+ number = {4},
+ month = dec,
+ year = {1983},
+ issn = {0362-5915},
+ pages = {465--483},
+ numpages = {19},
+ url = {http://doi.acm.org/10.1145/319996.319998},
+ doi = {10.1145/319996.319998},
+ acmid = {319998},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {transaction processing},
+} 
+
+@article{Faleiro:2015,
+ author = {Faleiro, Jose M. and Abadi, Daniel J.},
+ title = {Rethinking Serializable Multiversion Concurrency Control},
+ journal = {Proc. VLDB Endow.},
+ issue_date = {July 2015},
+ volume = {8},
+ number = {11},
+ month = jul,
+ year = {2015},
+ issn = {2150-8097},
+ pages = {1190--1201},
+ numpages = {12},
+ url = {http://dx.doi.org/10.14778/2809974.2809981},
+ doi = {10.14778/2809974.2809981},
+ acmid = {2809981},
+ publisher = {VLDB Endowment},
+}
+

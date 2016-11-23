@@ -144,51 +144,59 @@
 
 \maketitle
 
-\begin{abstract}
-The amounts of data being processed today are enormous and they require specialized systems 
-to store them, access them and do computations. Therefore, a number of NoSql databases and 
-big data platforms were built to address this problem. They usually lack of transaction 
-support which feature atomicity, consistency, isolation, durability and at the same time 
-they are distributed, scalable, and fault tolerant. In this paper we present a novel 
-transaction processing framework based on Cassandra storage model. It uses Paxos protocol 
-to provide atomicity and consistency of transactions and Cassandra specific read and write 
-paths improvements to provide read committed isolation level and durability. Unlike built-in 
-Light Weight Transactions (LWT) support in Cassandra, our algorithm can span multiple data 
-partitions and provides tunable contention control. We verified correctness and efficiency 
-both theoretically and by executing tests over different workloads. The results presented 
-in this paper prove the usability and robustness of the designed system. 
-\keywords{big data, transactions, cassandra, paxos, consistency, nosql}
+\begin{abstract} The amounts of data being processed today are enormous and they
+require specialized systems  to store them, access them and do computations.
+Therefore, a number of NoSql databases and  big data platforms were built to
+address this problem. They usually lack of transaction  support which feature
+atomicity, consistency, isolation, durability and at the same time  they are
+distributed, scalable, and fault tolerant. In this paper we present a novel
+transaction processing framework based on Cassandra storage model. It uses Paxos
+protocol  to provide atomicity and consistency of transactions and Cassandra
+specific read and write  paths improvements to provide read committed isolation
+level and durability. Unlike built-in  Light Weight Transactions (LWT) support
+in Cassandra, our algorithm can span multiple data  partitions and provides
+tunable contention control. We verified correctness and efficiency  both
+theoretically and by executing tests over different workloads. The results
+presented  in this paper prove the usability and robustness of the designed
+system.  \keywords{big data, transactions, cassandra, paxos, consistency, nosql}
 \end{abstract}
 
-\section{Introduction}
-Big Data is the term used for describing sets of increasing volumes of data, which do not fit 
-in a single machine. There are many sources of Big Data, such as system logs, user website 
-clicks, financial transactions, weather measurements, data from Internet of Things, and many others.
+\section{Introduction} Big Data is the term used for describing sets of
+increasing volumes of data, which do not fit  in a single machine. There are
+many sources of Big Data, such as system logs, user website  clicks, financial
+transactions, weather measurements, data from Internet of Things, and many
+others.
 
-NoSql databases were created to support storing Big Data and provide the means to analyze it. 
-Databases differ in a ways they represent the data, but the key principle remains the same: 
-store the data for future analysis. NoSql databases span over hundreds, even thousands servers 
-located in different various physical locations and are designed to overcome individual node 
-failures and network partitions. They provide guarantees for certain behaviour in face of such
-problems which usually means they eventually achieve the consistency of data at some point.
+NoSql databases were created to support storing Big Data and provide the means
+to analyze it.  Databases differ in a ways they represent the data, but the key
+principle remains the same:  store the data for future analysis. NoSql databases
+span over hundreds, even thousands servers  located in various physical
+locations and are designed to overcome individual node  failures and network
+partitions. They provide guarantees for certain behaviour in face of such
+problems which usually means they eventually achieve the consistency of data at
+some point.
 
-To this end, the ensemble of data is cut into groups of records which are called partitions. 
-Partitions are data replication and sharding units, which means that they are distributed across 
-the cluster in one or more copies so that the load can be balanced among different server nodes,
-and the availability of a distinct chunk of data is increased.
+To this end, the ensemble of data is cut into groups of records which are called
+partitions.  Partitions are data replication and sharding units, which means
+that they are distributed across  the cluster in one or more copies so that the
+load can be balanced among different server nodes, and the availability of a
+distinct chunk of data is increased.
 
-Properties of relational databases, such as ACID compliant transactions are usually sacrificed in
-NoSQL-like solutions in favour of high availability, fault tolerance and scalability. Though, 
-there exist some solutions which can help to overcome such deficiencies. Unfortunately they come
-with either functional or performance limitations which makes them difficult to adopt. 
-The functional limitations include constraining a transaction to a single partition of data
-or the lack of certain isolation levels. The performance problems are usually related to the 
-use of pessimistic locks to achieve a certain level of consistency.
+Properties of relational databases, such as ACID compliant transactions are
+usually sacrificed in NoSQL-like solutions in favour of high availability, fault
+tolerance and scalability. Though,  there exist some solutions which can help to
+overcome such deficiencies. Unfortunately they come with either functional or
+performance limitations which makes them difficult to adopt.  The functional
+limitations include constraining a transaction to a single partition of data or
+the lack of certain isolation levels. The performance problems are usually
+related to the  use of pessimistic locks to achieve a certain level of
+consistency.
 
-We overcame those problems by modifying Cassandra database. Cassandra is proven to be performant 
-and provide some basic transaction support known as LWT. Although the usability of LWT is limited,
-the model of storing data makes it a perfect platform for building transaction support extension
-which features good performance and rich functionality.
+We overcame those problems by modifying Cassandra database. Cassandra is proven
+to be performant  and provide some basic transaction support known as LWT.
+Although the usability of LWT is limited, the model of storing data makes it a
+perfect platform for building transaction support extension which features good
+performance and rich functionality.
 
 % TODO - jacek
 
@@ -524,7 +532,124 @@ uses $\mathit{clear}(\text{\txState})$ function of private transaction storage. 
 
 \section{Related work}
 
-% TODO - jacek
+There are a lot of NoSQL database - a web page which collects the information
+about the known systems of this kind \cite{NoSqlDatabasesOrg} reports over 225
+existing NoSql databases. Although they are called NoSQL, not all of them fall 
+into this category because of horizontal scalability and high availability support. 
+As mentioned in the introduction, we can find implementations which supports 
+transactions to some degree. They include MarkLogic, IBM Informix, Datomic, 
+Oracle and others. They use various techniques to achieve ACID properites, which 
+we will cover below. 
+
+\subsection{2 and 3 phase commit}
+\subsubsection{2 phase commit}
+2 phase commit operates in two distinct phases \cite{Bernstein:1987}: 
+\begin{enumerate} 
+	\item Contact every node, propose a value and gather responses 
+	\item If all nodes agree, contact every node again to let it know about 
+		  agreement. Otherwise, contact every node to abort the consensus. 
+\end{enumerate}
+
+A value is proposed by any node, which is then called the \emph{coordinator} who
+initiates round of 2PC. Note that, in 2PC nodes cannot suggest other value than
+the proposed one, they can only accept it, or decline it. Another proposal can
+be done only through another round. 
+
+Fault tolerance is not provided by 2PC. The 2PC solves the consensus problem in
+the absense of failures in 3 rounds. The first  round of messages for a
+proposal, the second round for votes and the third round for commit or abort. In
+this case there are 3n messages send for the whole protocol lifecycle. In the
+presence of failures,  the protocol may take additional 2 rounds to recover. Due
+to blocking nature of the protocol, tiemouts  need to be employed to terminate
+properly.
+
+\subsubsection{3 phase commit}
+3 phase commit splits the seconds phase of 2PC into two sub-phases: prepare to
+commit phase and commit phase, thus it has three phases in total
+\cite{Bernstein:1987}.
+
+It requires 5 rounds and 5n messages in the absensce of failures to reach a
+consensus.  Unlike 2PC, it is not blocking. 3PC can accept a configurable number
+of f failures, because the coordinator can move to phase 3 after it receives f +
+1 acknowledges of prepare to commit. 3PC does not work well during network
+partition, because if part of nodes on one side of the partition received
+prepare to commit message and all nodes on the other side did not receive that
+message, then recovery node on the former side commits transaction, whereas the
+other recovery node aborts it. After network partition is gone, nodes remain in
+inconsistent state, in which transaction is committed and aborted at the same
+time.
+
+\subsection{Multiversioning} Multivversion concurrency
+control \cite{Bernstein:1983} is known in the area of distributed databases as
+well as in the area of software transactional memory \cite{Perelman:2010}. It
+can outperform 2-phase commit in terms of efficiency and it handles failures in
+a more efficient way \cite{Halici:1991}. The main idea behind this approach is 
+to attach a version to each operation so that both reads and writes are applied
+on an exact version of data. This can significantly increase concurrency of 
+transactions by reducing the number of conflicts. However, as noted in 
+\cite{Faleiro:2015}, this approach make performing serializable transactions
+difficult.
+
+\subsection{RAMP transactions} 
+\emph{Read Atomic Multi Partition} \cite{Bailis:2014} was designed to 
+address the requirements of the following use cases: secondary indexing, 
+foreign key enforcement, and materialized view maintenance.
+\emph{RAMP} identifies new transaction isolation level \emph{Read Atomic}, which assures
+consistent visibility of changes made by the transaction: either all or none of
+each transaction’s updates are seen by other transactions.
+
+The key principle behind \emph{RAMP} is its ability to detect non-atomic partial read,
+and to repair it with additional rounds of communication with the nodes by the
+means of the metadata attached to each write and multi-versioning, which means
+that data are accessible in different versions and each modification to data
+creates a new version. Versions are either committed or not yet committed, in
+which case the data can be discarded by aborting the transaction [21, p. 6].
+There are three variants of \emph{RAMP} algorithm which differ in type of the metadata.
+RAMP is linearly scalable, which was tested during trials with the number of 
+nodes spanning up to 100 servers \cite[p. 10]{Bailis:2014}.
+
+Fault tolerance \emph{RAMP} is resilient to failures of part of the nodes in the
+cluster – for the reason that \emph{RAMP}’s transaction does not contact nodes that are
+not affected by the transaction. The number of rounds vary between 1 and 2 
+depending on the existence of the race and algorithm variant.  \emph{RAMP} does not block, 
+read transactions race write transactions, but such races are detected and handled by 
+\emph{RAMP}.
+
+\subsection{Consensus algorithms}
+\subsubsection{Paxos}
+\paxos is an algorithm to solve distributed consensus problem 
+\cite{Lamport1998partTimeParliment} \cite{lamport2001paxosMadeSimple}, which 
+was used, as the solution to the distributed consensus problem as part of 
+the larger systems in \cite{chandra2007PaxosMadeLive}, \cite{lampson1996build}, 
+and more recently in the Google's Chubby service \cite{burrows2006chubby}, 
+which is a lock service intended to provide coarse-grained locking, 
+as well as reliable storage. \paxos is resilient to $(\frac{n}{2}-1)$
+failures of nodes. It implements optimistic concurrency control thus it is 
+non blocking which means that a transaction can be interrupted when a conflict 
+occurs. The message complexitiy is similar to 3PC.
+
+\subsubsection{Raft}
+The aim of \emph{Raft} designers was to create a consensus algorithm which 
+would be more understandable to its predecessor \cite{ongaro2014search}. 
+The main idea behind the algorithm is decomposition of the consensus problem 
+into distinct phases \begin{enumerate*}[label=\alph*)]
+\item leader election,
+\item log replication,
+\item membership changes.
+\end{enumerate*} 
+\emph{Raft} is fault tolerant, because the the leader has to acquire only 
+majority of acknowledges, thus is resilient to failure of $(\frac{n}{2}-1)$ 
+nodes, same like \paxos. However failure of the leader causes delay, because 
+a new leader has to be elected before client's request is handled.
+In principle \emph{Raft} does not block, because all client requests are handled
+by the same leader. However election of the leader can be delayed in case of
+\emph{split vote}, in which two candidates receive the same number of votes,
+thus neither of them obtained majority vote and election has to start over in
+the next term after certain timeout. Approximating message complexitiy of \emph{Raft}
+is not that clear: assuming that the leader is already elected, a new value 
+is learnt by followers in at least $3n$ messages. However election process is 
+an additional overhead. Morever, heartbeat messages are exchanged, thus the total 
+number of messages exchanged can be greater than in previous algorithms.
 
 \section{Summary}
 
