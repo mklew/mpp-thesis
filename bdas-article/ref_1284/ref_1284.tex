@@ -198,37 +198,32 @@ Although the usability of LWT is limited, the model of storing data makes it a
 perfect platform for building transaction support extension which features good
 performance and rich functionality.
 
-% TODO - jacek
-
 \section{Preliminaries}
 
 Database $\Omega$ consists of key-value pairs $\{(k_{i},v_{j}), (k_{k},v_{m}),...\}, k_i\in\mathit{K}, v_i\in\mathit{V}$ stored by cluster of nodes $\{n_1, n_2, ...\}, n_i\in\mathit{N}$.
-Changes to data are represented by \emph{mutations} $\delta(k,v)$ (Definition \ref{def:mutation}). 
+Changes to data are represented by \emph{mutations} $\delta(k,v)$. 
 Each mutation is stored in nodes identified by topology $\tau$ (Definition \ref{def:topology}).
-Transaction is a set of mutations $\Delta(\delta_{1}, \delta_{2}, ...)$.
-
-\begin{definition}
-  \label{def:mutation}
-  \emph{Mutation} denoted, as \mutation{k}{v} is an operation, such as upsert (insert or update)\footnote{distinction between insert and update would require its own transaction} or removal of key-value pair \kv. 
-\end{definition}
+Transaction is a set of mutations $\Delta(\delta_{1}, \delta_{2}, ...)$, where mutation \mutation{k}{v} is an operation
+on key $k$ with value $v$.
 
 \begin{definition}
   \label{def:topology}
   \emph{Topology} is a partitioning function $\tau:\mathit{K} \mapsto \mathit{N}^{\mathbb{RF}}$ which for a given $k$ returns a set of replica nodes of size $\mathbb{RF}$. 
 \end{definition}
 
-\section{Multi partition transactions algorithm}
-
-\subsection{Outline}
-
 Client $c_{i}\in\mathit{C}$ is an actor, which performs transactions $\Delta_{1}, \Delta_{2}, ...$ and communicates to a cluster \nodes using messages $\mathit{M}$. Client \client begins a transaction \transaction by sending a message \beginTransactionMessage to any node $n\in\mathit{N}$ followed by receiving a message \initialTxStateMessage, which includes initial \emph{transaction state} (Definition \ref{def:transactionStateChapter4}), which will reflect all subsequent changes done in \transaction.
 
-During the transaction \transaction, client \client sends messages of two types: mutations and selects \selectMessage. All mutations within a transaction \transaction are isolated from other transactions - they are private to the enclosing transaction until it is committed. For the duration of the transaction, mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}. Select operations query against current state of the database, thus transactions provide read-committed isolation level.
+During the transaction \transaction, client \client sends messages of two types: mutations and selects \selectMessage. All mutations within a transaction \transaction are isolated from other transactions - they are private to the enclosing transaction until it is committed. For the duration of the transaction, mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}. Select operations query against current state of the database, thus transactions provide read-committed isolation level. 
+% to ostatnie zdanie wymaga więcej wyjaśnienia
 
 After each mutation client \client receives a message \updateTxStateMessage, which includes a transaction item \txItem referencing that mutation. A client is responsible for tracking changes performed in a transaction, thus it has to append all the received transaction items to the initial transaction state \txStatei{0}.
+% tutaj można dopisać, że dzięki temu, transakcja nie jest przypięta do konkretnego połączenia sieciowego, i tak 
+% naprawdę, o ile klient może ją dokończyć po restarcie.
 
+% Czy ten paragraf ponieżej jest istotny?
 Cassandra allows us to have a reference to the \mutation{k}{v} without the need to know the exact $k$, as long as token value of $k$ is known. \txItem and topology \topology determine $N'$, where private transaction storage \txStorage of each node $n$ can be checked for private data of transaction \transaction and then information from \txItem allows us to find \mutation{k}{v}.
 
+% do tej definicji mamy tylko jedną referencję - można ją zinlinować i skrócić
 \begin{definition}
   \label{def:keyCassandra}
   \emph{Key} -- key in Cassandra $k(k_p,k_c)$ consists of two keys: 
@@ -238,6 +233,7 @@ Cassandra allows us to have a reference to the \mutation{k}{v} without the need 
   \end{enumerate*}
 \end{definition}
 
+% do tej definicji mamy tylko jedną referencję - można ją zinlinować i skrócić
 \begin{definition}
   \label{def:tokenChapter4}
   \emph{Token} is a value computed by hash function from key $k_p$, which is used by topology \topology to determine replicas $\NRF_k$.
@@ -259,16 +255,19 @@ Cassandra allows us to have a reference to the \mutation{k}{v} without the need 
   \emph{Transaction state} $\Lambda(\mathit{id}, \{\lambda_{i}, \lambda_{j}, ...\})$ reflects changes done in transaction \transaction. Transaction state allows to identify nodes $N' \subset N$, which are affected by \transaction and store its \mutations. It is a pair of unique id of type \emph{timeuuid}, which is UUID with encoded timestamp \cite{CassandraUUID} and a set of transaction items (Definition \ref{def:transactionItemChapter4}).
 \end{definition}
 
-When client \client finishes its planned operations transaction \transaction can be either committed or rolled back. To perform rollback client sends \txRollbackMessage, and then $n$ sends out rollback messages to other nodes \rollbackMessage, where nodes $\{n_j,...,n_k\}$ are identified by \txItems, which makes them remove private storage for that transaction and mark \transaction as rolled back in an another local data structure called \emph{transaction log}.
+% When client \client finishes its planned operations transaction \transaction can be either committed or rolled back.
+To perform rollback client sends \txRollbackMessage, and then $n$ sends out rollback messages to other nodes \rollbackMessage, where nodes $\{n_j,...,n_k\}$ are identified by \txItems, which makes them remove private storage for that transaction and mark \transaction as rolled back in an another local data structure called \emph{transaction log}.
 
 In order to commit transaction \transaction a client \client sends message \txCommitMessage and subsequently \node{i} becomes the proposer of the transaction and is responsible for orchestrating distributed consensus round among nodes affected by transaction \transaction. %referenced by transaction items.%
 When consensus is reached each node moves private data of transaction \transaction from private transaction storage to the main storage and marks \transaction, as committed in the transaction log. The client \client receives message \txCommitResonseMessage about successfully committed transaction.
+
+\section{Multi partition transactions algorithm}
 
 There can be many concurrent transactions and some of them mutate values associated with the same keys, thus concurrency control guaranteeing that interfering transactions are not committed at the same time is required. Commit procedure solves this problem by grouping such transactions and performing distributed consensus round, which selects a single transaction that is committed and rollbacks the others. Commit procedure uses two local data structures \emph{transaction index}, which is responsible for identifing interfering transactions and grouping them into the same consenus rounds and \emph{transaction log}, which records committed or rolled back transactions.
 
 \subsection{Representation of a transaction}
 
-Transaction state (Definition \ref{def:transactionStateChapter4}) is used to identify transaction \transaction and to track mutations (Definition \ref{def:mutation}) done in \transaction, where each mutation is represented by \emph{transaction item} \txItem (Definition \ref{def:transactionItemChapter4}) received in a response to a mutation message. A client \client begins transaction by sending \beginTransactionMessage and receives empty transaction state \txState in a message  \initialTxStateMessage. Values of \mutationsFull tracked by transaction items \txItems are unknown to \txItems, but each value $v$ can be found at replica nodes $N^{\mathbb{RF}}(n_{i},n{j},...)\subset \mathit{N}$ by topology function \topology applied to each \txItem.
+Transaction state (Definition \ref{def:transactionStateChapter4}) is used to identify transaction \transaction and to track mutations done in \transaction, where each mutation is represented by \emph{transaction item} \txItem (Definition \ref{def:transactionItemChapter4}) received in a response to a mutation message. A client \client begins transaction by sending \beginTransactionMessage and receives empty transaction state \txState in a message  \initialTxStateMessage. Values of \mutationsFull tracked by transaction items \txItems are unknown to \txItems, but each value $v$ can be found at replica nodes $N^{\mathbb{RF}}(n_{i},n{j},...)\subset \mathit{N}$ by topology function \topology applied to each \txItem.
 
 \subsubsection{Tracking updates}
 
@@ -296,6 +295,7 @@ Client is responsible for keeping track of all performed operations within a tra
 \subsection{Isolation from other transactions}
 Transactions must run in isolation from each other and provide read-committed isolation level, thus transactions cannot see each other, nor anyone else can see effects of transactions before it completes with commit or rollback. Expected read-committed isolation is different than the one known from RDBMS, because in RDBMS such isolation holds write-locks for the duration of transaction, therefore if transaction writes then subsequent reads return written values. We want to avoid distributed locks, which decrease performance and cause deadlocks, therefore read-committed isolation in \mpt algorithm does not hold any locks, thus each \selectMessage receives current $v$, as it is in \database.
 
+% te dwa podrozdziały chyba można połączyć, tzn isolation i private storage
 \subsubsection{Private transaction storage}
 \label{sec:mpp:privateTxStorage}
 
@@ -473,6 +473,7 @@ If a client \client wants to rollback transaction \transaction then that client 
 
 % Transaction index \txIndex changes frequently, because transactions are registered in it and removed on commit and rollback along with their private data. Therefore we need to distinguish between the case when transaction \transaction is missing on node \node{i}, because \node{i} did not receive mutation messages and the case when \transaction was present on \node{i}, but was rolled back or committed. In the former case commit procedure of \mpt can try to continue with other replicas, as long as quorum knows about \transaction, whereas in the latter case commit procedure can abort. Information stored in transaction log \txLog allows us to distinguish which case it is.
 
+% tutaj też ta definicja chyba jest zbędna
 \begin{definition}
   \label{def:transactionLog}
   \emph{Transaction Log} \txLog records committed and rolledback transactions. It provides the following operations:
