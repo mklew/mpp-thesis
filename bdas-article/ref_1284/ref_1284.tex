@@ -219,30 +219,17 @@ After each mutation client \client receives a message \updateTxStateMessage, whi
 
 Transactions are decoupled from physical network connection and so is transaction state which means that if a client loses connection to a cluster due to some kind of network failure then transaction can be completed after the client connects back to the cluster.
 
-% do tej definicji mamy tylko jedną referencję - można ją zinlinować i skrócić
-\begin{definition}
-  \label{def:keyCassandra}
-  \emph{Key} -- key in Cassandra $k(k_p,k_c)$ consists of two keys: 
-  \begin{enumerate*}[label=\alph*)]
-    \item $k_p$ is a partitioning key, which is used by topology \topology to determine $\mathit{N}^{RF}_k$,
-    \item $k_c$ is a clustering key, which determines column in wide rows.
-  \end{enumerate*}
-\end{definition}
-
-% do tej definicji mamy tylko jedną referencję - można ją zinlinować i skrócić
-\begin{definition}
-  \label{def:tokenChapter4}
-  \emph{Token} is a value computed by hash function from key $k_p$, which is used by topology \topology to determine replicas $\NRF_k$.
-\end{definition}
-
 \begin{definition}
   \label{def:transactionItemChapter4}
   \emph{Transaction item} $\lambda(\mathit{keyspace}, \mathit{table}, \mathit{token})$ 
   is a reference to a single mutation \mutation{k}{v} of transaction \transaction, which indicates that replica nodes of $k$ store \mutation{k}{v} in \emph{private transaction storage}.  
   It is a triple with \begin{enumerate*}[label=\alph*)]
-    \item $\mathit{keyspace}$ -- name of keyspace,
-    \item $\mathit{table}$ -- name of table,
-    \item $\mathit{token}$ -- value of token (Definition \ref{def:tokenChapter4}) computed for a Cassandra key (Definition \ref{def:keyCassandra}).
+    \item $\mathit{keyspace}$ -- name of a keyspace,
+    \item $\mathit{table}$ -- name of a table,
+    \item $\mathit{token}$ -- value of a token, which is a value computed by hash function from Cassandra key $k_p$, which is used by topology \topology to determine replicas $\NRF_k$. Cassandra key $k(k_p,k_c)$ consists of two keys: \begin{enumerate*}[label=\alph*)]
+    \item $k_p$ is a partitioning key, which is used by topology \topology to determine $\mathit{N}^{RF}_k$,
+    \item $k_c$ is a clustering key, which determines column in wide rows.
+  \end{enumerate*}
   \end{enumerate*}
 \end{definition}
 
