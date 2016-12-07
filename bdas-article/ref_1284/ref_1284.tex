@@ -275,7 +275,8 @@ Transaction state \txState changes as transaction \transaction progresses and it
 %   \end{algorithmic}
 % \end{algorithm}
 
-A client is responsible for keeping track of all performed operations within a transaction. Transaction state is assumed to be a source of knowledge about a transaction, which means that it has valid information about which replicas are affected by a transaction. Note that, client i.e. database driver has to keep track of transaction items and append them to the transaction state after each transactional mutation, but the end user of the driver is potentially unaware of transaction items.
+A client is responsible for keeping track of all performed operations within a transaction. Transaction state is assumed to be a source of knowledge about a transaction, which means that it has valid information about which replicas are affected by a transaction. 
+%Note that, client i.e. database driver has to keep track of transaction items and append them to the transaction state after each transactional mutation, but the end user of the driver is potentially unaware of transaction items.
 
 \subsection{Isolation from other transactions}
 Transactions must run in isolation from each other and provide read-committed isolation level, thus transactions cannot see each other, nor anyone else can see effects of transactions before it completes with commit or rollback. Expected read-committed isolation is different than the one known from RDBMS, because in RDBMS such isolation holds write-locks for the duration of a transaction, therefore if a transaction writes then subsequent reads return written values. We want to avoid distributed locks, which decrease performance and cause deadlocks, therefore read-committed isolation in \mpt algorithm does not hold any locks, thus each \selectMessage receives current $v$, as it is in \database.
@@ -294,7 +295,8 @@ Each mutation message is executed by \node{i}, but instead of operating on curre
   \end{itemize}
 \end{definition}
 
-Definition \ref{def:privateTransactionStorage} abstracts from memory and time, but an implementation of private transaction storage has to $\mathit{clear}(\text{\txState})$ after certain timeout in order to free memory (assuming in-memory storage) and to be resilient to failures of clients, which can fail and abandon transaction \transactionj at any point in time. From a perspective of the algorithm, it does not matter whether mutations \mutations are stored in memory or in any other way as long as \mutations are accessible during transaction's execution. 
+Definition \ref{def:privateTransactionStorage} abstracts from memory and time, but an implementation of private transaction storage has to $\mathit{clear}(\text{\txState})$ after certain timeout in order to free memory (assuming in-memory storage) and to be resilient to failures of clients, which can fail and abandon transaction \transactionj at any point in time. 
+%From a perspective of the algorithm, it does not matter whether mutations \mutations are stored in memory or in any other way as long as \mutations are accessible during transaction's execution. 
 
 \paragraph{Quorum requirements}
 
