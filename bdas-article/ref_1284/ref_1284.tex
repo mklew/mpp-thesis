@@ -278,11 +278,7 @@ A client is responsible for keeping track of all performed operations within a t
 \subsection{Isolation from other transactions}
 Transactions must run in isolation from each other and provide read-committed isolation level, thus transactions cannot see each other, nor anyone else can see effects of transactions before it completes with commit or rollback. Expected read-committed isolation is different than the one known from RDBMS, because in RDBMS such isolation holds write-locks for the duration of a transaction, therefore if a transaction writes then subsequent reads return written values. We want to avoid distributed locks, which decrease performance and cause deadlocks, therefore read-committed isolation in \mpt algorithm does not hold any locks, thus each \selectMessage receives current $v$, as it is in \database.
 
-% te dwa podrozdziały chyba można połączyć, tzn isolation i private storage
-\subsubsection{Private transaction storage}
-\label{sec:mpp:privateTxStorage}
-
-Each mutation \mutation{k}{v} done in transaction \transaction should be stored on replicas responsible for given key keeping it private for that \transaction. Each mutation should be isolated from transactions other than \transaction and accessible only by \transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node.
+Each mutation \mutation{k}{v} done in transaction \transaction should be stored on replicas responsible for given key keeping it private for that \transaction. Each mutation should be isolated from transactions other than \transaction and accessible only by \transaction. In order to satisfy isolation requirement, \emph{private transaction storage} has to be present on each node. 
 
 Each mutation message is executed by \node{i}, but instead of operating on current live data of \database, mutations \mutations are put into private storage presented in Definition \ref{def:privateTransactionStorage}. 
 
