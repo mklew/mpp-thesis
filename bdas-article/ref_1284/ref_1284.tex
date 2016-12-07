@@ -215,7 +215,9 @@ Client $c_{i}\in\mathit{C}$ is an actor, which performs transactions $\Delta_{1}
 
 During the transaction \transaction, client \client sends messages of two types: mutations and selects \selectMessage. All mutations within a transaction \transaction are isolated from other transactions - they are private to the enclosing transaction until it is committed. For the duration of the transaction, mutations are stored in a \emph{private transaction storage}, which is a local data structure at each \node{i}. Select operations query against current state of the database, thus transactions provide read-committed isolation level. This means that transactions always get most recent committed state of data, thus a subsequent query for the same key can yield different value if there was a successfully committed transaction in between select queries. 
 
-After each mutation client \client receives a message \updateTxStateMessage, which includes a transaction item \txItem referencing that mutation. A client is responsible for tracking changes performed in a transaction, thus it has to append all the received transaction items to the initial transaction state \txStatei{0}.
+After each mutation client \client receives a message \updateTxStateMessage, which includes a transaction item \txItem referencing that mutation. A client is responsible for tracking changes performed in a transaction, thus it has to append all the received transaction items to the initial transaction state \txStatei{0}. 
+
+Transactions are decoupled from physical network connection and so is transaction state which means that if a client loses connection to a cluster due to some kind of network failure then transaction can be completed after the client connects back to the cluster.
 % tutaj można dopisać, że dzięki temu, transakcja nie jest przypięta do konkretnego połączenia sieciowego, i tak 
 % naprawdę, o ile klient może ją dokończyć po restarcie.
 
