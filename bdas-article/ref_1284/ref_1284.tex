@@ -48,16 +48,16 @@
 \newcommand{\txLog}{$\mathcal{L}$\xspace}
 \newcommand{\conflictingTxSet}{$\mathcal{C}\text{\txStates}$\xspace}
 % messages
-\newcommand{\beginTransactionMessage}{$\mathit{M}(c, n, \mathit{begin\_transaction}())$\xspace}
-\newcommand{\initialTxStateMessage}{$\mathit{M}(n, c, \mathit{initial\_transaction\_state}(\Lambda_{0}))$\xspace}
+\newcommand{\beginTransactionMessage}{$\mathit{M}(c, n, \mathit{begin\_tx}())$\xspace}
+\newcommand{\initialTxStateMessage}{$\mathit{M}(n, c, \mathit{initial\_tx\_state}(\Lambda_{0}))$\xspace}
 \newcommand{\selectMessage}{$\mathit{M}(c,n,select(k))$\xspace}
-\newcommand{\updateTxStateMessage}{$\mathit{M}(c, n, \mathit{update\_transaction\_state}(\lambda))$\xspace}
-\newcommand{\txRollbackMessage}{$\mathit{M}(c,n,\mathit{transaction\_rollback}(\Lambda))$\xspace}
+\newcommand{\updateTxStateMessage}{$\mathit{M}(c, n, \mathit{update\_tx\_state}(\lambda))$\xspace}
+\newcommand{\txRollbackMessage}{$\mathit{M}(c,n,\mathit{tx\_rollback}(\Lambda))$\xspace}
 \newcommand{\rollbackMessage}{$\mathit{M}(n_{i}, n_{j}, \mathit{rollback}(\Lambda))$\xspace}
 \newcommand{\nodesOfMutations}{$(\tau(k_1) \cup \tau(k_2) \cup ... ) =  \text{\nodesTx}\in\mathit{N}$\xspace}
 
-\newcommand{\txCommitMessage}{$\mathit{M}(c,n, \mathit{transaction\_commit}(\Lambda))$\xspace}
-\newcommand{\txCommitResonseMessage}{$\mathit{M}(n_{i},c,\mathit{transaction\_commit\_response}(committed))$\xspace}
+\newcommand{\txCommitMessage}{$\mathit{M}(c,n, \mathit{tx\_commit}(\Lambda))$\xspace}
+\newcommand{\txCommitResonseMessage}{$\mathit{M}(n_{i},c,\mathit{tx\_commit\_resp}(committed))$\xspace}
 
 \newcommand{\insertMessage}{$\mathit{M}(c, n, \mathit{upsert(\text{\txState}, k,v)})$\xspace}
 \newcommand{\NRF}{\mathit{N^{\mathbb{RF}}}}
@@ -189,7 +189,7 @@ overcome such deficiencies. Unfortunately, they come with either functional or
 performance limitations which make them difficult to adopt.  The functional
 limitations include constraining a transaction to a single partition of data or
 the lack of certain isolation levels. The performance problems are usually
-related to the  use of pessimistic locks to achieve a certain level of
+related to the use of pessimistic locks to achieve a certain level of
 consistency.
 
 We overcame those problems by modifying Cassandra database. Cassandra is proven
