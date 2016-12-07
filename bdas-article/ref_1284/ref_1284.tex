@@ -218,11 +218,6 @@ During the transaction \transaction, client \client sends messages of two types:
 After each mutation client \client receives a message \updateTxStateMessage, which includes a transaction item \txItem referencing that mutation. A client is responsible for tracking changes performed in a transaction, thus it has to append all the received transaction items to the initial transaction state \txStatei{0}. 
 
 Transactions are decoupled from physical network connection and so is transaction state which means that if a client loses connection to a cluster due to some kind of network failure then transaction can be completed after the client connects back to the cluster.
-% tutaj można dopisać, że dzięki temu, transakcja nie jest przypięta do konkretnego połączenia sieciowego, i tak 
-% naprawdę, o ile klient może ją dokończyć po restarcie.
-
-% Czy ten paragraf ponieżej jest istotny?
-Cassandra allows us to have a reference to the \mutation{k}{v} without the need to know the exact $k$, as long as token value of $k$ is known. \txItem and topology \topology determine $N'$, where private transaction storage \txStorage of each node $n$ can be checked for private data of transaction \transaction and then information from \txItem allows us to find \mutation{k}{v}.
 
 % do tej definicji mamy tylko jedną referencję - można ją zinlinować i skrócić
 \begin{definition}
