@@ -132,6 +132,8 @@
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
 \noindent\keywordname\enspace\ignorespaces#1}
 
+\interlinepenalty=0
+
 \begin{document}
 
 \mainmatter
@@ -388,7 +390,7 @@ There are a lot of NoSQL database - a web page which collects the information ab
 A value is proposed by any node, which is then called the \emph{coordinator} who initiates a round of 2PC. Note that, in 2PC nodes cannot suggest other value than the proposed one, they can only accept it, or decline it. Another proposal can be done only through another round. 
 
 Fault tolerance is not provided by 2PC. The 2PC solves the consensus problem in the absence of failures in 3 rounds. The first  round of messages for a proposal, the second round for votes and the third round for commit or abort. 
-%In this case there are 3n messages send for the whole protocol lifecycle. In the presence of failures,  the protocol may take additional 2 rounds to recover. Due to blocking nature of the protocol, timeouts need to be employed to terminate properly.
+%In this case there are 3n messages send for the whole protocol lifecycle. In the presence of failures, the protocol may take additional 2 rounds to recover. Due to blocking nature of the protocol, timeouts need to be employed to terminate properly.
 
 \subsubsection{3 phase commit}
 
@@ -481,9 +483,13 @@ Independent transactions, which do not mutate the same keys, do not cause conten
 
 \section{Conclusions}
 
-The algorithm we designed and implemented solves the problem of performing transactions enclosing multiple updates across many rows belonging to different replica sets. Unlike the other algorithms, which base on multi-versioning, our solution does not create a snapshot and provides light-weight read-commited isolation level. We keep a copy of those items which are changed in the private transaction storage. Therefore, we have the current view of data items in the database until we change them. Also, the conditions which need to be satisfied for the transaction to be accepted are flexible in the way that we can specify a custom expression to be evaluated on a consistent view of a database during commit which is in principle an extended compare and swap functionality. Moreover, our algorithm provides a way to define conflict resolution function so that the performance can be tuned for better handling large transactions or more precise conflict resolution which in turn leads to lower contention when a lot of concurrent transactions are committed.
+The algorithm we designed and implemented solves the problem of performing transactions enclosing multiple updates across many rows belonging to different replica sets. Unlike the other algorithms, which base on multi-versioning, our solution does not create a snapshot and provides light-weight read-commited isolation level. We keep a copy of those items which are changed in the private transaction storage. Therefore, we have the current view of data items in the database until we change them. Also, the conditions which need to be satisfied for the transaction to be accepted are flexible in the way that we can specify a custom expression to be evaluated on a consistent view of a database during commit which is in principle an extended compare and swap functionality. 
+
+Moreover, our algorithm provides a way to define conflict resolution function so that the performance can be tuned for better handling large transactions or more precise conflict resolution which in turn leads to lower contention when a lot of concurrent transactions are committed. 
+
 The algorithm was implemented and tested for correctness, stability and performance and the results, along with more detailed description can be found in \cite{masterthesis}.
 
+\pagebreak
 
 \bibliographystyle{splncs03}
 \bibliography{ref_1284} 
