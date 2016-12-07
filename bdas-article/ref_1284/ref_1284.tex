@@ -443,17 +443,11 @@ The total number of messages, assuming no contention and no failures, is $2 + 5 
   \centering
   \setlength{\unitlength}{1.3cm}  
     \renewcommand{\tabcolsep}{0.1cm}
-    \begin{tabular}{c|c|c|c}
+    \begin{tabular}{c|c|c|c|c|c}
       \toprule
-      \RFalone & $PC$ & messages \\ \midrule
-      \RF{3} & $PC=1$   & 23  \\
-      \RF{3} & $PC=2$   & 44  \\
-      \RF{3} & $PC=3$   & 65  \\
-      \RF{5} & $PC=1$   & 37  \\
-      \RF{5} & $PC=2$   & 72  \\
-      \RF{5} & $PC=3$   & 107 \\
-      \RF{5} & $PC=4$   & 142 \\
-      \RF{5} & $PC=5$   & 177 \\ \bottomrule  
+      \RFalone & $PC=1$ & $PC=2$ & $PC=3$ & $PC=4$ & $PC=5$ \\ \midrule
+      \RF{3} & 23 & 44 & 65  &   &     \\
+      \RF{5} & 37 & 72 & 107 & 142 & 177 \\ \bottomrule
     \end{tabular}
   \caption{Message count given different \RFalone and unique partitions count $PC$}
   \label{tab:tests:requestsCount}
