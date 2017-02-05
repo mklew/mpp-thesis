@@ -373,6 +373,9 @@ If a client \client wants to rollback transaction \transaction then that client 
 %\section{Implementation of the algorithm in Cassandra}
 
 %\section{Tests and performance analysis}
+\subsection{Pros and Cons}
+The most crucial advantage of \mpt over LWT is its support for multi-partition transactions. As a consequence, \mpt is less resilient to failures than LWT because it depends on quorums of distinct replica groups being available. It also requires more network messages. In terms of CAP theorem, both algorithms sacrifice consistency over availability and network partition tolerance. \mpt is scalable by its design and it does not require distributed locks. Another benefit of \mpt is its tunable contention level adjustable to specific workload needs. A downside is that \mpt assumes that its clients follow a specific protocol and handle transaction state correctly, which makes it not resilient to Byzantine faults. 
+
 
 \section{Related work}
 
