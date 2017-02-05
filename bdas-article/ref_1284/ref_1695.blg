@@ -1,0 +1,50 @@
+This is BibTeX, Version 0.99d (TeX Live 2016)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: ref_1695.aux
+The style file: splncs03.bst
+Database file #1: ref_1695.bib
+Warning--to sort, need author or key in CassandraUUID
+Warning--to sort, need author or key in NoSqlDatabasesOrg
+Warning--to sort, need author or key in DbEngines
+You've used 17 entries,
+            2785 wiz_defined-function locations,
+            707 strings with 7550 characters,
+and the built_in function-call counts, 9213 in all, are:
+= -- 827
+> -- 171
+< -- 19
++ -- 75
+- -- 56
+* -- 565
+:= -- 1098
+add.period$ -- 29
+call.type$ -- 17
+change.case$ -- 96
+chr.to.int$ -- 0
+cite$ -- 20
+duplicate$ -- 846
+empty$ -- 885
+format.name$ -- 65
+if$ -- 2081
+int.to.chr$ -- 0
+int.to.str$ -- 17
+missing$ -- 155
+newline$ -- 56
+num.names$ -- 28
+pop$ -- 275
+preamble$ -- 1
+purify$ -- 61
+quote$ -- 0
+skip$ -- 285
+stack$ -- 0
+substring$ -- 634
+swap$ -- 474
+text.length$ -- 19
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 68
+warning$ -- 3
+while$ -- 81
+width$ -- 19
+write$ -- 187
+(There were 3 warnings)
